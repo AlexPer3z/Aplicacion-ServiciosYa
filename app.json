@@ -1,0 +1,71 @@
+{
+  "expo": {
+    "name": "appTrabajo",
+    "slug": "appTrabajo",
+    "scheme": "solucionesya",
+    "linking": {
+      "prefixes": [
+        "solucionesya://"
+      ],
+      "config": {
+        "screens": {
+          "pago-exitoso": "pago-exitoso"
+        }
+      }
+    },
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "assets/icon.png",
+      "assets/splash-icon.png",
+      "assets/adaptive-icon.png",
+      "assets/favicon.png"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "La app necesita acceder a tu ubicación para mostrar servicios cercanos."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.alex_6775.appTrabajo",
+      "googleServicesFile": "./google-services.json",
+      "useNextNotificationsApi": true,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-notifications"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "faae2b69-41b5-40d4-ac3e-5582dae89cb2"
+      }
+    },
+    "owner": "jonymelavo"
+  }
+}

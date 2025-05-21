@@ -1,0 +1,149 @@
+// screens/PasarelaPago.js
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { WebView } from 'react-native-webview';
+import { Linking } from 'react-native';
+
+const CATEGORIAS_VALIDAS = [
+  'Electricista', 'Plomero', 'Gasista', 'Pintor', 'Carpintero', 'Albañil',
+  'Cerrajero', 'Mecánico', 'Jardinero', 'Niñera', 'Cocinero', 'Mudanzas',
+  'Diseñador', 'Programador', 'Fotógrafo', 'Veterinario', 'Profesor',
+  'Abogado', 'Contador', 'Peluquero', 'Masajista', 'Maquilladora', 'DJ',
+  'Decorador', 'Coach', 'Psicólogo', 'Tatuador', 'Editor de video',
+  'Community Manager', 'Traductor', 'Animador', 'Soldador', 'Tapicero',
+  'Costurera', 'Chofer', 'Reparación de PC', 'Reparación de celulares',
+  'Delivery', 'Camarero', 'Mozo', 'Personal trainer'
+];
+
+export default function PasarelaPago() {
+  const route = useRoute();
+  const navigation = useNavigation();
+  const { categoria } = route.params;
+
+  const [urlPago, setUrlPago] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const handleDeepLink = ({ url }) => {
+      if (url.includes('pago-exitoso')) {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'ServiciosPorCategoria', params: { categoria } }],
+        });
+      } else if (url.includes('pago-fallido')) {
+        Alert.alert('Pago fallido', 'No se pudo completar el pago.');
+        navigation.goBack();
+      } else if (url.includes('pago-pendiente')) {
+        Alert.alert('Pago pendiente', 'Tu pago está siendo procesado.');
+        navigation.goBack();
+      }
+    };
+
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink({ url });
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  const iniciarPago = async () => {
+    if (!CATEGORIAS_VALIDAS.includes(categoria)) {
+      Alert.alert('Categoría inválida', 'La categoría seleccionada no es válida.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('https://backend-pagos.onrender.com/crear-preferencia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categoria }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.init_point) {
+        setUrlPago(data.init_point);
+      } else {
+        Alert.alert('Error', data.error || 'No se pudo generar el link de pago.');
+      }
+    } catch (error) {
+      Alert.alert('Error de conexión', 'No se pudo conectar con el servidor.');
+    }
+    setLoading(false);
+  };
+
+  if (urlPago) {
+    Linking.openURL(urlPago);
+    return null;
+  }
+
+  const irAModoPrueba = () => {
+    navigation.navigate('ServiciosPorCategoria', { categoria });
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.mensaje}>
+        Para explorar todos nuestros profesionales en {categoria}, debe abonar un pago de $1.500 pesos argentinos.
+      </Text>
+
+      {loading ? (
+        <ActivityIndicator size="large" color="#27ae60" />
+      ) : (
+        <>
+          <TouchableOpacity style={styles.boton} onPress={iniciarPago}>
+            <Text style={styles.textoBoton}>Pagar $1.500</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.botonPrueba} onPress={irAModoPrueba}>
+            <Text style={styles.textoBotonPrueba}>Modo de prueba</Text>
+          </TouchableOpacity>
+        </>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fefefe',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 30,
+  },
+  mensaje: {
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 30,
+    color: '#2c3e50',
+  },
+  boton: {
+    backgroundColor: '#27ae60',
+    paddingVertical: 15,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
+  textoBoton: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  botonPrueba: {
+    backgroundColor: '#95a5a6',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+  },
+  textoBotonPrueba: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+});
