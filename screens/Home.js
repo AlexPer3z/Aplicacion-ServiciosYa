@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View,
-
+  Alert,
   Text,
   TouchableOpacity,
   StyleSheet,
@@ -9,12 +9,15 @@ import {
   ScrollView,
   TextInput,
   RefreshControl,
+  BackHandler,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect  } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import ChatBotModal from '../components/ChatBotModal';
+
+
 
 const iconosCategoria = {
   Electricista: require('../assets/icons/electricista.png'),
@@ -57,6 +60,8 @@ const iconosCategoria = {
   'Reparación de celulares': require('../assets/icons/reparacion_celulares.png'),
   'Profesor de música': require('../assets/icons/profesor_musica.png'),
 };
+
+
 
 const categorias = Object.keys(iconosCategoria);
 const categoriasPorSeccion = {
@@ -147,6 +152,9 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
   const [chatVisible, setChatVisible] = useState(false);
 
+  
+
+
   useEffect(() => {
     let isMounted = true;
 
@@ -178,13 +186,22 @@ export default function Home() {
     };
   }, []);
 
-  useEffect(() => {
-    const texto = busqueda.toLowerCase();
-    const filtradas = categorias.filter((cat) =>
-      cat.toLowerCase().includes(texto)
-    );
-    setCategoriasFiltradas(filtradas);
-  }, [busqueda]);
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        Alert.alert('Confirmación', '¿Deseas salir de la app?', [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Salir', onPress: () => BackHandler.exitApp() },
+        ]);
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => subscription.remove();
+    }, [])
+  );
+
 
   const cargarDatos = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -362,8 +379,15 @@ console.log('Mensajes no leídos:', mensajesNoLeidos);
                 {filtradas.map(categoria => (
                   <TouchableOpacity
                     key={categoria}
-                    style={styles.categoriaItem}
-                    onPress={() => irACategoria(categoria)}
+                    style={[styles.categoriaItem, (!perfilCompleto || mostrarCartelDNI) && { opacity: .5 }]}
+                    onPress={() =>{ if (!perfilCompleto) {
+              alert('Debes completar tu perfil antes de contratar a algun servicio.');
+              return;
+            }
+            if (mostrarCartelDNI) {
+              alert('Debes verificar tu DNI antes de contratar a algun servicio.');
+              return;
+            } irACategoria(categoria)}}
                   >
                     <View style={styles.iconoCategoria}>
                       <CategoriaIcon categoria={categoria} />

@@ -63,17 +63,11 @@ const ciudadesCatamarca = [
 'Poman',
 ];
 
-useEffect(() => {
-// Verificar si todos los campos son válidos
-const todosValidos = Object.values(validaciones).every((valor) => valor === true);
-setValidarBoton(todosValidos);
-}, [validaciones]);
-
 const seleccionarImagen = async (setImage, tipo) => {
 try {
 let result;
 
-``
+
 // Para DNI frente y dorso, usar la cámara
 if (tipo === 'fotoFrente' || tipo === 'fotoDorso') {
   const permisoCamara = await ImagePicker.requestCameraPermissionsAsync();
@@ -106,7 +100,7 @@ if (!result.canceled && result.assets.length > 0) {
   setImage(uri);
   setValidaciones((prev) => ({ ...prev, [tipo]: true }));
 }
-``
+
 
 } catch (error) {
 console.log('Error seleccionando imagen:', error);
@@ -117,7 +111,6 @@ const subirImagen = async (uri, nombreBase) => {
 const user = (await supabase.auth.getUser()).data.user;
 const nombreArchivo = `${user.id}-${nombreBase}-${Date.now()}.jpg`;
 
-``
 const fileData = await FileSystem.readAsStringAsync(uri, {
   encoding: FileSystem.EncodingType.Base64,
 });
@@ -137,7 +130,7 @@ const { data: publicUrlData } = supabase.storage
   .getPublicUrl(nombreArchivo);
 
 return publicUrlData.publicUrl;
-``
+
 
 };
 
@@ -146,7 +139,7 @@ if (!nombre || !apellido || !edad || !dni || !fotoFrente || !fotoDorso || !fotoP
 Alert.alert('Faltan datos', 'Por favor completá todos los campos.');
 return;
 }
-``
+
 if (!aceptaTerminos) {
   Alert.alert('Términos', 'Debés aceptar los términos y condiciones.');
   return;
@@ -191,9 +184,7 @@ try {
 
 };
 
-const setValidarBoton = (validaciones) => {
-setValidaciones(validaciones);
-}
+
 
 return (
 
@@ -247,7 +238,11 @@ return (
     value={edad}
     onChangeText={(text) => {
       setEdad(text);
-      setValidaciones((prev) => ({ ...prev, edad: /^[0-9]+$/.test(text) && text > 18 }));
+      setValidaciones((prev) => ({ 
+  ...prev, 
+  edad: /^[0-9]+$/.test(text) && parseInt(text) > 18 
+}));
+
     }}
     keyboardType="numeric"
   />
@@ -409,7 +404,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   input: {
-    backgroundColor: '#b949',
+    backgroundColor: '#fff',
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 20,

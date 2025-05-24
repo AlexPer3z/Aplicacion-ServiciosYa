@@ -6,6 +6,7 @@ import { WebView } from 'react-native-webview';
 import { Linking } from 'react-native';
 
 const CATEGORIAS_VALIDAS = [
+  // Categorías originales
   'Electricista', 'Plomero', 'Gasista', 'Pintor', 'Carpintero', 'Albañil',
   'Cerrajero', 'Mecánico', 'Jardinero', 'Niñera', 'Cocinero', 'Mudanzas',
   'Diseñador', 'Programador', 'Fotógrafo', 'Veterinario', 'Profesor',
@@ -13,8 +14,31 @@ const CATEGORIAS_VALIDAS = [
   'Decorador', 'Coach', 'Psicólogo', 'Tatuador', 'Editor de video',
   'Community Manager', 'Traductor', 'Animador', 'Soldador', 'Tapicero',
   'Costurera', 'Chofer', 'Reparación de PC', 'Reparación de celulares',
-  'Delivery', 'Camarero', 'Mozo', 'Personal trainer'
+  'Delivery', 'Camarero', 'Mozo', 'Personal trainer',
+
+  // Nuevas categorías adicionales
+  'Reparaciones en el hogar',
+  'Decorador de interiores',
+  'Servicio de limpieza',
+  'Técnico de PC',
+  'Desarrollador web',
+  'Fletes',
+  'Chofer privado',
+  'Profesor particular',
+  'Profesor de música',
+  'Diseñador gráfico',
+  'Marketing',
+  'Asistente virtual',
+  'Atención al cliente',
+  'Paseador de perros',
+  'Entrenador personal',
+  'Estilista',
+  'Chef personal',
+  'Organizador de eventos',
+  'Cuidado de niños',
+  'Cuidado de adultos mayores'
 ];
+
 
 export default function PasarelaPago() {
   const route = useRoute();

@@ -38,7 +38,7 @@
       "supportsTablet": true,
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "La app necesita acceder a tu ubicación para mostrar servicios cercanos."
+        "NSLocationWhenInUseUsageDescription": "Necesitamos acceder a tu ubicación para mostrarla en el mapa"
       }
     },
     "android": {
@@ -63,9 +63,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "faae2b69-41b5-40d4-ac3e-5582dae89cb2"
+        "projectId": "aea4aff9-1e66-4a9c-a2e7-17402b7bc1f1"
       }
     },
-    "owner": "jonymelavo"
+    "owner": "perezzz2003"
   }
 }

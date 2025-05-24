@@ -9,6 +9,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@maplibre/maplibre-react-native": "^10.1.4",
     "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-native-picker/picker": "2.11.0",
     "@react-navigation/native": "^7.1.8",
@@ -34,7 +35,6 @@
     "react": "19.0.0",
     "react-native": "0.79.2",
     "react-native-blob-util": "^0.21.2",
-    "react-native-fingerprint-scanner": "^6.0.0",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-maps": "1.20.1",
     "react-native-paper": "^5.14.1",
