@@ -38,8 +38,10 @@
       "supportsTablet": true,
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Necesitamos acceder a tu ubicación para mostrarla en el mapa"
-      }
+        "NSLocationWhenInUseUsageDescription": "Necesitamos acceder a tu ubicación para mostrarla en el mapa",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.perezzz2003.appTrabajo"
     },
     "android": {
       "adaptiveIcon": {
@@ -59,7 +61,9 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-notifications"
+     "expo-notifications",
+      "expo-notifications",
+      "expo-secure-store"
     ],
     "extra": {
       "eas": {

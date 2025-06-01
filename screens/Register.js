@@ -3,8 +3,6 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ImageBackground, Image, Alert
 } from 'react-native';
-import * as AuthSession from 'expo-auth-session';
-import { supabase } from '../lib/supabase';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import fondo from '../assets/fondo.png';
 import logo from '../assets/logo.png';
@@ -37,22 +35,15 @@ export default function Register({ navigation }) {
       Alert.alert('Formato inválido', 'Por favor ingresa un email válido.');
       return;
     }
-
     if (!esSegura) {
       Alert.alert('Contraseña débil', 'La contraseña debe cumplir con todos los requisitos de seguridad.');
       return;
     }
-
     if (password !== repeatPassword) {
       Alert.alert('Error', 'Las contraseñas no coinciden.');
       return;
     }
-
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
+    const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) {
       if (error.message.includes('already registered')) {
         Alert.alert('Correo en uso', 'Este correo ya está registrado.');
@@ -61,19 +52,22 @@ export default function Register({ navigation }) {
       }
       return;
     }
-
     if (data.user) {
       await supabase.from('usuarios').insert([{ id: data.user.id, email }]);
       setShowMessage(true);
     }
   };
 
-  
-
   const renderRequisito = (cumple, texto) => (
     <View style={styles.requisito}>
-      <Icon name={cumple ? 'check-circle' : 'cancel'} color={cumple ? 'green' : 'gray'} size={18} />
-      <Text style={{ color: cumple ? 'green' : 'gray', marginLeft: 6 }}>{texto}</Text>
+      <Icon
+        name={cumple ? 'check-circle' : 'cancel'}
+        color={cumple ? '#10b981' : '#fb923c'}
+        size={18}
+      />
+      <Text style={{ color: cumple ? '#10b981' : '#fb923c', marginLeft: 8, fontWeight: '600' }}>
+        {texto}
+      </Text>
     </View>
   );
 
@@ -82,7 +76,8 @@ export default function Register({ navigation }) {
       <View style={styles.container}>
         {showMessage ? (
           <View style={styles.messageContainer}>
-            <Text style={styles.modalTitle}>Verifica tu correo</Text>
+            <Icon name="check-circle" size={44} color="#19D4C6" style={{ marginBottom: 14 }} />
+            <Text style={styles.modalTitle}>¡Verificá tu correo!</Text>
             <Text style={styles.modalMessage}>
               Te enviamos un correo para confirmar tu cuenta. Una vez verificado, podrás iniciar sesión.
             </Text>
@@ -100,10 +95,9 @@ export default function Register({ navigation }) {
           <>
             <Image source={logo} style={styles.logo} />
             <Text style={styles.title}>Crear Cuenta</Text>
-
             <TextInput
               placeholder="Correo Electrónico"
-              placeholderTextColor="#999"
+              placeholderTextColor="#7bc1ba"
               onChangeText={setEmail}
               value={email}
               style={styles.input}
@@ -114,14 +108,14 @@ export default function Register({ navigation }) {
             <View style={styles.passwordContainer}>
               <TextInput
                 placeholder="Contraseña"
-                placeholderTextColor="#999"
+                placeholderTextColor="#7bc1ba"
                 secureTextEntry={!showPassword}
                 onChangeText={setPassword}
                 value={password}
                 style={styles.passwordInput}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                <Icon name={showPassword ? 'visibility-off' : 'visibility'} size={24} color="#999" />
+                <Icon name={showPassword ? 'visibility-off' : 'visibility'} size={24} color="#19D4C6" />
               </TouchableOpacity>
             </View>
 
@@ -135,14 +129,21 @@ export default function Register({ navigation }) {
 
             <TextInput
               placeholder="Repetir Contraseña"
-              placeholderTextColor="#999"
+              placeholderTextColor="#7bc1ba"
               secureTextEntry={!showPassword}
               onChangeText={setRepeatPassword}
               value={repeatPassword}
               style={styles.input}
             />
 
-            <TouchableOpacity style={styles.button} onPress={handleRegister}>
+            <TouchableOpacity
+              style={[
+                styles.button,
+                (!email || !esSegura || password !== repeatPassword) && { backgroundColor: '#a0a0a0' }
+              ]}
+              onPress={handleRegister}
+              disabled={!email || !esSegura || password !== repeatPassword}
+            >
               <Text style={styles.buttonText}>Registrarme</Text>
             </TouchableOpacity>
 
@@ -162,60 +163,63 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   container: {
-    backgroundColor: '#f0f4f8',
-    margin: 20,
-    borderRadius: 20,
-    padding: 25,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
-    opacity: 0.95,
+    backgroundColor: 'rgba(255,255,255,0.97)',
+    margin: 16,
+    borderRadius: 22,
+    padding: 24,
+    shadowColor: '#00B8A9',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.13,
+    shadowRadius: 14,
+    elevation: 7,
   },
   logo: {
-    width: 150,
-    height: 150,
+    width: 110,
+    height: 110,
     alignSelf: 'center',
-    marginBottom: 15,
+    marginBottom: 10,
     borderRadius: 20,
   },
   title: {
-    fontSize: 26,
-    fontWeight: 'bold',
+    fontSize: 27,
+    fontWeight: '900',
     textAlign: 'center',
-    marginBottom: 25,
-    color: '#333',
+    marginBottom: 24,
+    color: '#19D4C6',
+    letterSpacing: .6
   },
   input: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 15,
+    backgroundColor: '#f7fdfc',
+    borderRadius: 13,
+    paddingVertical: 13,
+    paddingHorizontal: 16,
     fontSize: 16,
-    color: '#333',
+    color: '#222',
     marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#ccc',
+    borderWidth: 1.4,
+    borderColor: '#40BFC1',
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
+    backgroundColor: '#f7fdfc',
+    borderRadius: 13,
+    borderWidth: 1.4,
+    borderColor: '#40BFC1',
     paddingHorizontal: 10,
     marginBottom: 10,
   },
   passwordInput: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 13,
     fontSize: 16,
-    color: '#333',
+    color: '#222',
   },
   requisitosContainer: {
     marginBottom: 15,
+    backgroundColor: '#eafaf8',
+    borderRadius: 12,
+    padding: 10,
   },
   requisito: {
     flexDirection: 'row',
@@ -223,63 +227,61 @@ const styles = StyleSheet.create({
     marginVertical: 3,
   },
   button: {
-    backgroundColor: '#40BFC1',
+    backgroundColor: '#19D4C6',
     paddingVertical: 15,
     borderRadius: 30,
     alignItems: 'center',
     marginBottom: 15,
-    elevation: 3,
+    elevation: 2,
   },
   buttonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '900',
     fontSize: 16,
+    letterSpacing: .3
   },
   registerText: {
     textAlign: 'center',
-    color: '#555',
-    fontSize: 14,
-    marginTop: 10,
-  },
-  googleButton: {
-    backgroundColor: '#4285F4',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 30,
-    marginBottom: 15,
-  },
-  googleButtonText: {
-    color: '#fff',
+    color: '#FF6B35',
     fontSize: 15,
-    fontWeight: 'bold',
+    marginTop: 12,
+    fontWeight: 'bold'
   },
   messageContainer: {
     alignItems: 'center',
-    padding: 25,
+    padding: 32,
+    backgroundColor: '#fff',
+    borderRadius: 22,
+    shadowColor: '#19D4C6',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.13,
+    shadowRadius: 10,
+    elevation: 7,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
+    fontSize: 22,
+    fontWeight: '900',
+    marginBottom: 12,
     textAlign: 'center',
+    color: '#19D4C6'
   },
   modalMessage: {
     fontSize: 16,
-    color: '#555',
+    color: '#333',
     textAlign: 'center',
     marginBottom: 25,
   },
   modalButton: {
-    backgroundColor: '#40BFC1',
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 25,
+    backgroundColor: '#FF6B35',
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 22,
+    marginTop: 6,
   },
   modalButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '900',
     fontSize: 16,
+    letterSpacing: .5
   },
 });

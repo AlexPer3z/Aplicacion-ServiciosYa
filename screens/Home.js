@@ -10,16 +10,19 @@ import {
   TextInput,
   RefreshControl,
   BackHandler,
+  ImageBackground,
 } from 'react-native';
 import { useNavigation, useFocusEffect  } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import ChatBotModal from '../components/ChatBotModal';
-
-
+import fondo from '../assets/fondo_home.png';
+import { AuthError } from 'expo-auth-session';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const iconosCategoria = {
+  // EXISTENTES
   Electricista: require('../assets/icons/electricista.png'),
   Plomero: require('../assets/icons/plomero.png'),
   Pintor: require('../assets/icons/pintor.png'),
@@ -59,68 +62,181 @@ const iconosCategoria = {
   'Atención al cliente': require('../assets/icons/atencion_cliente.png'),
   'Reparación de celulares': require('../assets/icons/reparacion_celulares.png'),
   'Profesor de música': require('../assets/icons/profesor_musica.png'),
+
+  // NUEVAS (ejemplos sin íconos aún, puedes ir agregándolos luego)
+  Soldador: require('../assets/icons/soldador.png'),
+  Gasista: require('../assets/icons/gasista.png'),
+  Herrero: require('../assets/icons/herrero.png'),
+  'Asistente contable': require('../assets/icons/asistente_contable.png'),
+  Psicólogo: require('../assets/icons/psicologo.png'),
+  Kinesiólogo: require('../assets/icons/kinesiologo.png'),
+  Nutricionista: require('../assets/icons/nutricionista.png'),
+  Enfermero: require('../assets/icons/enfermera.png'),
+  'Diseñador UX/UI': require('../assets/icons/diseñador_ux.png'),
+  Ilustrador: require('../assets/icons/ilustrador.png'),
+  Guionista: require('../assets/icons/guionista.png'),
+  Camarógrafo: require('../assets/icons/camarografo.png'),
+  'Gestor de redes': require('../assets/icons/gestor_redes_sociales.png'),
+  'Tester QA': require('../assets/icons/tester_QA.png'),
+  'Coach de vida': require('../assets/icons/coach_vida.png'),
+  'Terapista ocupacional': require('../assets/icons/terapista_ocupacional.png'),
+  'Maquillador profesional': require('../assets/icons/maquilladora.png'),
+  Manicurista: require('../assets/icons/manicurista.png'),
+  'Técnico en refrigeración': require('../assets/icons/refrigeracion.png'),
+  'Montador de muebles': require('../assets/icons/montador_muebles.png'),
+  Bartender: require('../assets/icons/bartender.png'),
+  'Mozos para eventos': require('../assets/icons/mozo_eventos.png'),
+  'Dj para eventos': require('../assets/icons/dj_eventos.png'),
+  'Instalador de cámaras': require('../assets/icons/instalador_camaras.png'),
+  'Animador infantil': require('../assets/icons/animador_infantil.png'),
+  'Profesor de yoga': require('../assets/icons/profesor_yoga.png'),
+  'Instructor de manejo': require('../assets/icons/instructor_manejo.png'),
+  'Lavado de autos': require('../assets/icons/lavador_autos.png'),
+  'guarderia de mascotas': require('../assets/icons/guarderia_mascotas.png'),
+  'Personal de seguridad': require('../assets/icons/personal_seguridad.png'),
+  'Coach financiero': require('../assets/icons/coach_financiero.png'),
+  'Redactor de contenidos': require('../assets/icons/redactor_contenidos.png'),
+  'Consultor de negocios': require('../assets/icons/consultor_negocios.png'),
+  'Instalador de paneles solares': require('../assets/icons/instalador_paneles_solares.png'),
+  'Reparador de electrodomésticos': require('../assets/icons/reparador_electrodomesticos.png'),
+  Tapicero: require('../assets/icons/tapicero.png'),
+  Modista: require('../assets/icons/modista.png'),
+  Sastre: require('../assets/icons/sastre.png'),
+  'Montador de estructuras': require('../assets/icons/montador_estructuras.png'),
+  'Diseñador industrial': require('../assets/icons/diseñador_industrial.png'),
+  'Fotógrafo de producto': require('../assets/icons/fotografo_productos.png'),
+  'Traductor jurado': require('../assets/icons/traductor_jurado.png'),
+  'Desarrollador de apps': require('../assets/icons/desarrollador_app.png'),
+  'Gestor de ecommerce': require('../assets/icons/gestor_ecommerce.png'),
+  Abogado: require('../assets/icons/abogado.png'),
+  Artesano: require('../assets/icons/artesano.png'),
+  'Consultor ambiental': require('../assets/icons/consultor_ambiental.png'),
+  'Encargado de depósito': require('../assets/icons/encargado_deposito.png'),
+  Camarero: require('../assets/icons/camarero.png'),
+  Panadero: require('../assets/icons/panadero.png'),
+  Pastelero: require('../assets/icons/pastelero.png'),
+  Delivery: require('../assets/icons/delivery.png'),
+  'Personal de limpieza de oficinas': require('../assets/icons/personal_limpieza_oficinas.png'),
 };
-
-
 
 const categorias = Object.keys(iconosCategoria);
 const categoriasPorSeccion = {
   Hogar: [
     'Electricista',
+    'Gasista',
     'Plomero',
     'Pintor',
     'Carpintero',
     'Cerrajero',
+    'Jardinero',
     'Albañil',
+    'Tapicero',
     'Reparaciones en el hogar',
-    'Decorador de interiores',
     'Servicio de limpieza',
-  ],
-  Tecnología: [
-    'Programador',
-    'Técnico de PC',
-    'Desarrollador web',
-    'Reparación de celulares',
-    'Editor de video',
-    'Community Manager',
+    'Montador de muebles',
+    'Montador de estructuras',
+    'Decorador de interiores',
   ],
   Transporte: [
     'Fletes',
     'Mudanzas',
     'Chofer privado',
+    'Delivery',
+    'Instructor de manejo',
+    'Lavado de autos',
+  ],
+  Tecnología: [
+    'Programador',
+    'Técnico de PC',
+    'Tester QA',
+    'Desarrollador web',
+    'Desarrollador de apps',
+    'Instalador de cámaras',
+    'Community Manager',
+    'Editor de video',
+    'Diseñador UX/UI',
+    'Redactor de contenidos',
+    'Gestor de ecommerce',
   ],
   Educación: [
     'Profesor particular',
     'Traductor',
     'Profesor de música',
+    'Profesor de yoga',
   ],
   Profesionales: [
     'Contador',
+    'Asistente contable',
     'Diseñador gráfico',
+    'Consultor de negocios',
+    'Abogado',
+    'Consultor ambiental',
     'Marketing',
-    'Asistente virtual',
+    'Gestor de redes',
+    'Traductor jurado',
     'Atención al cliente',
+    'Asistente virtual',
+    'Coach financiero',
+    'Coach de vida',
   ],
   Mascotas: [
     'Paseador de perros',
     'Veterinario',
+    'guarderia de mascotas',
   ],
   Bienestar: [
     'Entrenador personal',
     'Masajista',
     'Estilista',
+    'Maquillador profesional',
     'Tatuador',
-    'Chef personal',
+    'Manicurista',
+    'Terapista ocupacional',
   ],
   Eventos: [
     'Organizador de eventos',
     'Fotógrafo',
+    'Fotógrafo de producto',
+    'Camarógrafo',
+    'Animador infantil',
+    'Mozos para eventos',
+    'Bartender',
+    'Dj para eventos',
   ],
   Cuidados: [
     'Cuidado de niños',
     'Cuidado de adultos mayores',
+    'Enfermero',
   ],
+  Salud: [
+    'Psicólogo',
+    'Kinesiólogo',
+    'Nutricionista',
+  ],
+  Construcción: [
+    'Soldador',
+    'Herrero',
+    'Instalador de paneles solares',
+    'Reparador de electrodomésticos',
+  ],
+  'Arte Y Cultura': [
+    'Ilustrador',
+    'Guionista',
+    'Diseñador industrial',
+    'Sastre',
+    'Modista',
+    'Artesano',
+  ],
+  'Oficios Generales': [
+    'Encargado de depósito',
+    'Camarero',
+    'Panadero',
+    'Pastelero',
+    'Personal de limpieza de oficinas',
+    'Personal de seguridad',
+  ]
 };
+
 function CategoriaIcon({ categoria }) {
   const icono = iconosCategoria[categoria];
   
@@ -151,6 +267,7 @@ export default function Home() {
   const [conteosPorCategoria, setConteosPorCategoria] = useState({});
   const [refreshing, setRefreshing] = useState(false);
   const [chatVisible, setChatVisible] = useState(false);
+  const [soloConServicios, setSoloConServicios] = useState(false);
 
   
 
@@ -255,7 +372,7 @@ console.log('Mensajes no leídos:', mensajesNoLeidos);
 
     data.forEach(servicio => {
       const categoria = servicio.categoria;
-      const estadoLimpio = servicio.estado?.replace(/['"]+/g, '').trim(); // elimina comillas
+      const estadoLimpio = servicio.estado?.replace(/['"]+/g, '').trim();
 
       if (estadoLimpio === 'activo' && categoria) {
         if (!conteos[categoria]) {
@@ -288,7 +405,14 @@ console.log('Mensajes no leídos:', mensajesNoLeidos);
 }, [conteosPorCategoria]);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#00B8A9' }}>
+    <ImageBackground
+    source={require('../assets/fondo_home.png')} // Cambiá al path correcto
+    style={styles.background}
+    imageStyle={styles.imagen}
+    resizeMode="cover"
+  >
+    <View style={styles.overlay}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View style={styles.saludoContainer}>
@@ -331,6 +455,20 @@ console.log('Mensajes no leídos:', mensajesNoLeidos);
             onChangeText={setBusqueda}
           />
         </View>
+        <View style={styles.filtroContainer}>
+  <TouchableOpacity
+    style={styles.checkboxContainer}
+    onPress={() => setSoloConServicios(prev => !prev)}
+  >
+    <Ionicons
+      name={soloConServicios ? 'checkbox-outline' : 'square-outline'}
+      size={20}
+      color="#fff"
+      style={styles.checkIcon}
+    />
+    <Text style={styles.checkboxLabel}>Ver servicios disponibles</Text>
+  </TouchableOpacity>
+</View>
       </View>
 
       {!perfilCompleto && (
@@ -358,17 +496,22 @@ console.log('Mensajes no leídos:', mensajesNoLeidos);
           </Text>
         </View>
       )}
+      
+
 
       <ScrollView
-        style={{ flex: 1 }}
+        style={{ flex: 1, marginRight: 0, marginBottom:30}}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
         {Object.entries(categoriasPorSeccion).map(([seccion, cats]) => {
-          const filtradas = cats.filter(cat =>
-            cat.toLowerCase().includes(busqueda.toLowerCase())
-          );
+          const filtradas = cats.filter(cat => {
+  const coincideBusqueda = cat.toLowerCase().includes(busqueda.toLowerCase());
+  const tieneServicios = conteosPorCategoria[cat] > 0;
+  return coincideBusqueda && (!soloConServicios || tieneServicios);
+});
+
 
           if (filtradas.length === 0) return null;
 
@@ -379,7 +522,7 @@ console.log('Mensajes no leídos:', mensajesNoLeidos);
                 {filtradas.map(categoria => (
                   <TouchableOpacity
                     key={categoria}
-                    style={[styles.categoriaItem, (!perfilCompleto || mostrarCartelDNI) && { opacity: .5 }]}
+                    style={[styles.categoriaItem, (!perfilCompleto || mostrarCartelDNI) && { opacity: .9 }]}
                     onPress={() =>{ if (!perfilCompleto) {
               alert('Debes completar tu perfil antes de contratar a algun servicio.');
               return;
@@ -408,9 +551,23 @@ console.log('Mensajes no leídos:', mensajesNoLeidos);
         })}
       </ScrollView>
 
-      <View style={styles.nav}>
+      
+      {/* --- BOTÓN FLOTANTE PARA ABRIR CHATBOT --- */}
+      <TouchableOpacity
+        onPress={() => setChatVisible(true)}
+        style={styles.botonChatFlotante}
+      >
+        <Ionicons name="chatbubble-ellipses" size={28} color="#fff" />
+      </TouchableOpacity>
+
+      {/* --- MODAL DEL CHATBOT --- */}
+      <ChatBotModal visible={chatVisible} onClose={() => setChatVisible(false)} />
+        </View>
+        
+  </ImageBackground>
+<View style={styles.nav}>
         <TouchableOpacity onPress={() => navigation.navigate('Home')}>
-          <Ionicons name="home-outline" size={24} color="#333" />
+          <Ionicons name="home-outline" size={28} color="#fff" />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -431,61 +588,78 @@ console.log('Mensajes no leídos:', mensajesNoLeidos);
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => navigation.navigate('MisServicios')}>
-          <Ionicons name="list-outline" size={24} color="#333" />
+          <Ionicons name="list-outline" size={28} color="#fff" />
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => navigation.navigate('ChatIA')}>
-          <Ionicons name="chatbubble-ellipses-outline" size={24} color="#333" />
+          <Ionicons name="chatbubble-ellipses-outline" size={28} color="#fff" />
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => navigation.navigate('Configuracion')}>
-          <Ionicons name="settings-outline" size={24} color="#333" />
+          <Ionicons name="settings-outline" size={28} color="#fff" />
         </TouchableOpacity>
 
         {(rol === 'admin' || rol === 'verificador') && (
           <TouchableOpacity onPress={() => navigation.navigate('PerfilesPendientes')}>
-            <Ionicons name="shield-checkmark-outline" size={24} color="#333" />
+            <Ionicons name="shield-checkmark-outline" size={28} color="#fff" />
           </TouchableOpacity>
         )}
       </View>
-      {/* --- BOTÓN FLOTANTE PARA ABRIR CHATBOT --- */}
-      <TouchableOpacity
-        onPress={() => setChatVisible(true)}
-        style={styles.botonChatFlotante}
-      >
-        <Ionicons name="chatbubble-ellipses" size={28} color="#fff" />
-      </TouchableOpacity>
-
-      {/* --- MODAL DEL CHATBOT --- */}
-      <ChatBotModal visible={chatVisible} onClose={() => setChatVisible(false)} />
-    </View>
-   
-    
+        
+    </SafeAreaView>
   );
 }
 
 
 const styles = StyleSheet.create({
+  background: {
+  flex: 1,
+  width: '100%',
+  height: '100%',
+
+  
+},
+
+overlay: {
+  flex: 1,
+  backgroundColor: ' #ffff',
+  margin:0,
+  
+},
+imagen: {
+  },
+
   container: {
     flex: 1,
     backgroundColor: '#FFFDF9',
   },
 
   header: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
+  backgroundColor: '#19D4C6',
+  paddingTop: 48,
   paddingHorizontal: 20,
-  paddingVertical: 12,
-  backgroundColor: '#fff',
-  borderBottomWidth: 1,
-  borderBottomColor: '#ddd',
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.1,
-  shadowRadius: 4,
-  elevation: 3,
+  paddingBottom: 28,
+  borderBottomLeftRadius: 28,
+  borderBottomRightRadius: 28,
+  elevation: 8,
+  shadowColor: '#19D4C6',
+  shadowOffset: { width: 0, height: 7 },
+  shadowOpacity: 0.11,
+  shadowRadius: 12,
 },
+saludo: {
+  color: '#fff',
+  fontSize: 32,
+  fontWeight: '900',
+  letterSpacing: 1,
+},
+subtitulo: {
+  color: '#fff',
+  fontSize: 17,
+  marginTop: 4,
+  fontWeight: '500',
+},
+
 bienvenida: {
   fontSize: 20,
   fontWeight: '700',
@@ -495,7 +669,7 @@ bienvenida: {
 topRight: {
   flexDirection: 'row',
   alignItems: 'center',
-  gap: 15, // no funciona en React Native, reemplazar con margin
+  margin: 15, // no funciona en React Native, reemplazar con margin
 },
 iconButton: {
   marginLeft: 15,
@@ -535,22 +709,28 @@ avatar: {
 },
 
 
-  buscadorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#eee',
-    marginHorizontal: 20,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    marginBottom: 15,
-  },
-
-  buscador: {
-    flex: 1,
-    fontSize: 16,
-    color: '#333',
-    paddingVertical: 10,
-  },
+ buscadorContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#fff',
+  borderRadius: 18,
+  marginTop: 14,
+  marginBottom: 7,
+  paddingHorizontal: 13,
+  paddingVertical: 5,
+  elevation: 2,
+  shadowColor: '#19D4C6',
+  shadowOpacity: 0.07,
+  shadowOffset: { width: 0, height: 1 },
+  shadowRadius: 7,
+},
+buscador: {
+  flex: 1,
+  fontSize: 17,
+  color: '#333',
+  marginLeft: 8,
+  backgroundColor: 'transparent',
+},
 
   grid: {
     flexDirection: 'row',
@@ -561,14 +741,43 @@ avatar: {
   },
 
   categoriaItem: {
-    width: '45%',
-    backgroundColor: '#f9f9f9',
-    borderRadius: 12,
-    paddingVertical: 18,
-    alignItems: 'center',
-    marginVertical: 10,
-    elevation: 2,
-  },
+  alignItems: 'center',
+  marginRight: 16,
+  backgroundColor: '#fff',
+  padding: 15,
+  borderRadius: 15,
+  elevation: 4,
+  shadowColor: '#19D4C6',
+  shadowOpacity: 0.08,
+  shadowOffset: { width: 0, height: 1 },
+  shadowRadius: 6,
+  marginVertical: 8,
+  minWidth: 110,
+  maxWidth: 170,
+  borderWidth: 1.2,
+  borderColor: '#b6e1ea',
+},
+
+categoriaItemSelected: {
+  backgroundColor: '#FFA13C',
+  borderColor: '#FFA13C',
+},
+
+nombreCategoria: {
+  fontSize: 12,
+  textAlign: 'center',
+  color: '#222',
+  fontWeight: '700',
+  marginTop: 4,
+  marginBottom: 2,
+},
+
+cantidadServicios: {
+  fontSize: 12,
+  color: '#FFA13C',
+  fontWeight: '900',
+  marginTop: 2,
+},
 
   iconCircle: {
     width: 50,
@@ -612,13 +821,23 @@ avatar: {
   },
 
   nav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#ddd',
-    backgroundColor: '#fff',
-  },
+  flexDirection: 'row',
+  justifyContent: 'space-around',
+  alignItems: 'center',
+  paddingVertical: 12,
+  borderTopWidth: 1,
+  borderTopColor: '#f26700',
+  backgroundColor: '#FFA13C',
+  elevation: 10,
+},
+btnPublicar: {
+  backgroundColor: '#19D4C6',
+  padding: 12,
+  borderRadius: 28,
+  marginHorizontal: 8,
+  elevation: 5,
+  top: -17,
+},
 
   btnPublicar: {
     backgroundColor: '#00B9ba',
@@ -654,11 +873,13 @@ avatar: {
   },
    header: {
     backgroundColor: '#00B8A9', // Amarillo mockup
-    paddingTop: 50,
+    paddingTop: 0,
+    marginBotton: 0,
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 15,
     borderBottomLeftRadius: 25,
     borderBottomRightRadius: 25,
+    top:-5,
   },
   headerTop: {
     flexDirection: 'row',
@@ -730,23 +951,25 @@ avatar: {
     paddingVertical: 0,
   },
 
-
-
 scrollContainer: {
-  paddingBottom: 80,
+  paddingBottom: 180,
+  height:150,
 },
 seccionContainer: {
   margin: 24,
   marginLeft: 0,
   marginRight:0,
   paddingHorizontal: 0,
-  paddingLeft:10
+  paddingLeft:10,
 },
 seccionTitulo: {
-  fontSize: 18,
+  fontSize: 20,
   fontWeight: '900',
   marginBottom: 8,
-  color: '#FF6B35',
+  color: '#fff',
+  background: '#fff',
+  boxShadow: '#000',
+
 },
 categoriaItem: {
   alignItems: 'center',
@@ -854,21 +1077,101 @@ textoBoton: {
   fontWeight: 'bold',
   fontSize: 13,
 },
- botonChatFlotante: {
-    position: 'absolute',
-    bottom: 90, // justo arriba del nav inferior
-    right: 20,
-    backgroundColor: '#f62',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 6, // sombra para android
-    shadowColor: '#000', // sombra ios
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-  },
+botonChatFlotante: {
+  position: 'absolute',
+  bottom: 80,
+  right: 24,
+  backgroundColor: '#FFA13C',
+  width: 56,
+  height: 56,
+  borderRadius: 28,
+  justifyContent: 'center',
+  alignItems: 'center',
+  elevation: 8,
+  shadowColor: '#FFA13C',
+  shadowOpacity: 0.16,
+  shadowOffset: { width: 0, height: 2 },
+  shadowRadius: 6,
+},
+seccionTitulo: {
+  backgroundColor: 'white',
+  paddingVertical: 6,
+  paddingHorizontal: 26,
+  borderRadius: 10,
+  marginTop: 20,
+  marginLeft: 3,
+  alignSelf: 'flex-start',
+  marginBottom: 8,
+  elevation: 3, // para dar sombra en Android
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.2,
+  shadowRadius: 2,
+  fontWeight: 900,
+  color:'#333'
+},
 
+seccionContainer: {
+  color: 'black',
+  fontSize: 18,
+  fontWeight: '900',
+},
+filtroContainer: {
+  paddingHorizontal: 20,
+  marginTop: 10,
+  marginBottom: 5,
+},
+
+checkboxContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+checkboxLabel: {
+  marginLeft: 8,
+  fontSize: 14,
+  color: '#fff',
+},
+filtroContainer: {
+  paddingHorizontal: 20,
+  marginTop: 0,
+  marginBottom: 0,
+},
+
+checkboxContainer: {
+  backgroundColor: '#FFA13C',
+  paddingHorizontal: 16,
+  borderRadius: 10,
+  elevation: 3, // para dar sombra en Android
+  shadowColor: '#000',
+  shadowOpacity: 0.2,
+  shadowRadius: 2,
+  flexDirection: 'row',
+  width: 160,
+  justifySelf: 'center',
+  marginLeft: 60,
+},
+
+checkboxLabel: {
+  marginLeft: 8,
+  fontSize: 14,
+  color: '#fff',
+},
+checkIcon:{
+  alignSelf: 'center',
+},
+nav: {
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  right: 0,
+  flexDirection: 'row',
+  justifyContent: 'space-around',
+  alignItems: 'center',
+  paddingVertical: 5,
+  borderTopWidth: 1,
+  borderTopColor: '#f26700',
+  backgroundColor: '#FFA13C',
+  elevation: 0,
+},
 });
