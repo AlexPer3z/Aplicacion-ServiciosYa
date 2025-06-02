@@ -5,8 +5,7 @@ import {
   ToastAndroid
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '../lib/supabase';
-import * as Google from 'expo-auth-session/providers/google';
+import { supabase } from '../lib/supabase'; 
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
 import { registrarTokenPush } from '../lib/notificaciones';
@@ -14,7 +13,8 @@ import fondo from '../assets/fondo.png';
 import logo from '../assets/logo.png';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import useAuthSession from '../lib/hooks/useAuthSession';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';import BtnLoginGoogle from '../components/BtnLoginGoogle';
+
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -36,12 +36,7 @@ export default function Login({ navigation }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
 
-  const redirectUri = makeRedirectUri({ useProxy: true });
-
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: '787321467289-onc37jg8ueum1dkkjk5nhjgudnhdhfd8.apps.googleusercontent.com',
-    redirectUri,
-  });
+  const redirectUri = makeRedirectUri({ useProxy: true }); 
 
   useEffect(() => {
     Animated.parallel([
@@ -111,39 +106,34 @@ export default function Login({ navigation }) {
     navigation.replace('Home');
   };
 
+  const handleLoginGoogle = async (errorResponse, response) => { 
+    if (errorResponse) { 
+      setErrorMessage(errorResponse);
+      return;
+    }
+ 
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: 'google',
+      token: response.data.idToken,
+    })
+    const user = data?.user;
+    console.log('Usuario:', data);
+    console.log('Error:', error);
+
+    if(user.email){
+      await guardarCorreo(user.email);
+      navigation.replace('Home');
+    }else{
+      setErrorMessage('Error al iniciar sesión con Google.');
+    } 
+  };
+
+
   const ErrorBox = ({ message }) => (
     <View style={styles.errorBox}>
       <Text style={styles.errorText}>{message}</Text>
     </View>
-  );
-
-  useEffect(() => {
-    const autenticarConGoogle = async () => {
-      if (response?.type === 'success') {
-        const { id_token } = response.params;
-
-        const base64Url = id_token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const decodedPayload = JSON.parse(atob(base64));
-        const googleEmail = decodedPayload.email;
-
-        const { data: usuario, error } = await supabase
-          .from('usuarios')
-          .select('*')
-          .eq('email', googleEmail)
-          .single();
-
-        if (usuario) {
-          await AsyncStorage.setItem('correoLogueado', googleEmail);
-          await guardarCorreo(googleEmail);
-          navigation.replace('Home');
-        } else {
-          setErrorMessage('Tu correo de Google no está registrado en la app.');
-        }
-      }
-    };
-    autenticarConGoogle();
-  }, [response]);
+  ); 
 
   return (
     <ImageBackground source={fondo} style={styles.background} resizeMode="cover">
@@ -233,6 +223,7 @@ export default function Login({ navigation }) {
           </TouchableOpacity>
           <Text style={styles.fingerprintLabel}>Usar huella digital</Text>
         </View>)}
+        <BtnLoginGoogle onLogin={handleLoginGoogle} />
 
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
           <Text style={styles.registerText}>¿No tienes cuenta? Regístrate</Text>
