@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
+  Pressable,
   View,
   Text,
   StyleSheet,
@@ -13,7 +14,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
 import NavInferior from '../components/NavInferior';
 import { useUserData } from '../lib/hooks/useUserData';
-
+import { Ionicons } from '@expo/vector-icons';
+import ReportServiceModal from '../components/servicios/ReporteModal';
 
 const screenHeight = Dimensions.get('window').height;
 
@@ -25,6 +27,7 @@ export default function ServiciosPorCategoria() {
   const [modalVisible, setModalVisible] = useState(false);
   const [servicioSeleccionado, setServicioSeleccionado] = useState(null);
   const [confirmacionVisible, setConfirmacionVisible] = useState(false);
+  const [reportVisible, setReportVisible] = useState(false);
 
   useEffect(() => {
     const fetchServicios = async () => {
@@ -116,6 +119,13 @@ export default function ServiciosPorCategoria() {
     }
   };
 
+  // Necesitamos cerral el modal que esta abierto, para luego abrir el del reporte
+  const handleReport = (servicio) => {
+    cerrarModal();
+    setServicioSeleccionado(servicio);
+    setReportVisible(true);
+  };
+
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -179,7 +189,14 @@ export default function ServiciosPorCategoria() {
             <View style={styles.modalContenido}>
               {servicioSeleccionado && (
                 <>
-                  <Text style={styles.modalTitulo}>{servicioSeleccionado.titulo}</Text>
+                  <View style={styles.modalTituloContainer}>
+                    <Text style={styles.modalTitulo}>
+                      {servicioSeleccionado.titulo}
+                    </Text>
+                    <Pressable onPress={() => handleReport(servicioSeleccionado)}>
+                      <Ionicons name="warning-outline" size={20} color="#FF0000" />
+                    </Pressable>
+                  </View>
                   <Text style={styles.modalTexto}>Precio: {servicioSeleccionado.precio}</Text>
                   <Text style={styles.modalTexto}>Horario: {servicioSeleccionado.horario}</Text>
                   <Text style={styles.modalTexto}>Descripción: {servicioSeleccionado.descripcion}</Text>
@@ -223,6 +240,14 @@ export default function ServiciosPorCategoria() {
         </Modal>
       </ScrollView>
 
+      {/* MODAL DE REPORTE */}
+      {servicioSeleccionado && (
+        <ReportServiceModal
+          visible={reportVisible}
+          servicio={servicioSeleccionado}
+          onClose={() => setReportVisible(false)}
+          currentUserId={0} />)}
+
       {/* NAV INFERIOR */}
       <NavInferior />
     </View>
@@ -231,49 +256,56 @@ export default function ServiciosPorCategoria() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    padding: 18,
     backgroundColor: '#F8F8F8',
   },
   title: {
-    fontSize: 26,
-    fontWeight: 'bold',
+    fontSize: 27,
+    fontWeight: '900',
     textAlign: 'center',
     marginBottom: 20,
-    color: '#00B8A9',
+    color: '#19D4C6',
+    letterSpacing: .5,
   },
   noServicios: {
-    fontSize: 16,
-    color: '#777',
+    fontSize: 17,
+    color: '#FF6B35',
+    fontWeight: 'bold',
     textAlign: 'center',
     marginTop: 30,
   },
   servicioCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    padding: 15,
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    padding: 18,
     marginBottom: 15,
-    elevation: 2,
+    elevation: 3,
     position: 'relative',
+    shadowColor: '#19D4C6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 12,
+    borderWidth: 1,
+    borderColor: '#F2F6F6',
   },
   servicioTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 19,
+    fontWeight: '900',
     color: '#333',
+    marginBottom: 2,
   },
   servicioText: {
-    fontSize: 14,
-    color: '#555',
+    fontSize: 15,
+    color: '#444',
+    marginBottom: 2,
   },
   pausadoOverlay: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(250, 144, 56, 0.85)',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(255,107,53,0.92)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 10,
+    borderRadius: 18,
     zIndex: 1,
   },
   pausadoText: {
@@ -281,77 +313,98 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#fff',
     textShadowColor: '#000',
+    fontSize: 15,
+    letterSpacing: 0.2,
   },
   modalFondo: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'center',
     padding: 20,
   },
   modalContenido: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    maxHeight: screenHeight * 0.8,
+    borderRadius: 20,
+    padding: 28,
+    maxHeight: screenHeight * 0.85,
+    shadowColor: '#19D4C6',
+    shadowOpacity: 0.2,
+    elevation: 8,
   },
   modalTitulo: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#222',
+    marginBottom: 8,
+    color: '#19D4C6',
   },
   modalTexto: {
     fontSize: 16,
-    color: '#444',
-    marginBottom: 5,
+    color: '#333',
+    marginBottom: 6,
+    lineHeight: 21,
   },
   botonContratar: {
-    marginTop: 20,
-    backgroundColor: '#28a745',
-    paddingVertical: 12,
-    borderRadius: 8,
+    marginTop: 22,
+    backgroundColor: '#19D4C6',
+    paddingVertical: 14,
+    borderRadius: 30,
     alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#19D4C6',
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
   },
   botonTexto: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
+    letterSpacing: .3,
   },
   cancelar: {
     marginTop: 15,
     textAlign: 'center',
     color: '#888',
+    fontWeight: '600',
   },
   modalConfirmacion: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 25,
+    borderRadius: 22,
+    padding: 28,
     alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#19D4C6',
+    shadowOpacity: 0.15,
   },
   mensajeConfirmacion: {
-    fontSize: 18,
-    color: '#333',
+    fontSize: 17,
+    color: '#19D4C6',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 22,
     fontWeight: 'bold',
   },
   botonVolver: {
-    backgroundColor: '#007bff',
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 8,
+    backgroundColor: '#FF6B35',
+    paddingVertical: 13,
+    paddingHorizontal: 36,
+    borderRadius: 25,
+    elevation: 2,
+    shadowColor: '#FF6B35',
+    shadowOpacity: 0.15,
+    marginTop: 6,
   },
   botonMapa: {
-    backgroundColor: '#17a2b8',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
+    backgroundColor: '#19D4C6',
+    paddingVertical: 11,
+    paddingHorizontal: 26,
+    borderRadius: 23,
     alignSelf: 'center',
-    marginBottom: 15,
+    marginBottom: 20,
+    elevation: 3,
   },
   botonMapaTexto: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+    letterSpacing: .1,
   },
 });

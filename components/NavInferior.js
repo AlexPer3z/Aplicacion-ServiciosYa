@@ -15,7 +15,7 @@ export default function NavInferior() {
   return (
     <View style={styles.nav}>
       <TouchableOpacity onPress={() => navigation.navigate('Home')}>
-        <Ionicons name="home-outline" size={24} color="#333" />
+        <Ionicons name="home-outline" size={28} color="#fff" />
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -27,20 +27,20 @@ export default function NavInferior() {
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.navigate('MisServicios')}>
-        <Ionicons name="list-outline" size={24} color="#333" />
+        <Ionicons name="list-outline" size={28} color="#fff" />
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.navigate('ChatIA')}>
-        <Ionicons name="chatbubble-ellipses-outline" size={24} color="#333" />
+        <Ionicons name="chatbubble-ellipses-outline" size={28} color="#fff" />
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.navigate('Configuracion')}>
-        <Ionicons name="settings-outline" size={24} color="#333" />
+        <Ionicons name="settings-outline" size={28} color="#fff" />
       </TouchableOpacity>
 
       {(rol === 'admin' || rol === 'verificador') && (
         <TouchableOpacity onPress={() => navigation.navigate('PerfilesPendientes')}>
-          <Ionicons name="shield-checkmark-outline" size={24} color="#333" />
+          <Ionicons name="shield-checkmark-outline" size={28} color="#fff" />
         </TouchableOpacity>
       )}
     </View>
@@ -49,12 +49,22 @@ export default function NavInferior() {
 
 const styles = StyleSheet.create({
   nav: {
+  flexDirection: 'row',
+  justifyContent: 'space-around',
+  alignItems: 'center',
+  paddingVertical: 12,
+  borderTopWidth: 1,
+  borderTopColor: '#f26700',
+  backgroundColor: '#FFA13C',
+  elevation: 10,
+},
+  nav: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingVertical: 10,
     borderTopWidth: 1,
     borderTopColor: '#ddd',
-    backgroundColor: '#fff',
+    backgroundColor: '#FFA13C',
     position: 'absolute',
     bottom: 0,
     left: 0,

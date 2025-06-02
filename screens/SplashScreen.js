@@ -7,18 +7,33 @@ export default function SplashScreen() {
   const navigation = useNavigation();
 
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+  const checkSession = async () => {
+    const { data: { session }, error } = await supabase.auth.getSession();
 
-      if (session) {
-        navigation.replace('Home');
-      } else {
-        navigation.replace('Login');
-      }
-    };
+    if (session) {
+      navigation.replace('Home');
+    } else {
+      // Escucha cambios de sesión
+      const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
+        if (session) {
+          navigation.replace('Home');
+        } else {
+          navigation.replace('Login');
+        }
+      });
 
-    checkSession();
-  }, []);
+      // Timeout de fallback al Login (por si no se dispara el listener)
+      const timeout = setTimeout(() => navigation.replace('Login'), 3000);
+
+      return () => {
+        subscription.subscription.unsubscribe();
+        clearTimeout(timeout);
+      };
+    }
+  };
+
+  checkSession();
+}, []);
 
   return (
     <View style={styles.container}>

@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Alert,
   TextInput,
-  Switch,
   TouchableOpacity,
   ScrollView,
 } from 'react-native'
@@ -66,11 +65,6 @@ export default function Configuracion({ navigation }) {
     }
   }
 
-  const toggleModoAusente = () => {
-    setIsAbsent(!isAbsent)
-    Alert.alert('Modo Ausente', isAbsent ? 'Has desactivado el modo ausente.' : 'Estás en modo ausente.')
-  }
-
   const invitarAmigo = () => {
     Alert.alert('Invitar a un amigo', 'La función de invitar a un amigo está en desarrollo.')
   }
@@ -87,57 +81,63 @@ export default function Configuracion({ navigation }) {
   return (
     <ScrollView style={styles.background}>
       <View style={styles.container}>
-        <Text style={styles.title}>Configuraciones</Text>
+        <Text style={styles.title}>Configuración</Text>
 
-        <Text style={styles.optionText}>Cambiar Contraseña</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Nueva contraseña"
-          secureTextEntry
-          value={password}
-          onChangeText={handlePasswordChange}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Repetir nueva contraseña"
-          secureTextEntry
-          value={confirmPassword}
-          onChangeText={handleConfirmPasswordChange}
-        />
+        <View style={styles.section}>
+          <Text style={styles.optionText}>Cambiar Contraseña</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Nueva contraseña"
+            secureTextEntry
+            value={password}
+            onChangeText={handlePasswordChange}
+            placeholderTextColor="#999"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Repetir nueva contraseña"
+            secureTextEntry
+            value={confirmPassword}
+            onChangeText={handleConfirmPasswordChange}
+            placeholderTextColor="#999"
+          />
 
-        <TouchableOpacity style={styles.button} onPress={cambiarContrasena}>
-          <Text style={styles.buttonText}>Guardar Contraseña</Text>
-        </TouchableOpacity>
+          <View style={styles.requisitosContainer}>
+            <Text style={[styles.requisito, password.length >= 8 ? styles.valid : styles.invalid]}>
+              {password.length >= 8 ? '✔' : '○'} Al menos 8 caracteres.
+            </Text>
+            <Text style={[styles.requisito, /[A-Z]/.test(password) ? styles.valid : styles.invalid]}>
+              {/[A-Z]/.test(password) ? '✔' : '○'} Una letra mayúscula.
+            </Text>
+            <Text style={[styles.requisito, /\d/.test(password) ? styles.valid : styles.invalid]}>
+              {/\d/.test(password) ? '✔' : '○'} Un número.
+            </Text>
+            <Text style={[styles.requisito, /[!@#$%^&*(),.?":{}|<>]/.test(password) ? styles.valid : styles.invalid]}>
+              {/[!@#$%^&*(),.?":{}|<>]/.test(password) ? '✔' : '○'} Un carácter especial.
+            </Text>
+            <Text style={[styles.requisito, passwordMatch ? styles.valid : styles.invalid]}>
+              {passwordMatch ? '✔' : '○'} Las contraseñas coinciden.
+            </Text>
+          </View>
 
-        <View style={styles.requisitosContainer}>
-          <Text style={[styles.requisito, password.length >= 8 ? styles.valid : styles.invalid]}>
-            • Al menos 8 caracteres.
-          </Text>
-          <Text style={[styles.requisito, /[A-Z]/.test(password) ? styles.valid : styles.invalid]}>
-            • Una letra mayúscula.
-          </Text>
-          <Text style={[styles.requisito, /\d/.test(password) ? styles.valid : styles.invalid]}>
-            • Un número.
-          </Text>
-          <Text style={[styles.requisito, /[!@#$%^&*(),.?":{}|<>]/.test(password) ? styles.valid : styles.invalid]}>
-            • Un carácter especial.
-          </Text>
-          <Text style={[styles.requisito, passwordMatch ? styles.valid : styles.invalid]}>
-            • Las contraseñas coinciden.
-          </Text>
+          <TouchableOpacity style={styles.buttonOrange} onPress={cambiarContrasena}>
+            <Text style={styles.buttonText}>Guardar Contraseña</Text>
+          </TouchableOpacity>
         </View>
 
-        
+        <View style={styles.section}>
+          <Text style={styles.optionText}>Invitar a un Amigo</Text>
+          <TouchableOpacity style={styles.buttonTurquoise} onPress={invitarAmigo}>
+            <Text style={styles.buttonText}>Invitar</Text>
+          </TouchableOpacity>
+        </View>
 
-        <Text style={styles.optionText}>Invitar a un Amigo</Text>
-        <TouchableOpacity style={styles.button} onPress={invitarAmigo}>
-          <Text style={styles.buttonText}>Invitar</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.optionText}>Cerrar Sesión</Text>
-        <TouchableOpacity style={styles.button} onPress={handleLogout}>
-          <Text style={styles.buttonText}>Cerrar Sesión</Text>
-        </TouchableOpacity>
+        <View style={styles.section}>
+          <Text style={styles.optionText}>Cerrar Sesión</Text>
+          <TouchableOpacity style={styles.buttonOrange} onPress={handleLogout}>
+            <Text style={styles.buttonText}>Cerrar Sesión</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </ScrollView>
   )
@@ -146,79 +146,93 @@ export default function Configuracion({ navigation }) {
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    backgroundColor: '#f0f4f8',
+    backgroundColor: '#E8FAF7', // turquesa clarito
   },
   container: {
-    margin: 20,
-    backgroundColor: '#f0f4f8',
-    borderRadius: 20,
-    padding: 25,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
-    opacity: 0.9,
+    margin: 18,
+    marginTop: 32,
+    backgroundColor: '#fff',
+    borderRadius: 26,
+    padding: 24,
+    shadowColor: '#19D4C6',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 7,
   },
   title: {
-    fontSize: 26,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '900',
     textAlign: 'center',
-    marginBottom: 25,
-    color: '#333',
+    marginBottom: 30,
+    color: '#19D4C6',
+    letterSpacing: 1,
+  },
+  section: {
+    marginBottom: 34,
   },
   optionText: {
-    fontSize: 18,
-    fontWeight: '500',
-    marginBottom: 10,
-    color: '#333',
+    fontSize: 17,
+    fontWeight: '600',
+    marginBottom: 12,
+    color: '#202B3A',
+    marginTop: 4,
   },
   input: {
-    backgroundColor: '#3335',
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 15,
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    paddingVertical: 13,
+    paddingHorizontal: 16,
     fontSize: 16,
-    color: '#333',
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#ccc',
+    color: '#222',
+    marginBottom: 13,
+    borderWidth: 1.3,
+    borderColor: '#b6e1ea',
   },
-  button: {
-    backgroundColor: '#40BFC1',
-    paddingVertical: 15,
-    borderRadius: 30,
+  buttonTurquoise: {
+    backgroundColor: '#19D4C6',
+    paddingVertical: 14,
+    borderRadius: 24,
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 10,
     elevation: 3,
+    shadowColor: '#19D4C6',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.13,
+    shadowRadius: 7,
+  },
+  buttonOrange: {
+    backgroundColor: '#FFA13C',
+    paddingVertical: 14,
+    borderRadius: 24,
+    alignItems: 'center',
+    marginBottom: 10,
+    elevation: 3,
+    shadowColor: '#FFA13C',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.13,
+    shadowRadius: 7,
   },
   buttonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '700',
     fontSize: 16,
+    letterSpacing: 0.5,
   },
   requisitosContainer: {
-    marginBottom: 15,
+    marginBottom: 13,
+    marginTop: 5,
   },
   requisito: {
-    fontSize: 14,
-    marginVertical: 3,
+    fontSize: 15,
+    marginVertical: 2,
+    fontWeight: '500',
+    letterSpacing: 0.2,
   },
   valid: {
-    color: 'green',
+    color: '#19D4C6',
   },
   invalid: {
-    color: 'red',
-  },
-  switchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  switchText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
+    color: '#FFA13C',
   },
 })

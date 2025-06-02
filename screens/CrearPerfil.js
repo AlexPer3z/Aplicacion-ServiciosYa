@@ -204,7 +204,7 @@ return (
 
   <TextInput
     style={[styles.input, !validaciones.nombre && nombre !== '' ? styles.inputError : null]}
-    placeholder="Nombre"
+    placeholder="Nombre"placeholderTextColor="#999"
     value={nombre}
     onChangeText={(text) => {
       setNombre(text);
@@ -219,7 +219,7 @@ return (
 
   <TextInput
     style={[styles.input, !validaciones.apellido && apellido !== '' ? styles.inputError : null]}
-    placeholder="Apellido"
+    placeholder="Apellido"placeholderTextColor="#999"
     value={apellido}
     onChangeText={(text) => {
       setApellido(text);
@@ -234,7 +234,7 @@ return (
 
   <TextInput
     style={[styles.input, !validaciones.edad && edad !== '' ? styles.inputError : null]}
-    placeholder="Edad"
+    placeholder="Edad"placeholderTextColor="#999"
     value={edad}
     onChangeText={(text) => {
       setEdad(text);
@@ -254,7 +254,7 @@ return (
 
   <TextInput
     style={[styles.input, !validaciones.dni && dni !== '' ? styles.inputError : null]}
-    placeholder="DNI"
+    placeholder="DNI"placeholderTextColor="#999"
     value={dni}
     onChangeText={(text) => {
       setDni(text);
@@ -316,7 +316,7 @@ return (
 
   <TextInput
     style={[styles.input, !validaciones.domicilio && domicilio !== '' ? styles.inputError : null]}
-    placeholder="Domicilio"
+    placeholder="Domicilio"placeholderTextColor="#999"
     value={domicilio}
     onChangeText={(text) => {
       setDomicilio(text);
@@ -331,7 +331,7 @@ return (
 
   <TextInput
     style={[styles.input, !validaciones.calle && calle !== '' ? styles.inputError : null]}
-    placeholder="Calle"
+    placeholder="Calle"placeholderTextColor="#999"
     value={calle}
     onChangeText={(text) => {
       setCalle(text);

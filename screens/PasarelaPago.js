@@ -51,10 +51,12 @@ export default function PasarelaPago() {
   useEffect(() => {
     const handleDeepLink = ({ url }) => {
       if (url.includes('pago-exitoso')) {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'ServiciosPorCategoria', params: { categoria } }],
-        });
+      Alert.alert(
+        'Solicitud enviada',
+        'Tu solicitud fue enviada correctamente, ahora espera que el trabajador acepte.'
+      );
+
+      navigation.navigate('ServiciosPorCategoria', { categoria });
       } else if (url.includes('pago-fallido')) {
         Alert.alert('Pago fallido', 'No se pudo completar el pago.');
         navigation.goBack();
@@ -136,38 +138,55 @@ export default function PasarelaPago() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fefefe',
+    backgroundColor: '#E8FAF7', // Turquesa claro
     justifyContent: 'center',
     alignItems: 'center',
     padding: 30,
   },
   mensaje: {
-    fontSize: 18,
+    fontSize: 20,
     textAlign: 'center',
-    marginBottom: 30,
-    color: '#2c3e50',
+    marginBottom: 38,
+    color: '#19D4C6', // Turquesa “Servicios Ya”
+    fontWeight: '800',
+    lineHeight: 28,
+    letterSpacing: 0.2,
   },
   boton: {
-    backgroundColor: '#27ae60',
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    borderRadius: 10,
-    marginBottom: 15,
+    backgroundColor: '#FFA13C', // Naranja fuerte
+    paddingVertical: 18,
+    paddingHorizontal: 50,
+    borderRadius: 24,
+    marginBottom: 18,
+    elevation: 6,
+    shadowColor: '#FFA13C',
+    shadowOpacity: 0.14,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 3 },
+    alignItems: 'center',
   },
   textoBoton: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
   botonPrueba: {
-    backgroundColor: '#95a5a6',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 10,
+    backgroundColor: '#19D4C6', // Turquesa fuerte
+    paddingVertical: 15,
+    paddingHorizontal: 44,
+    borderRadius: 22,
+    elevation: 2,
+    shadowColor: '#19D4C6',
+    shadowOpacity: 0.09,
+    shadowRadius: 7,
+    shadowOffset: { width: 0, height: 2 },
+    alignItems: 'center',
   },
   textoBotonPrueba: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
 });
