@@ -5,7 +5,7 @@ import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { View, StyleSheet, StatusBar } from 'react-native';
+import { StyleSheet, StatusBar } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
@@ -30,6 +30,7 @@ import DniPendiente from './screens/DniPendiente';
 import PerfilesPendientes from './screens/PerfilesPendientes';
 import PerfilPendienteDetalle from './screens/PerfilPendienteDetalle';
 import Maps from './screens/Maps';
+import LoginSelect from './screens/LoginSeleccion';
 
 const Stack = createNativeStackNavigator();
 
@@ -61,6 +62,7 @@ export default function App() {
           />
           <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
             <Stack.Screen name="Splash" component={withSafeArea(SplashScreen)} />
+            <Stack.Screen name="LoginSelect" component={withSafeArea(LoginSelect)} />
             <Stack.Screen name="Login" component={withSafeArea(Login)} />
             <Stack.Screen name="Register" component={withSafeArea(Register)} />
             <Stack.Screen name="Home" component={withSafeArea(Home)} />

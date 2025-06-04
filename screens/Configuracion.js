@@ -9,6 +9,7 @@ import {
   ScrollView,
 } from 'react-native'
 import { supabase } from '../lib/supabase'
+import { removeAuthSession } from '../lib/storage'
 
 export default function Configuracion({ navigation }) {
   const [password, setPassword] = useState('')
@@ -72,7 +73,8 @@ export default function Configuracion({ navigation }) {
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut()
     if (!error) {
-      navigation.replace('Login')
+      await removeAuthSession()
+      navigation.replace('LoginSelect')
     } else {
       Alert.alert('Error al cerrar sesión', error.message)
     }
