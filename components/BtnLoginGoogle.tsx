@@ -6,6 +6,7 @@ import SocialButton from './SocialButton';
 
 GoogleSignin.configure({
   webClientId: '453761258131-3djvd01vqfglrcgcokqih78jhrjmo6oc.apps.googleusercontent.com',
+  iosClientId: '453761258131-6anu4ghpi4jv1df72490vo69vj23qq22.apps.googleusercontent.com'
 });
 
 export default function BtnLoginGoogle({ onLogin }) {
