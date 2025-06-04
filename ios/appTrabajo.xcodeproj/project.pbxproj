@@ -8,11 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		229A970A103CEF866E058792 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = EF9453F3910B83D73A2A9572 /* PrivacyInfo.xcprivacy */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		6208D066E6392A669FF505CA /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB18E142A26987892A33576A /* ExpoModulesProvider.swift */; };
+		43E7707E27DCE61D4DABD309 /* libPods-appTrabajo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3FC8386D38EB985C0222584A /* libPods-appTrabajo.a */; };
+		4FBCCB668A1CAF0B26ED7EA1 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 702C5483A5CF033ADA7D795D /* ExpoModulesProvider.swift */; };
+		B3782C562DEE27CC00760FB8 /* MapLibre in Frameworks */ = {isa = PBXBuildFile; productRef = 74DFD57D770862030738AA46 /* MapLibre */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		DF67C9939798F30D07CB1A00 /* libPods-appTrabajo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A2DF7707B1B2BF32E68639E6 /* libPods-appTrabajo.a */; };
-		E6D7C2FE23AA8BCAF34351FF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B889FF02A8183F57CB61FA6A /* PrivacyInfo.xcprivacy */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
@@ -20,16 +21,16 @@
 		13B07F961A680F5B00A75B9A /* appTrabajo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = appTrabajo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = appTrabajo/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = appTrabajo/Info.plist; sourceTree = "<group>"; };
-		59DBF60938A0CC43BB73FFE7 /* Pods-appTrabajo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-appTrabajo.release.xcconfig"; path = "Target Support Files/Pods-appTrabajo/Pods-appTrabajo.release.xcconfig"; sourceTree = "<group>"; };
-		60D787651793952C853DB47B /* Pods-appTrabajo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-appTrabajo.debug.xcconfig"; path = "Target Support Files/Pods-appTrabajo/Pods-appTrabajo.debug.xcconfig"; sourceTree = "<group>"; };
-		A2DF7707B1B2BF32E68639E6 /* libPods-appTrabajo.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-appTrabajo.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		3FC8386D38EB985C0222584A /* libPods-appTrabajo.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-appTrabajo.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6BC62E4CC9D8A9B8F99CE608 /* Pods-appTrabajo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-appTrabajo.debug.xcconfig"; path = "Target Support Files/Pods-appTrabajo/Pods-appTrabajo.debug.xcconfig"; sourceTree = "<group>"; };
+		702C5483A5CF033ADA7D795D /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-appTrabajo/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = appTrabajo/SplashScreen.storyboard; sourceTree = "<group>"; };
-		B889FF02A8183F57CB61FA6A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = appTrabajo/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		AC793657358F58FFCCB812E6 /* Pods-appTrabajo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-appTrabajo.release.xcconfig"; path = "Target Support Files/Pods-appTrabajo/Pods-appTrabajo.release.xcconfig"; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		EF9453F3910B83D73A2A9572 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = appTrabajo/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = appTrabajo/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* appTrabajo-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "appTrabajo-Bridging-Header.h"; path = "appTrabajo/appTrabajo-Bridging-Header.h"; sourceTree = "<group>"; };
-		FB18E142A26987892A33576A /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-appTrabajo/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,7 +38,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DF67C9939798F30D07CB1A00 /* libPods-appTrabajo.a in Frameworks */,
+				B3782C562DEE27CC00760FB8 /* MapLibre in Frameworks */,
+				43E7707E27DCE61D4DABD309 /* libPods-appTrabajo.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,44 +55,26 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				B889FF02A8183F57CB61FA6A /* PrivacyInfo.xcprivacy */,
+				EF9453F3910B83D73A2A9572 /* PrivacyInfo.xcprivacy */,
 			);
 			name = appTrabajo;
-			sourceTree = "<group>";
-		};
-		176234785D77CBA37D823785 /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				5E8BE1DF92D0E2D6012259A5 /* appTrabajo */,
-			);
-			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				A2DF7707B1B2BF32E68639E6 /* libPods-appTrabajo.a */,
+				3FC8386D38EB985C0222584A /* libPods-appTrabajo.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		2E1793DA6A3B07FEC2EF7282 /* Pods */ = {
+		44B91CE4E5F82BD9184374C6 /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
-				60D787651793952C853DB47B /* Pods-appTrabajo.debug.xcconfig */,
-				59DBF60938A0CC43BB73FFE7 /* Pods-appTrabajo.release.xcconfig */,
+				983B0D8237BD62F0C2DD37B0 /* appTrabajo */,
 			);
-			name = Pods;
-			path = Pods;
-			sourceTree = "<group>";
-		};
-		5E8BE1DF92D0E2D6012259A5 /* appTrabajo */ = {
-			isa = PBXGroup;
-			children = (
-				FB18E142A26987892A33576A /* ExpoModulesProvider.swift */,
-			);
-			name = appTrabajo;
+			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -107,8 +91,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				2E1793DA6A3B07FEC2EF7282 /* Pods */,
-				176234785D77CBA37D823785 /* ExpoModulesProviders */,
+				BA714A4C606EB8CE6D09770F /* Pods */,
+				44B91CE4E5F82BD9184374C6 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -121,6 +105,23 @@
 				13B07F961A680F5B00A75B9A /* appTrabajo.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		983B0D8237BD62F0C2DD37B0 /* appTrabajo */ = {
+			isa = PBXGroup;
+			children = (
+				702C5483A5CF033ADA7D795D /* ExpoModulesProvider.swift */,
+			);
+			name = appTrabajo;
+			sourceTree = "<group>";
+		};
+		BA714A4C606EB8CE6D09770F /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				6BC62E4CC9D8A9B8F99CE608 /* Pods-appTrabajo.debug.xcconfig */,
+				AC793657358F58FFCCB812E6 /* Pods-appTrabajo.release.xcconfig */,
+			);
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -140,13 +141,14 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "appTrabajo" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				EA2426279B02D4EA86504324 /* [Expo] Configure project */,
+				862BEECCF5A54BAD46ECF2AE /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				41421CE5C4A99F65D2C1615F /* [CP] Embed Pods Frameworks */,
+				E3704FDABCBB401685D28F02 /* Remove signature files (Xcode workaround) */,
+				B28C5C926945DB3B43E79F9C /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -154,7 +156,7 @@
 			);
 			name = appTrabajo;
 			packageProductDependencies = (
-				91B436760018B3757094E3DD /* MapLibre */,
+				74DFD57D770862030738AA46 /* MapLibre */,
 			);
 			productName = appTrabajo;
 			productReference = 13B07F961A680F5B00A75B9A /* appTrabajo.app */;
@@ -183,7 +185,7 @@
 			);
 			mainGroup = 83CBB9F61A601CBA00E9B192;
 			packageReferences = (
-				E0DD96D15077D353E0C184CA /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */,
+				E7FEF22E44B30F3B104F419F /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */,
 			);
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
@@ -202,7 +204,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				E6D7C2FE23AA8BCAF34351FF /* PrivacyInfo.xcprivacy in Resources */,
+				229A970A103CEF866E058792 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -246,24 +248,6 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		41421CE5C4A99F65D2C1615F /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-appTrabajo/Pods-appTrabajo-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-appTrabajo/Pods-appTrabajo-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -271,12 +255,17 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-appTrabajo/Pods-appTrabajo-resources.sh",
+				"${PODS_CONFIGURATION_BUILD_DIR}/AppAuth/AppAuthCore_Privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXApplication/ExpoApplication_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXNotifications/ExpoNotifications_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoDevice/ExpoDevice_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoSystemUI/ExpoSystemUI_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/GTMAppAuth/GTMAppAuth_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/GTMSessionFetcher/GTMSessionFetcher_Core_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/GoogleSignIn/GoogleSignIn.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/RCT-Folly/RCT-Folly_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/RNCAsyncStorage/RNCAsyncStorage_resources.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
@@ -290,12 +279,17 @@
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/AppAuthCore_Privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoApplication_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoNotifications_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoDevice_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoSystemUI_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GTMAppAuth_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GTMSessionFetcher_Core_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleSignIn.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RCT-Folly_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNCAsyncStorage_resources.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
@@ -312,7 +306,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-appTrabajo/Pods-appTrabajo-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		EA2426279B02D4EA86504324 /* [Expo] Configure project */ = {
+		862BEECCF5A54BAD46ECF2AE /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -331,6 +325,38 @@
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-appTrabajo/expo-configure-project.sh\"\n";
 		};
+		B28C5C926945DB3B43E79F9C /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-appTrabajo/Pods-appTrabajo-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-appTrabajo/Pods-appTrabajo-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		E3704FDABCBB401685D28F02 /* Remove signature files (Xcode workaround) */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Remove signature files (Xcode workaround)";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\n          echo \"Remove signature files (Xcode workaround)\";\n          rm -rf \"$CONFIGURATION_BUILD_DIR/MapLibre.xcframework-ios.signature\";\n        ";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -339,7 +365,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				6208D066E6392A669FF505CA /* ExpoModulesProvider.swift in Sources */,
+				4FBCCB668A1CAF0B26ED7EA1 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -348,11 +374,13 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 60D787651793952C853DB47B /* Pods-appTrabajo.debug.xcconfig */;
+			baseConfigurationReference = 6BC62E4CC9D8A9B8F99CE608 /* Pods-appTrabajo.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = appTrabajo/appTrabajo.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -371,22 +399,26 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = org.name.appTrabajo;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.alex-6775.appTrabajo";
 				PRODUCT_NAME = appTrabajo;
 				SWIFT_OBJC_BRIDGING_HEADER = "appTrabajo/appTrabajo-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 59DBF60938A0CC43BB73FFE7 /* Pods-appTrabajo.release.xcconfig */;
+			baseConfigurationReference = AC793657358F58FFCCB812E6 /* Pods-appTrabajo.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = appTrabajo/appTrabajo.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				INFOPLIST_FILE = appTrabajo/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -400,10 +432,11 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = org.name.appTrabajo;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.alex-6775.appTrabajo";
 				PRODUCT_NAME = appTrabajo;
 				SWIFT_OBJC_BRIDGING_HEADER = "appTrabajo/appTrabajo-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
@@ -463,10 +496,7 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -521,10 +551,7 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
@@ -556,7 +583,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		E0DD96D15077D353E0C184CA /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */ = {
+		E7FEF22E44B30F3B104F419F /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/maplibre/maplibre-gl-native-distribution";
 			requirement = {
@@ -567,9 +594,9 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		91B436760018B3757094E3DD /* MapLibre */ = {
+		74DFD57D770862030738AA46 /* MapLibre */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = E0DD96D15077D353E0C184CA /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */;
+			package = E7FEF22E44B30F3B104F419F /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */;
 			productName = MapLibre;
 		};
 /* End XCSwiftPackageProductDependency section */

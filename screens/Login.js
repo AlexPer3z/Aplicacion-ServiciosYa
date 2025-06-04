@@ -13,8 +13,7 @@ import fondo from '../assets/fondo.png';
 import logo from '../assets/logo.png';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import useAuthSession from '../lib/hooks/useAuthSession';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';import BtnLoginGoogle from '../components/BtnLoginGoogle';
-
+import { saveAuthSession } from "../lib/storage";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -103,31 +102,10 @@ export default function Login({ navigation }) {
     }
 
     await guardarCorreo(email);
+    // guardar la sesion para despues utilizarlo con el login biometrico
+    saveAuthSession(data.session);
     navigation.replace('Home');
   };
-
-  const handleLoginGoogle = async (errorResponse, response) => { 
-    if (errorResponse) { 
-      setErrorMessage(errorResponse);
-      return;
-    }
- 
-    const { data, error } = await supabase.auth.signInWithIdToken({
-      provider: 'google',
-      token: response.data.idToken,
-    })
-    const user = data?.user;
-    console.log('Usuario:', data);
-    console.log('Error:', error);
-
-    if(user.email){
-      await guardarCorreo(user.email);
-      navigation.replace('Home');
-    }else{
-      setErrorMessage('Error al iniciar sesión con Google.');
-    } 
-  };
-
 
   const ErrorBox = ({ message }) => (
     <View style={styles.errorBox}>
@@ -213,21 +191,6 @@ export default function Login({ navigation }) {
           }}>Ingresar</Text>
         </TouchableOpacity>
 
-           {isBiometricAvailable && (<View style={{ alignItems: 'center', marginVertical: 8 }}>
-          <TouchableOpacity
-            style={styles.fingerprintButton}
-            onPress={biometricLogin}
-            activeOpacity={0.7}
-          >
-            <MaterialIcons name="fingerprint" size={28} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.fingerprintLabel}>Usar huella digital</Text>
-        </View>)}
-        <BtnLoginGoogle onLogin={handleLoginGoogle} />
-
-        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={styles.registerText}>¿No tienes cuenta? Regístrate</Text>
-        </TouchableOpacity>
       </Animated.View>
     </ImageBackground>
   );

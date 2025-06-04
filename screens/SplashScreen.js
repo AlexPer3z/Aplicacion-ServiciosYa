@@ -18,12 +18,12 @@ export default function SplashScreen() {
         if (session) {
           navigation.replace('Home');
         } else {
-          navigation.replace('Login');
+          navigation.replace('LoginSelect');
         }
       });
 
       // Timeout de fallback al Login (por si no se dispara el listener)
-      const timeout = setTimeout(() => navigation.replace('Login'), 3000);
+      const timeout = setTimeout(() => navigation.replace('LoginSelect'), 3000);
 
       return () => {
         subscription.subscription.unsubscribe();
