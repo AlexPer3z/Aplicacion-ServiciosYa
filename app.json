@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "appTrabajo",
-    "slug": "appTrabajo",
+    "name": "Servicios Ya",
+    "slug": "servicios-ya",
     "scheme": "solucionesya",
     "linking": {
       "prefixes": [
