@@ -6,6 +6,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import fondo from '../assets/fondo.png';
 import logo from '../assets/logo.png';
+import { supabase } from '../lib/supabase'; 
 
 export default function Register({ navigation }) {
   const [email, setEmail] = useState('');
@@ -141,7 +142,8 @@ export default function Register({ navigation }) {
                 styles.button,
                 (!email || !esSegura || password !== repeatPassword) && { backgroundColor: '#a0a0a0' }
               ]}
-              onPress={handleRegister}
+              //onPress={handleRegister}
+              onPress={() => handleRegister()}
               disabled={!email || !esSegura || password !== repeatPassword}
             >
               <Text style={styles.buttonText}>Registrarme</Text>
