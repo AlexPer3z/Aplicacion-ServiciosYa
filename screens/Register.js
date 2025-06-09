@@ -149,7 +149,7 @@ export default function Register({ navigation }) {
               <Text style={styles.buttonText}>Registrarme</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <TouchableOpacity onPress={() => navigation.navigate('LoginSelect')}>
               <Text style={styles.registerText}>¿Ya tienes cuenta? Inicia sesión</Text>
             </TouchableOpacity>
           </>
