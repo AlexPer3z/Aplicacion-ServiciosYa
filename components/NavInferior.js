@@ -49,27 +49,19 @@ export default function NavInferior() {
 
 const styles = StyleSheet.create({
   nav: {
-  flexDirection: 'row',
-  justifyContent: 'space-around',
-  alignItems: 'center',
-  paddingVertical: 12,
-  borderTopWidth: 1,
-  borderTopColor: '#f26700',
-  backgroundColor: '#FFA13C',
-  elevation: 10,
-},
-  nav: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: 10,
+    alignItems: 'center',
+    paddingVertical: 8,
     borderTopWidth: 1,
-    borderTopColor: '#ddd',
+    borderTopColor: '#f26700',
     backgroundColor: '#FFA13C',
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     zIndex: 10,
+    elevation: 10,
   },
   btnPublicar: {
     backgroundColor: '#00B9ba',

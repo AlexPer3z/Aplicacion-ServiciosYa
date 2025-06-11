@@ -84,12 +84,7 @@ export default function LoginSelect({ navigation }) {
       provider: 'google',
       token: response.data.idToken,
     });
-    const user = data?.user;
-    if (user?.email) {
-      // guardar la sesion para despues utilizarlo con el login biometrico
-      await saveAuthSession(data.session);
-      navigation.replace('Home');
-    } else {
+    if (error) {
       setErrorMessage('Error al iniciar sesión con Google.');
     }
   };

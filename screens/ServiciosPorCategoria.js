@@ -16,6 +16,7 @@ import NavInferior from '../components/NavInferior';
 import { useUserData } from '../lib/hooks/useUserData';
 import { Ionicons } from '@expo/vector-icons';
 import ReportServiceModal from '../components/servicios/ReporteModal';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const screenHeight = Dimensions.get('window').height;
 
@@ -28,6 +29,7 @@ export default function ServiciosPorCategoria() {
   const [servicioSeleccionado, setServicioSeleccionado] = useState(null);
   const [confirmacionVisible, setConfirmacionVisible] = useState(false);
   const [reportVisible, setReportVisible] = useState(false);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const fetchServicios = async () => {
@@ -127,8 +129,9 @@ export default function ServiciosPorCategoria() {
   };
 
   return (
+    <SafeAreaView style={{ flex: 1, paddingTop: 24, backgroundColor: '#F8F8F8' }}>
     <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 24 }]} >
         <Text style={styles.title}>Servicios de {categoria}</Text>
 
         <TouchableOpacity
@@ -251,13 +254,13 @@ export default function ServiciosPorCategoria() {
       {/* NAV INFERIOR */}
       <NavInferior />
     </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     padding: 18,
-    backgroundColor: '#F8F8F8',
   },
   title: {
     fontSize: 27,

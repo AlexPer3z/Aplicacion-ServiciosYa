@@ -12,8 +12,7 @@ import { registrarTokenPush } from '../lib/notificaciones';
 import fondo from '../assets/fondo.png';
 import logo from '../assets/logo.png';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import useAuthSession from '../lib/hooks/useAuthSession';
-import { saveAuthSession } from "../lib/storage";
+import { saveCredentials } from "../lib/storage";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -27,10 +26,6 @@ export default function Login({ navigation }) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const { isBiometricAvailable, biometricLogin, emailLogin } = useAuthSession({
-    onAuthSuccess: () => navigation.replace('Home'),
-    onError: (error) => ToastAndroid.show(error.message, ToastAndroid.SHORT)
-  });
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
@@ -103,8 +98,8 @@ export default function Login({ navigation }) {
 
     await guardarCorreo(email);
     // guardar la sesion para despues utilizarlo con el login biometrico
-    saveAuthSession(data.session);
-    navigation.replace('Home');
+    await saveCredentials(email, password);
+    // navigation.replace('Home');
   };
 
   const ErrorBox = ({ message }) => (

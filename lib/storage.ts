@@ -1,27 +1,54 @@
-import { Session } from "@supabase/supabase-js";
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Constantes para almacenamiento seguro
+// Constants for secure storage
 const STORAGE_KEYS = {
-    SESSION: 'supabase_session',
-    LAST_LOGIN: 'last_login_method',
-    CREDENTIALS: 'supabase_credentials',
-    BIOMETRIC_AUTH: 'last_biometric_auth',
+  CREDENTIALS: 'supabase_credentials', // Only this key is needed now
+  LAST_USER: 'last_user_id'
 };
 
-// Guarda la sesión de Supabase en SecureStore
-export async function saveAuthSession(session: Session) {
-    await SecureStore.setItemAsync(STORAGE_KEYS.SESSION, session.refresh_token);
-    await SecureStore.setItemAsync(`${STORAGE_KEYS.SESSION}_access_token`, session.access_token);
+// Type for credentials
+type Credentials = {
+  email: string;
+  password: string;
+};
+
+/**
+ * Saves only email and password (no session tokens)
+ */
+export async function saveCredentials(email: string, password: string) {
+  const credentials: Credentials = { email, password };
+  await SecureStore.setItemAsync(
+    STORAGE_KEYS.CREDENTIALS,
+    JSON.stringify(credentials)
+  );
 }
 
-export async function getAuthSession(): Promise<{ refresh_token: string | null, access_token: string | null }> {
-    const refresh_token = await SecureStore.getItemAsync(STORAGE_KEYS.SESSION);
-    const access_token = await SecureStore.getItemAsync(`${STORAGE_KEYS.SESSION}_access_token`);
-    return { refresh_token, access_token };
+/**
+ * Retrieves stored email and password
+ */
+export async function getCredentials(): Promise<Credentials | null> {
+  const stored = await SecureStore.getItemAsync(STORAGE_KEYS.CREDENTIALS);
+  return stored ? JSON.parse(stored) : null;
 }
 
-export async function removeAuthSession() {
-    await SecureStore.deleteItemAsync(STORAGE_KEYS.SESSION);
-    await SecureStore.deleteItemAsync(`${STORAGE_KEYS.SESSION}_access_token`);
+/**
+ * Removes stored credentials
+ */
+export async function removeCredentials() {
+  await SecureStore.deleteItemAsync(STORAGE_KEYS.CREDENTIALS);
+}
+
+async function getlastUserId(): Promise<string | null> {
+  const value = await AsyncStorage.getItem(STORAGE_KEYS.LAST_USER);
+  return value
+}
+
+async function setLastUserId(id: string) {
+  await AsyncStorage.setItem(STORAGE_KEYS.LAST_USER, id);  
+}
+
+export const lastUserId = {
+  get: getlastUserId,
+  set: setLastUserId
 }

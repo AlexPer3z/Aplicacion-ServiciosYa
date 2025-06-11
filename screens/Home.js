@@ -19,7 +19,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ChatBotModal from '../components/ChatBotModal';
 import fondo from '../assets/fondo_home.png';
 import { AuthError } from 'expo-auth-session';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useUserSettings } from '../lib/hooks/useUserSettings';
+import { useOnboarding } from '../lib/hooks/useOnboarding';
 
 const iconosCategoria = {
   // EXISTENTES
@@ -268,8 +270,19 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
   const [chatVisible, setChatVisible] = useState(false);
   const [soloConServicios, setSoloConServicios] = useState(false);
+  const insets = useSafeAreaInsets();
+  const bottomNavBarHeight = insets.bottom;
+  const { startOnboarding } = useOnboarding();
+  const { settings, updateSettings } = useUserSettings();
 
-  
+  useFocusEffect(
+    React.useCallback(() => {
+      if (settings && !settings.onBoardingComplete) {
+        startOnboarding((results) => updateSettings({ useBiometric: results['useBiometric'], onBoardingComplete: true }));
+      }
+      return () => { };
+    }, [settings])
+  );
 
 
   useEffect(() => {
@@ -500,10 +513,11 @@ console.log('Mensajes no leídos:', mensajesNoLeidos);
 
 
       <ScrollView
-        style={{ flex: 1, marginRight: 0, marginBottom:30}}
+        style={{ flex: 1, marginRight: 0 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        contentContainerStyle={{ paddingBottom: bottomNavBarHeight + 24 }}
       >
         {Object.entries(categoriasPorSeccion).map(([seccion, cats]) => {
           const filtradas = cats.filter(cat => {
@@ -565,7 +579,7 @@ console.log('Mensajes no leídos:', mensajesNoLeidos);
         </View>
         
   </ImageBackground>
-<View style={styles.nav}>
+<View style={[styles.nav, { paddingBottom: bottomNavBarHeight }]}>
         <TouchableOpacity onPress={() => navigation.navigate('Home')}>
           <Ionicons name="home-outline" size={28} color="#fff" />
         </TouchableOpacity>
@@ -873,7 +887,7 @@ btnPublicar: {
   },
    header: {
     backgroundColor: '#00B8A9', // Amarillo mockup
-    paddingTop: 0,
+    paddingTop: 12,
     marginBotton: 0,
     paddingHorizontal: 20,
     paddingBottom: 15,

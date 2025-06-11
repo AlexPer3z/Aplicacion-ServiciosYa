@@ -10,6 +10,7 @@ import {
 } from 'react-native'
 import { supabase } from '../lib/supabase'
 import { removeAuthSession } from '../lib/storage'
+import { useUserSettings } from '../lib/hooks/useUserSettings';
 
 export default function Configuracion({ navigation }) {
   const [password, setPassword] = useState('')
@@ -17,6 +18,7 @@ export default function Configuracion({ navigation }) {
   const [isAbsent, setIsAbsent] = useState(false)
   const [passwordValid, setPasswordValid] = useState(true)
   const [passwordMatch, setPasswordMatch] = useState(true)
+  const { settings } = useUserSettings();
 
   const validarContrasena = (password) => {
     const minLength = 8
@@ -72,10 +74,7 @@ export default function Configuracion({ navigation }) {
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut()
-    if (!error) {
-      await removeAuthSession()
-      navigation.replace('LoginSelect')
-    } else {
+    if (error) {
       Alert.alert('Error al cerrar sesión', error.message)
     }
   }
