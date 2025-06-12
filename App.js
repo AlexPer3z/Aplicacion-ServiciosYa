@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, StatusBar } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { AppProvider } from './lib/context/AppContext';
 
 // Screens
 import Login from './screens/Login';
@@ -54,36 +55,38 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <NavigationContainer>
-          <StatusBar
-            barStyle="dark-content"
-            backgroundColor="#4CAF50"
-            translucent={false}
-          />
-          <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Splash" component={withSafeArea(SplashScreen)} />
-            <Stack.Screen name="LoginSelect" component={withSafeArea(LoginSelect)} />
-            <Stack.Screen name="Login" component={withSafeArea(Login)} />
-            <Stack.Screen name="Register" component={withSafeArea(Register)} />
-            <Stack.Screen name="Home" component={withSafeArea(Home)} />
-            <Stack.Screen name="CrearPerfil" component={withSafeArea(CrearPerfil)} />
-            <Stack.Screen name="Perfil" component={withSafeArea(Perfil)} />
-            <Stack.Screen name="OfrecerServicio" component={withSafeArea(OfrecerServicio)} />
-            <Stack.Screen name="Configuracion" component={withSafeArea(Configuracion)} />
-            <Stack.Screen name="ServiciosPorCategoria" component={withSafeArea(ServiciosPorCategoria)} />
-            <Stack.Screen name="PasarelaPago" component={withSafeArea(PasarelaPago)} />
-            <Stack.Screen name="ChatIA" component={withSafeArea(ChatIA)} />
-            <Stack.Screen name="ChatIndividual" component={withSafeArea(ChatIndividual)} />
-            <Stack.Screen name="MisServicios" component={withSafeArea(MisServicios)} />
-            <Stack.Screen name="EditarServicio" component={withSafeArea(EditarServicio)} />
-            <Stack.Screen name="VerificacionPendiente" component={withSafeArea(VerificacionPendiente)} />
-            <Stack.Screen name="NotificacionesScreen" component={withSafeArea(NotificacionesScreen)} />
-            <Stack.Screen name="DniPendiente" component={withSafeArea(DniPendiente)} />
-            <Stack.Screen name="PerfilesPendientes" component={withSafeArea(PerfilesPendientes)} />
-            <Stack.Screen name="PerfilPendienteDetalle" component={withSafeArea(PerfilPendienteDetalle)} />
-            <Stack.Screen name="Maps" component={Maps} />
-          </Stack.Navigator>
-        </NavigationContainer>
+        <AppProvider>
+          <NavigationContainer>
+            <StatusBar
+              barStyle="dark-content"
+              backgroundColor="#4CAF50"
+              translucent={false}
+            />
+            <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="Splash" component={withSafeArea(SplashScreen)} />
+              <Stack.Screen name="LoginSelect" component={withSafeArea(LoginSelect)} />
+              <Stack.Screen name="Login" component={withSafeArea(Login)} />
+              <Stack.Screen name="Register" component={withSafeArea(Register)} />
+              <Stack.Screen name="Home" component={withSafeArea(Home)} />
+              <Stack.Screen name="CrearPerfil" component={withSafeArea(CrearPerfil)} />
+              <Stack.Screen name="Perfil" component={withSafeArea(Perfil)} />
+              <Stack.Screen name="OfrecerServicio" component={withSafeArea(OfrecerServicio)} />
+              <Stack.Screen name="Configuracion" component={withSafeArea(Configuracion)} />
+              <Stack.Screen name="ServiciosPorCategoria" component={withSafeArea(ServiciosPorCategoria)} />
+              <Stack.Screen name="PasarelaPago" component={withSafeArea(PasarelaPago)} />
+              <Stack.Screen name="ChatIA" component={withSafeArea(ChatIA)} />
+              <Stack.Screen name="ChatIndividual" component={withSafeArea(ChatIndividual)} />
+              <Stack.Screen name="MisServicios" component={withSafeArea(MisServicios)} />
+              <Stack.Screen name="EditarServicio" component={withSafeArea(EditarServicio)} />
+              <Stack.Screen name="VerificacionPendiente" component={withSafeArea(VerificacionPendiente)} />
+              <Stack.Screen name="NotificacionesScreen" component={withSafeArea(NotificacionesScreen)} />
+              <Stack.Screen name="DniPendiente" component={withSafeArea(DniPendiente)} />
+              <Stack.Screen name="PerfilesPendientes" component={withSafeArea(PerfilesPendientes)} />
+              <Stack.Screen name="PerfilPendienteDetalle" component={withSafeArea(PerfilPendienteDetalle)} />
+              <Stack.Screen name="Maps" component={Maps} />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </AppProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

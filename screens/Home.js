@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useContext, useState } from 'react';
 import {
   View,
   Alert,
@@ -20,6 +20,7 @@ import ChatBotModal from '../components/ChatBotModal';
 import fondo from '../assets/fondo_home.png';
 import { AuthError } from 'expo-auth-session';
 import { SafeAreaView } from 'react-native-safe-area-context';
+ import { AuthContext } from '../lib/context/AppContext';
 
 const iconosCategoria = {
   // EXISTENTES
@@ -269,11 +270,20 @@ export default function Home() {
   const [chatVisible, setChatVisible] = useState(false);
   const [soloConServicios, setSoloConServicios] = useState(false);
 
-  
+ 
+  const { 
+    notificationsCount,
+    startNotificationCounter,
+    unreadMessagesCount,
+    startMessageCounter,
+  } = useContext(AuthContext);
 
 
   useEffect(() => {
-    let isMounted = true;
+    let isMounted = true; 
+
+    startNotificationCounter();
+    startMessageCounter();
 
     cargarDatos();
     actualizarConteos();
@@ -335,26 +345,7 @@ export default function Home() {
       setMostrarCartelDNI(perfil.perfil_completo && !perfil.dni_verificado);
       setFotoPerfil(perfil.foto_perfil || null);
       setRol(perfil.rol || null);
-    }
-
-    const { data: notifs } = await supabase
-      .from('notificaciones')
-      .select('mensaje, leido')
-      .eq('receptor_id', user.id);
-
-    setNotificaciones(notifs || []);
-    const noLeidas = (notifs || []).filter(n => n.leido_por_receptor === false).length;
-    setNotificacionesNoLeidas(noLeidas);
-    // Obtener mensajes no leídos para mostrar contador
-const { data: mensajes, error: errorMensajes } = await supabase
-  .from('mensajes')
-  .select('id')
-  .eq('receptor_id', user.id)
-  .eq('leido_por_receptor', false);
-
-const mensajesNoLeidos = mensajes?.length || 0;
-console.log('Mensajes no leídos:', mensajesNoLeidos);
-
+    } 
   };
 
   const actualizarConteos = async () => {
@@ -424,10 +415,10 @@ console.log('Mensajes no leídos:', mensajesNoLeidos);
               onPress={() => navigation.navigate('NotificacionesScreen')}
               style={styles.iconButton}
             >
-              <Ionicons name="notifications-outline" size={26} color="#fff" />
-              {notificacionesNoLeidas > 0 && (
+              <Ionicons name="notifications" size={26} color="#fff" />
+              {notificationsCount > 0 && (
                 <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{notificacionesNoLeidas}</Text>
+                  <Text style={styles.badgeText}>{notificationsCount}</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -593,6 +584,13 @@ console.log('Mensajes no leídos:', mensajesNoLeidos);
 
         <TouchableOpacity onPress={() => navigation.navigate('ChatIA')}>
           <Ionicons name="chatbubble-ellipses-outline" size={28} color="#fff" />
+           {unreadMessagesCount > 0 && (
+              <View style={styles.badgeNav}>
+                <Text style={styles.badgeText}>
+                  {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
+                </Text>
+              </View>
+            )}
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => navigation.navigate('Configuracion')}>
@@ -679,14 +677,14 @@ badge: {
   position: 'absolute',
   top: -4,
   right: -4,
-  backgroundColor: '#ff3b30',
+  backgroundColor: '#ffa13d',
   borderRadius: 10,
   minWidth: 18,
   height: 18,
   justifyContent: 'center',
   alignItems: 'center',
   paddingHorizontal: 4,
-  shadowColor: '#ff3b30',
+  shadowColor: '#ffa13d',
   shadowOffset: { width: 0, height: 0 },
   shadowOpacity: 0.8,
   shadowRadius: 3,
@@ -852,6 +850,17 @@ btnPublicar: {
     position: 'absolute',
     right: -6,
     top: -4,
+    backgroundColor: '#ffa13d',
+    borderRadius: 10,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    zIndex: 10,
+  },
+
+  badgeNav: {
+    position: 'absolute',
+    right: -9,
+    top: -9,
     backgroundColor: 'red',
     borderRadius: 10,
     paddingHorizontal: 5,
@@ -913,7 +922,7 @@ btnPublicar: {
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: '#f00',
+    backgroundColor: '#ffa13d',
     borderRadius: 10,
   minWidth: 16,
   paddingHorizontal: 4,

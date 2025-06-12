@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -11,11 +11,18 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
+ import { AuthContext } from '../lib/context/AppContext';
 
 export default function Notificaciones() {
   const [notificaciones, setNotificaciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
+
+   
+    const { 
+      loadNotifications
+    } = useContext(AuthContext);
+
 
   const obtenerUsuarioActual = async () => {
     const { data, error } = await supabase.auth.getUser();
@@ -76,6 +83,9 @@ export default function Notificaciones() {
       .eq('id', id);
 
     if (!error) {
+
+      loadNotifications();
+
       setNotificaciones((prev) =>
         prev.map((item) => (item.id === id ? { ...item, leido: true } : item))
       );
@@ -85,6 +95,7 @@ export default function Notificaciones() {
   const eliminarNotificacion = async (id) => {
     const { error } = await supabase.from('notificaciones').delete().eq('id', id);
     if (!error) {
+      loadNotifications();
       setNotificaciones((prev) => prev.filter((item) => item.id !== id));
     }
   };
@@ -97,6 +108,7 @@ export default function Notificaciones() {
       .eq('receptor_id', userId);
 
     if (!error) {
+      loadNotifications();
       setNotificaciones([]);
     }
   };
