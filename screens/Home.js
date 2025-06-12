@@ -20,7 +20,7 @@ import ChatBotModal from '../components/ChatBotModal';
 import fondo from '../assets/fondo_home.png';
 import { AuthError } from 'expo-auth-session';
 import { SafeAreaView } from 'react-native-safe-area-context';
- import { AuthContext } from '../lib/context/AppContext';
+import { AuthContext } from '../lib/context/AppContext';
 
 const iconosCategoria = {
   // EXISTENTES

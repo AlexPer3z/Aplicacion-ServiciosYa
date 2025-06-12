@@ -20,7 +20,8 @@ export default function Notificaciones() {
 
    
     const { 
-      loadNotifications
+      loadNotifications,
+      loadUnreadMessages
     } = useContext(AuthContext);
 
 
@@ -177,6 +178,9 @@ emisor_id: userId,
     if (error) {
       console.error('Error al enviar mensaje ticket:', error.message);
     }
+
+    loadUnreadMessages();
+
     navigation.navigate('ChatIndividual', {
       chatId: chatExistente.id,
       otroUsuarioId: notificacion.emisor_id,
@@ -249,6 +253,8 @@ const { error: errorMensajes } = await supabase
 if (errorMensajes) {
   console.error('Error al enviar mensajes automáticos:', errorMensajes.message);
 }
+
+loadUnreadMessages();
 
 // Redirigir al chat recién creado
 navigation.navigate('ChatIndividual', {

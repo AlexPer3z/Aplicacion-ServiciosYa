@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useContext, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { AuthContext } from '../lib/context/AppContext';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 
@@ -9,9 +10,16 @@ export default function Chat() {
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    obtenerChats();
-  }, []);
+    const { 
+      loadUnreadMessages
+    } = useContext(AuthContext);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      obtenerChats();
+      loadUnreadMessages();
+    }, [])
+  );
 
   const obtenerChats = async () => {
     setLoading(true);
@@ -58,14 +66,25 @@ export default function Chat() {
           console.error('Error al obtener datos del usuario:', errorUsuario.message);
         }
 
-        const ultimoMensaje = chat.mensajes?.[chat.mensajes.length - 1]?.contenido || 'Entra para comenzar a chatear';
+        // Obtener cantidad de mensajes no leídos en este chat
+        const { data: mensajesNoLeidosData, error: errorMensajes } = await supabase
+          .from('mensajes')
+          .select('id')
+          .eq('chat_id', chat.id)
+          .eq('leido_por_receptor', false)
+          .neq('remitente_id', user.id); // que los haya enviado la otra persona
 
+        const cantidadNoLeidos = errorMensajes ? 0 : mensajesNoLeidosData.length;
+
+        const ultimoMensaje = chat.mensajes?.[chat.mensajes.length - 1]?.contenido || 'Entra para comenzar a chatear';
+        
         return {
           id: chat.id,
           nombre: usuario?.nombre || 'Usuario desconocido',
           avatar: usuario?.foto_perfil || 'https://via.placeholder.com/100',
           mensaje: ultimoMensaje,
           servicioId: chat.servicio_id, // <--- agrego servicioId aquí
+          noLeidos: cantidadNoLeidos,
         };
       })
     );
@@ -88,7 +107,14 @@ export default function Chat() {
         <Text style={styles.nombre}>{item.nombre}</Text>
         <Text style={styles.mensaje} numberOfLines={1}>{item.mensaje}</Text>
       </View>
+      <View style={{ position: 'relative' }}>
       <Ionicons name="chevron-forward" size={22} color="#30D5C8" style={styles.chevronIcon} />
+      {item.noLeidos > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{item.noLeidos}</Text>
+        </View>
+      )}
+    </View>
     </TouchableOpacity>
   );
 
@@ -200,5 +226,23 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
     borderWidth: 3,
     borderColor: '#fff',
+  },
+  badge: {
+    position: 'absolute',
+    top: 2,
+    right: 25,
+    backgroundColor: '#FF5A5F',
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    minWidth: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 11,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
