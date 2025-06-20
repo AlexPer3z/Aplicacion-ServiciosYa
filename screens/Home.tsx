@@ -28,7 +28,7 @@ import type { MainStackParamList } from "../types/navigation";
 
 type Props = NativeStackScreenProps<MainStackParamList, "Home">;
 
-function HomeV2({ navigation }: Props) {
+function Home({ navigation }: Props) {
   const [busqueda, setBusqueda] = useState("");
   const [showCountsOnly, setShowCountsOnly] = useState(false);
   const [chatVisible, setChatVisible] = useState(false);
@@ -114,7 +114,7 @@ function HomeV2({ navigation }: Props) {
   );
 }
 
-export default withModalProvider(HomeV2);
+export default withModalProvider(Home);
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#00B8A9" },
