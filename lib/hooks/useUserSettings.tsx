@@ -1,37 +1,51 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import type { LocationData } from "../../types/location";
 
 /**
  * Define la estructura de la configuración del usuario.
  * Usar una interfaz de TypeScript nos da seguridad de tipos y autocompletado.
  */
 export interface UserSettings {
-  theme: 'light' | 'dark' | 'system';
+  theme: "light" | "dark" | "system";
   notificationsEnabled: boolean;
   onBoardingComplete: boolean;
   user_id: string | null;
   useBiometric: boolean;
+  useGPS: boolean;
+  lastGPSLocation: LocationData | null;
+  searchRadius: number;
+  showAllCategories: boolean;
 }
 
 /**
  * Una clave única para almacenar la configuración en AsyncStorage.
  */
-export const SETTINGS_STORAGE_KEY = 'app-user-settings';
+export const SETTINGS_STORAGE_KEY = "app-user-settings";
 
 /**
  * Una clave de consulta única para que React Query administre estos datos.
  */
-export const queryKey = ['user', 'settings'];
+export const queryKey = ["user", "settings"];
 
 /**
  * Configuración predeterminada para usuarios nuevos o si falla el almacenamiento.
  */
 const defaultSettings: UserSettings = {
-  theme: 'system',
+  theme: "system",
   notificationsEnabled: true,
   onBoardingComplete: false,
   user_id: null,
   useBiometric: false,
+  useGPS: true,
+  lastGPSLocation: null,
+  searchRadius: 10000,
+  showAllCategories: true,
 };
 
 /**
@@ -50,7 +64,10 @@ export async function getSettingsFromStorage(): Promise<UserSettings> {
     }
     return defaultSettings;
   } catch (error) {
-    console.warn('No se pudo analizar la configuración desde AsyncStorage:', error);
+    console.warn(
+      "No se pudo analizar la configuración desde AsyncStorage:",
+      error,
+    );
     // Volver a la configuración predeterminada en caso de corrupción
     return defaultSettings;
   }
@@ -59,15 +76,17 @@ export async function getSettingsFromStorage(): Promise<UserSettings> {
 /**
  * Guarda el objeto completo de configuración en AsyncStorage.
  */
-export async function saveSettingsToStorage(settings: UserSettings): Promise<UserSettings> {
+export async function saveSettingsToStorage(
+  settings: UserSettings,
+): Promise<UserSettings> {
   try {
     const rawSettings = JSON.stringify(settings);
     await AsyncStorage.setItem(SETTINGS_STORAGE_KEY, rawSettings);
     return settings; // Retorna la configuración en caso de éxito
   } catch (error) {
-    console.warn('No se pudo guardar la configuración en AsyncStorage:', error);
+    console.warn("No se pudo guardar la configuración en AsyncStorage:", error);
     // Relanza el error para que la mutación de React Query pueda manejarlo
-    throw new Error('No se pudo guardar la configuración.');
+    throw new Error("No se pudo guardar la configuración.");
   }
 }
 
@@ -75,8 +94,8 @@ export async function clearSettingsToStorage() {
   try {
     await AsyncStorage.removeItem(SETTINGS_STORAGE_KEY);
   } catch (error) {
-    console.warn('No se pudo remover la configuración en AsyncStorage:', error);
-    throw new Error('No se pudo remover la configuración.');
+    console.warn("No se pudo remover la configuración en AsyncStorage:", error);
+    throw new Error("No se pudo remover la configuración.");
   }
 }
 
@@ -100,7 +119,7 @@ export function useUserSettings() {
   } = useQuery({
     queryKey,
     queryFn: getSettingsFromStorage,
-    staleTime: Infinity,
+    staleTime: Number.POSITIVE_INFINITY,
   });
 
   // The hook `useMutation` to handle updates.
@@ -109,7 +128,8 @@ export function useUserSettings() {
     // The new mutation function now accepts a PARTIAL settings object.
     mutationFn: async (newPartialSettings: Partial<UserSettings>) => {
       // 1. Get the current state from the query cache.
-      const currentSettings = queryClient.getQueryData<UserSettings>(queryKey) || defaultSettings;
+      const currentSettings =
+        queryClient.getQueryData<UserSettings>(queryKey) || defaultSettings;
 
       // 2. Merge the current settings with the new partial settings.
       const updatedSettings = { ...currentSettings, ...newPartialSettings };
@@ -123,7 +143,7 @@ export function useUserSettings() {
       queryClient.setQueryData(queryKey, updatedSettings);
     },
     onError: (err) => {
-      console.warn('La actualización de la configuración falló:', err);
+      console.warn("La actualización de la configuración falló:", err);
     },
   });
 
@@ -145,4 +165,12 @@ export function useUserSettings() {
     /** The error object if fetching failed. */
     error,
   };
+}
+
+export function useUserSettingsSuspense() {
+  return useSuspenseQuery({
+    queryKey,
+    queryFn: getSettingsFromStorage,
+    staleTime: Number.POSITIVE_INFINITY,
+  });
 }

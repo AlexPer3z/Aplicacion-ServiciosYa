@@ -4,20 +4,14 @@
     "slug": "servicios-ya",
     "scheme": "solucionesya",
     "linking": {
-      "prefixes": [
-        "solucionesya://"
-      ],
+      "prefixes": ["solucionesya://"],
       "config": {
         "screens": {
           "pago-exitoso": "pago-exitoso"
         }
       }
     },
-    "platforms": [
-      "ios",
-      "android",
-      "web"
-    ],
+    "platforms": ["ios", "android", "web"],
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -57,10 +51,7 @@
       "edgeToEdgeEnabled": true,
       "package": "com.alex_6775.appTrabajo",
       "googleServicesFile": "./google-services.json",
-      "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
-      ]
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -83,7 +74,20 @@
           "imageWidth": 150
         }
       ],
-      "react-native-edge-to-edge"
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Permitir que $(PRODUCT_NAME) utilice su ubicación."
+        }
+      ],
+      "react-native-edge-to-edge",
+      [
+        "expo-maps",
+        {
+          "requestLocationPermission": true,
+          "locationPermission": "Allow $(PRODUCT_NAME) to use your location"
+        }
+      ]
     ],
     "extra": {
       "eas": {

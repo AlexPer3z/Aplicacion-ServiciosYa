@@ -31,7 +31,7 @@ export default function MisServicios() {
 
     // Obtener servicios publicados por el usuario
     const { data: publicados, error: errorPublicados } = await supabase
-      .from('servicios')
+      .from('servicios_with_coords')
       .select('*')
       .eq('user_id', user.id);
 
