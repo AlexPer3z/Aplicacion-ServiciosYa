@@ -19,6 +19,7 @@ import PerfilesPendientes from "../screens/PerfilesPendientes";
 import PerfilPendienteDetalle from "../screens/PerfilPendienteDetalle";
 import ServiciosPorCategoria from "../screens/ServiciosPorCategoria";
 import VerificacionPendiente from "../screens/VerificacionPendiente";
+import pagoInicial from "../screens/pagoInicial";
 import { useGPSLocation } from "../lib/hooks/useGPSLocation";
 import type { MainStackParamList } from "../types/navigation";
 import type { FC, PropsWithChildren } from "react";
@@ -46,6 +47,10 @@ export default function MainStackNavigator() {
       <Stack.Screen name="CrearPerfil" component={withSafeArea(CrearPerfil)} />
       <Stack.Screen name="Perfil" component={withSafeArea(Perfil)} />
       <Stack.Screen name="OfrecerServicio" component={OfrecerServicio} />
+      <Stack.Screen
+        name="pagoInicial"
+        component={pagoInicial}
+      />
       <Stack.Screen
         name="Configuracion"
         component={withSafeArea(Configuracion)}

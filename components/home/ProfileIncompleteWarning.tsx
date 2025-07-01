@@ -18,7 +18,7 @@ export const ProfileIncompleteWarning = ({
         style={styles.icon}
       />
       <Text style={styles.text}>
-        Para usar todas las funciones, completa tu perfil.
+        Para usar todas las funciones, completa tu perfil. SI YA SE REGISTRO ESPERE A SER VERIFICADO NO SE REGISTRE NUEVAMENTER
       </Text>
     </View>
     <TouchableOpacity style={styles.button} onPress={onPress}>

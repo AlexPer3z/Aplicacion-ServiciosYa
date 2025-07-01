@@ -1,49 +1,15 @@
-// screens/PasarelaPago.js
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { WebView } from 'react-native-webview';
 import { Linking } from 'react-native';
 
-const CATEGORIAS_VALIDAS = [
-  // Categorías originales
-  'Electricista', 'Plomero', 'Gasista', 'Pintor', 'Carpintero', 'Albañil',
-  'Cerrajero', 'Mecánico', 'Jardinero', 'Niñera', 'Cocinero', 'Mudanzas',
-  'Diseñador', 'Programador', 'Fotógrafo', 'Veterinario', 'Profesor',
-  'Abogado', 'Contador', 'Peluquero', 'Masajista', 'Maquilladora', 'DJ',
-  'Decorador', 'Coach', 'Psicólogo', 'Tatuador', 'Editor de video',
-  'Community Manager', 'Traductor', 'Animador', 'Soldador', 'Tapicero',
-  'Costurera', 'Chofer', 'Reparación de PC', 'Reparación de celulares',
-  'Delivery', 'Camarero', 'Mozo', 'Personal trainer',
-
-  // Nuevas categorías adicionales
-  'Reparaciones en el hogar',
-  'Decorador de interiores',
-  'Servicio de limpieza',
-  'Técnico de PC',
-  'Desarrollador web',
-  'Fletes',
-  'Chofer privado',
-  'Profesor particular',
-  'Profesor de música',
-  'Diseñador gráfico',
-  'Marketing',
-  'Asistente virtual',
-  'Atención al cliente',
-  'Paseador de perros',
-  'Entrenador personal',
-  'Estilista',
-  'Chef personal',
-  'Organizador de eventos',
-  'Cuidado de niños',
-  'Cuidado de adultos mayores'
-];
-
+const CATEGORIAS_VALIDAS = [/* ... tus categorías ... */];
 
 export default function PasarelaPago() {
   const route = useRoute();
   const navigation = useNavigation();
-  const { categoria } = route.params;
+
+  const { categoria, mensaje } = route.params || {}; // ← mensaje opcional
 
   const [urlPago, setUrlPago] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -51,12 +17,11 @@ export default function PasarelaPago() {
   useEffect(() => {
     const handleDeepLink = ({ url }) => {
       if (url.includes('pago-exitoso')) {
-      Alert.alert(
-        'Solicitud enviada',
-        'Tu solicitud fue enviada correctamente, ahora espera que el trabajador acepte.'
-      );
-
-      navigation.navigate('ServiciosPorCategoria', { categoria });
+        Alert.alert(
+          'Solicitud enviada',
+          'Tu solicitud fue enviada correctamente, ahora espera que el trabajador acepte.'
+        );
+        navigation.navigate('ServiciosPorCategoria', { categoria });
       } else if (url.includes('pago-fallido')) {
         Alert.alert('Pago fallido', 'No se pudo completar el pago.');
         navigation.goBack();
@@ -114,6 +79,8 @@ export default function PasarelaPago() {
 
   return (
     <View style={styles.container}>
+      {mensaje && <Text style={styles.mensajeExtra}>{mensaje}</Text>} {/* mensaje opcional */}
+      
       <Text style={styles.mensaje}>
         Para explorar todos nuestros profesionales en {categoria}, debe abonar un pago de $1.500 pesos argentinos.
       </Text>
@@ -138,7 +105,7 @@ export default function PasarelaPago() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8FAF7', // Turquesa claro
+    backgroundColor: '#E8FAF7',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 30,
@@ -147,13 +114,22 @@ const styles = StyleSheet.create({
     fontSize: 20,
     textAlign: 'center',
     marginBottom: 38,
-    color: '#19D4C6', // Turquesa “Servicios Ya”
+    color: '#19D4C6',
     fontWeight: '800',
     lineHeight: 28,
     letterSpacing: 0.2,
   },
+  mensajeExtra: {
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 16,
+    color: '#FF8C42',
+    fontWeight: '700',
+    lineHeight: 24,
+    paddingHorizontal: 12,
+  },
   boton: {
-    backgroundColor: '#FFA13C', // Naranja fuerte
+    backgroundColor: '#FFA13C',
     paddingVertical: 18,
     paddingHorizontal: 50,
     borderRadius: 24,
@@ -172,7 +148,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   botonPrueba: {
-    backgroundColor: '#19D4C6', // Turquesa fuerte
+    backgroundColor: '#19D4C6',
     paddingVertical: 15,
     paddingHorizontal: 44,
     borderRadius: 22,

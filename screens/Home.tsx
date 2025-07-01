@@ -1,4 +1,4 @@
-import React, { useState, useCallback, Suspense } from "react";
+import React, { useState, useContext, useCallback, useEffect, Suspense } from "react";
 import {
   View,
   StyleSheet,
@@ -9,6 +9,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { withModalProvider } from "../components/sheet/withModalProvider";
+import { AuthContext } from '../lib/context/AppContext';
 
 // Custom Hooks
 import { useUserSettings } from "../lib/hooks/useUserSettings";
@@ -20,11 +21,13 @@ import { BottomNavBar } from "../components/home/BottomNavBar";
 import { CategoryList } from "../components/home/CategoryList";
 import { ProfileIncompleteWarning } from "../components/home/ProfileIncompleteWarning";
 import { DniPendingWarning } from "../components/home/DniPendingWarning";
-import HomeHeader from "../components/HomeHeader"; // Assuming this is the top bar with search
+import HomeHeader from "../components/HomeHeader";
 import ChatBotModal from "../components/ChatBotModal";
 import LoadingView from "../components/LoadingView";
+
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { MainStackParamList } from "../types/navigation";
+import { supabase } from "../lib/supabase";
 
 type Props = NativeStackScreenProps<MainStackParamList, "Home">;
 
@@ -33,7 +36,7 @@ function Home({ navigation }: Props) {
   const [showCountsOnly, setShowCountsOnly] = useState(false);
   const [chatVisible, setChatVisible] = useState(false);
 
-  // Custom Hooks for logic
+  // Custom Hooks
   const { startOnboarding } = useOnboarding();
   const { settings, updateSettings } = useUserSettings();
   const {
@@ -43,8 +46,44 @@ function Home({ navigation }: Props) {
     askProfileCompletion,
     onRefresh,
   } = useHomeData();
+  // Notifications & Messages
+  const {
+    notificationsCount,
+    startNotificationCounter,
+    unreadMessagesCount,
+    startMessageCounter,
+  } = useContext(AuthContext);
 
-  // Onboarding Logic
+  // Lanzar contadores y suscripciones en tiempo real
+  useEffect(() => {
+    startNotificationCounter();
+    startMessageCounter();
+
+    const notifSub = supabase
+      .channel('public:notificaciones')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notificaciones' },
+        () => startNotificationCounter()
+      )
+      .subscribe();
+
+    const msgSub = supabase
+      .channel('public:mensajes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'mensajes' },
+        () => startMessageCounter()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(notifSub);
+      supabase.removeChannel(msgSub);
+    };
+  }, []);
+
+  // Onboarding
   useFocusEffect(
     useCallback(() => {
       if (settings && !settings.onBoardingComplete) {
@@ -73,9 +112,12 @@ function Home({ navigation }: Props) {
       >
         <View style={styles.container}>
           <HomeHeader
-            onSearch={setBusqueda}
-            onShowCountsOnlyChange={(value) => setShowCountsOnly(value)}
-          />
+              onSearch={setBusqueda}
+              onShowCountsOnlyChange={(value) => setShowCountsOnly(value)}
+              notificationsCount={notificationsCount}
+              unreadMessagesCount={unreadMessagesCount}
+            />
+
 
           {askProfileCompletion && (
             <ProfileIncompleteWarning
@@ -109,7 +151,12 @@ function Home({ navigation }: Props) {
         </View>
       </ImageBackground>
 
-      <BottomNavBar rol={rol ?? "user"} isUserRestricted={isUserRestricted} />
+      <BottomNavBar
+        rol={rol ?? "user"}
+        isUserRestricted={isUserRestricted}
+        unreadMessagesCount={unreadMessagesCount}
+      />
+
     </SafeAreaView>
   );
 }
@@ -122,7 +169,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "rgba(255, 255, 255, 0.40)" },
   fab: {
     position: "absolute",
-    bottom: 90, // Adjust to be above the BottomNavBar
+    bottom: 90,
     right: 24,
     backgroundColor: "#FFA13C",
     width: 56,

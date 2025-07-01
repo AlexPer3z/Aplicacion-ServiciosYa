@@ -10,9 +10,10 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import queryClient from "./lib/reactQuery";
 import AnimatedSwitcher from "./components/AnimatedSwitcher";
 import ToastManager from "toastify-react-native";
-
+import { AppProvider } from './lib/context/AppContext';
 import MainStackNavigator from "./navigation/MainAppStackNavigator";
 import AuthStackNavigator from "./navigation/AuthStackNavigator";
+
 
 SplashScreen2.setOptions({
   duration: 1000,
@@ -28,6 +29,7 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
+          <AppProvider>
           <NavigationContainer>
             <AnimatedSwitcher condition={isAuth}>
               <MainStackNavigator />
@@ -35,6 +37,7 @@ export default function App() {
             </AnimatedSwitcher>
             <ToastManager showCloseIcon={false} />
           </NavigationContainer>
+          </AppProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
