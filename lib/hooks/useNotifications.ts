@@ -1,0 +1,197 @@
+// hooks/useNotifications.ts
+import { useState, useEffect, useCallback } from "react";
+import * as Device from "expo-device";
+import * as Notifications from "expo-notifications";
+import * as Linking from "expo-linking";
+import Constants from "expo-constants";
+import { Alert, Platform } from "react-native";
+import { supabase } from "../supabase";
+import { useQueryClient } from "@tanstack/react-query";
+import { getUserFromClient } from "../utils/user";
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+
+export const useNotifications = () => {
+  const queryClient = useQueryClient();
+  const [expoPushToken, setExpoPushToken] = useState<string>("");
+  const [notification, setNotification] = useState<
+    Notifications.Notification | undefined
+  >(undefined);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const saveTokenToSupabase = useCallback(async (token: string) => {
+    try {
+      const user = getUserFromClient(queryClient);
+
+      const { error: updateError } = await supabase
+        .from("usuarios")
+        .update({ expo_token: token })
+        .eq("id", user.id);
+
+      if (updateError) {
+        console.error("Error saving push token:", updateError);
+        setError("Failed to save notification settings");
+      }
+    } catch (err) {
+      console.error("Unexpected error saving token:", err);
+      setError("Failed to save notification settings");
+    }
+  }, []);
+
+  const registerForPushNotificationsAsync = useCallback(async (): Promise<
+    string | null
+  > => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Check if device supports notifications
+      if (!Device.isDevice) {
+        Alert.alert(
+          "Dispositivo no compatible",
+          "Las notificaciones push solo están disponibles en dispositivos físicos",
+        );
+        return null;
+      }
+
+      // Setup Android notification channel
+      if (Platform.OS === "android") {
+        await Notifications.setNotificationChannelAsync("default", {
+          name: "Default",
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: "#FF231F7C",
+        });
+      }
+
+      // Check/request permissions
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      if (finalStatus !== "granted") {
+        Alert.alert(
+          "Permiso requerido",
+          "Las notificaciones push están deshabilitadas. Por favor, actívalas en la configuración de tu dispositivo para recibir actualizaciones.",
+          [{ text: "OK" }],
+        );
+        return null;
+      }
+
+      // Get project ID
+      const projectId =
+        Constants?.expoConfig?.extra?.eas?.projectId ??
+        Constants?.easConfig?.projectId;
+
+      if (!projectId) {
+        throw new Error("Project ID not found in app configuration");
+      }
+
+      // Get push token
+      const tokenData = await Notifications.getExpoPushTokenAsync({
+        projectId,
+      });
+      const token = tokenData.data;
+
+      if (!token) {
+        throw new Error("Failed to get push token");
+      }
+
+      return token;
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred";
+      console.error("Push notification registration failed:", errorMessage);
+      setError(`Failed to register for notifications: ${errorMessage}`);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const initializeNotifications = useCallback(async () => {
+    const token = await registerForPushNotificationsAsync();
+
+    if (token) {
+      setExpoPushToken(token);
+      await saveTokenToSupabase(token);
+    }
+  }, [registerForPushNotificationsAsync, saveTokenToSupabase]);
+
+  useEffect(() => {
+    let notificationListener: Notifications.EventSubscription;
+    let responseListener: Notifications.EventSubscription;
+
+    // Initialize notifications
+    initializeNotifications();
+
+    // Setup listeners
+    notificationListener = Notifications.addNotificationReceivedListener(
+      (notification) => {
+        setNotification(notification);
+        console.log("Notification received:", {
+          title: notification.request.content.title,
+          body: notification.request.content.body,
+          data: notification.request.content.data,
+        });
+      },
+    );
+
+    responseListener = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        console.log("Notification interaction:", {
+          actionIdentifier: response.actionIdentifier,
+          data: response.notification.request.content.data,
+        });
+
+        // Handle notification tap/interaction
+        // You can add navigation logic here based on response.notification.request.content.data
+        const { screen, params } = response.notification.request.content.data;
+
+        if (screen) {
+          // Create a URL from the notification data
+          // e.g., "service/uuid-123" -> becomes "myapp://service/uuid-123"
+          const url = Linking.createURL(`${screen}`, { queryParams: params });
+          // Use Expo's Linking to navigate
+          Linking.openURL(url);
+        }
+      },
+    );
+
+    // Cleanup function
+    return () => {
+      if (notificationListener) {
+        notificationListener.remove();
+      }
+      if (responseListener) {
+        responseListener.remove();
+      }
+    };
+  }, [initializeNotifications]);
+
+  // Public API for re-registering notifications (useful for settings screens)
+  const refreshNotificationToken = useCallback(async () => {
+    await initializeNotifications();
+  }, [initializeNotifications]);
+
+  return {
+    expoPushToken,
+    notification,
+    isLoading,
+    error,
+    refreshNotificationToken,
+  };
+};

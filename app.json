@@ -1,18 +1,24 @@
 {
   "expo": {
     "name": "Servicios Ya",
-    "slug": "servicios-ya",
+    "slug": "appTrabajo",
     "scheme": "solucionesya",
     "linking": {
-      "prefixes": ["solucionesya://"],
+      "prefixes": [
+        "solucionesya://"
+      ],
       "config": {
         "screens": {
           "pago-exitoso": "pago-exitoso"
         }
       }
     },
-    "platforms": ["ios", "android", "web"],
-    "version": "1.0.0",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -51,7 +57,10 @@
       "edgeToEdgeEnabled": true,
       "package": "com.alex_6775.appTrabajo",
       "googleServicesFile": "./google-services.json",
-      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

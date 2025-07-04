@@ -6,7 +6,6 @@ import {
   Text,
   TextInput,
   Image,
-  Pressable,
 } from "react-native";
 import LocationChip from "./location/LocationChip";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,6 +14,9 @@ import { perfilQueryOptions } from "../lib/queryOptions";
 import { useMainNavigation } from "../lib/hooks/useNavigation";
 import OptionsButton from "./home/OptionsButton";
 import { useUserSettings } from "../lib/hooks/useUserSettings";
+import WorkerState from "./home/WorkerState";
+import { isWorker } from "../lib/utils/user";
+import OnlineFilterCheckBox from "./home/OnlineFilterCheckBox";
 
 interface HomeHeaderProps {
   onSearch: (query: string) => void;
@@ -29,12 +31,7 @@ function HomeHeader({ onSearch, onShowCountsOnlyChange }: HomeHeaderProps) {
   const [busqueda, setBusqueda] = useState("");
   const { data: perfil } = useQuery(perfilQueryOptions);
   const useGPS = settings?.useGPS ?? false;
-
-  useEffect(() => {
-    if (perfil) {
-      console.log("Perfil data:", perfil);
-    }
-  }, [perfil]);
+  const rol = perfil?.rol ?? "user";
 
   useEffect(() => {
     onSearch(busqueda.trim());
@@ -83,6 +80,12 @@ function HomeHeader({ onSearch, onShowCountsOnlyChange }: HomeHeaderProps) {
           </View>
         </View>
 
+        <View style={[styles.filtroContainer, { marginVertical: 6 }]}>
+          {useGPS && settings && (
+            <LocationChip location={settings?.lastGPSLocation} />
+          )}
+        </View>
+
         <View style={styles.searchBarContainer}>
           <View style={styles.buscadorContainer}>
             <Ionicons
@@ -103,8 +106,11 @@ function HomeHeader({ onSearch, onShowCountsOnlyChange }: HomeHeaderProps) {
         </View>
 
         <View style={styles.filtroContainer}>
-          {useGPS && settings && (
-            <LocationChip location={settings?.lastGPSLocation} />
+          <OnlineFilterCheckBox style={styles.filtroColumn} />
+          {isWorker(rol) ? (
+            <WorkerState style={styles.filtroColumn} />
+          ) : (
+            <View style={styles.filtroColumn} />
           )}
         </View>
       </View>
@@ -126,7 +132,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
   },
   saludoContainer: {
     flex: 1,
@@ -162,7 +167,10 @@ const styles = StyleSheet.create({
   },
   filtroContainer: {
     flexDirection: "row",
-    alignItems: "center",
+    gap: 8,
+  },
+  filtroColumn: {
+    flex: 1,
   },
   iconButton: {
     marginLeft: 12,

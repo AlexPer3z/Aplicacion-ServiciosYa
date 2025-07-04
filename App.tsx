@@ -1,7 +1,9 @@
 import "react-native-gesture-handler";
 
-import React from "react";
-import { NavigationContainer } from "@react-navigation/native";
+import React, {  } from "react";
+import {
+  NavigationContainer,
+} from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as SplashScreen2 from "expo-splash-screen";
@@ -13,6 +15,8 @@ import ToastManager from "toastify-react-native";
 
 import MainStackNavigator from "./navigation/MainAppStackNavigator";
 import AuthStackNavigator from "./navigation/AuthStackNavigator";
+import { navegationLinkin } from "./lib/utils/navegation";
+import { useNotificationHandler } from "./lib/hooks/useNotificationHandler";
 
 SplashScreen2.setOptions({
   duration: 1000,
@@ -21,6 +25,7 @@ SplashScreen2.setOptions({
 
 export default function App() {
   const { isInitializing, isAuth } = useAuth(queryClient);
+  const { navigationRef, handleInitialNotification } = useNotificationHandler();
 
   if (isInitializing) return null;
 
@@ -28,7 +33,11 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <NavigationContainer>
+          <NavigationContainer
+            ref={navigationRef}
+            linking={navegationLinkin}
+            onReady={handleInitialNotification}
+          >
             <AnimatedSwitcher condition={isAuth}>
               <MainStackNavigator />
               <AuthStackNavigator />

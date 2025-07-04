@@ -14,3 +14,9 @@ export interface LocationItem {
   lng: number;
   isoCountryCode?: string;
 }
+
+export interface LocationParams {
+  search_lat: number | null;
+  search_lon: number | null;
+  search_radius_meters: number | null;
+}

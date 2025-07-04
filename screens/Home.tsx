@@ -4,6 +4,7 @@ import {
   StyleSheet,
   ImageBackground,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,7 +17,7 @@ import { useOnboarding } from "../lib/hooks/useOnboarding";
 import { useHomeData } from "../lib/hooks/useHomeData";
 
 // Refactored Components
-import { BottomNavBar } from "../components/home/BottomNavBar";
+import BottomNavBar from "../components/home/BottomNavBar";
 import { CategoryList } from "../components/home/CategoryList";
 import { ProfileIncompleteWarning } from "../components/home/ProfileIncompleteWarning";
 import { DniPendingWarning } from "../components/home/DniPendingWarning";
@@ -25,6 +26,8 @@ import ChatBotModal from "../components/ChatBotModal";
 import LoadingView from "../components/LoadingView";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { MainStackParamList } from "../types/navigation";
+import FloatingButtonMenu from "../components/FloatingButtonMenu";
+import { withSuspense } from "../components/withSuspense";
 
 type Props = NativeStackScreenProps<MainStackParamList, "Home">;
 
@@ -95,12 +98,12 @@ function Home({ navigation }: Props) {
             />
           </Suspense>
 
-          <TouchableOpacity
+          {/* <TouchableOpacity
             onPress={() => setChatVisible(true)}
             style={styles.fab}
           >
             <Ionicons name="chatbubble-ellipses" size={28} color="#fff" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           <ChatBotModal
             visible={chatVisible}
@@ -114,7 +117,7 @@ function Home({ navigation }: Props) {
   );
 }
 
-export default withModalProvider(Home);
+export default withModalProvider(withSuspense(Home, <LoadingView />));
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#00B8A9" },

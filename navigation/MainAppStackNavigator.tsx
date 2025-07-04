@@ -22,6 +22,8 @@ import VerificacionPendiente from "../screens/VerificacionPendiente";
 import { useGPSLocation } from "../lib/hooks/useGPSLocation";
 import type { MainStackParamList } from "../types/navigation";
 import type { FC, PropsWithChildren } from "react";
+import OnlineWorkers from "../screens/OnlineWorkers";
+import { useNotifications } from "../lib/hooks/useNotifications";
 
 const withSafeArea = <P extends object>(Component: FC<P>) => {
   const WrappedComponent: FC<P> = (props: PropsWithChildren<P>) => (
@@ -36,6 +38,7 @@ const withSafeArea = <P extends object>(Component: FC<P>) => {
 const Stack = createNativeStackNavigator<MainStackParamList>();
 
 export default function MainStackNavigator() {
+  useNotifications();
   useGPSLocation();
   return (
     <Stack.Navigator
@@ -89,6 +92,9 @@ export default function MainStackNavigator() {
         component={withSafeArea(PerfilPendienteDetalle)}
       />
       <Stack.Screen name="Maps" component={Maps} />
+      <Stack.Group screenOptions={{ presentation: "modal" }}>
+        <Stack.Screen name="OnlineWorkers" component={OnlineWorkers} />
+      </Stack.Group>
     </Stack.Navigator>
   );
 }

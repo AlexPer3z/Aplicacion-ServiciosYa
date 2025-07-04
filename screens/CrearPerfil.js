@@ -17,8 +17,11 @@ import * as FileSystem from 'expo-file-system';
 import { supabase } from '../lib/supabase';
 import { useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
+import { useQueryClient } from '@tanstack/react-query';
+import { perfilQueryKey } from '../lib/queryOptions';
 
 export default function FormularioRegistroDNI() {
+const queryClient = useQueryClient();
 const [nombre, setNombre] = useState('');
 const [apellido, setApellido] = useState('');
 const [edad, setEdad] = useState('');
@@ -172,6 +175,8 @@ try {
     })
     .eq('id', user.id);
 
+  // Invalidar la caché del perfil, necesario cada vez que se hagan cambios al perfil del usuario
+  await queryClient.invalidateQueries({ queryKey: perfilQueryKey });
   Alert.alert('✅ Éxito', 'Datos guardados correctamente.');
   navigation.navigate('Home');
 } catch (error) {

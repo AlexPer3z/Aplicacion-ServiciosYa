@@ -59,6 +59,7 @@
     "react-native-svg": "15.11.2",
     "react-native-webview": "13.13.5",
     "toastify-react-native": "^7.2.0",
+    "type-fest": "^4.41.0",
     "undefined": "expo-auth-session/providers/google",
     "uuid": "^11.1.0"
   },
@@ -67,6 +68,7 @@
     "@biomejs/biome": "1.9.4",
     "@types/lodash": "^4.17.17",
     "@types/react": "~19.0.10",
+    "supabase": "^2.30.4",
     "typescript": "~5.8.3"
   },
   "private": true,

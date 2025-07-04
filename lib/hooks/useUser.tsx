@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { perfilQueryOptions, sessionQueryOptions } from "../queryOptions";
 import { useUserSettings } from "./useUserSettings";
 
@@ -19,5 +19,19 @@ export function useUser() {
     isLoggedIn,
     isProfileComplete,
     isDniVerified,
+  };
+}
+
+export function useSuspenseProfile() {
+  const { data: profile } = useSuspenseQuery(perfilQueryOptions);
+  const askDniVerification = profile.perfil_completo && !profile.dni_verificado;
+  const askProfileCompletion = !profile.perfil_completo;
+  const isUserRestricted = askDniVerification || askProfileCompletion;
+
+  return {
+    ...profile,
+    askDniVerification,
+    askProfileCompletion,
+    isUserRestricted,
   };
 }

@@ -2,10 +2,14 @@
 import { useEffect, useCallback } from "react";
 import * as Linking from "expo-linking";
 import * as SplashScreen from "expo-splash-screen";
-import { Alert, AppState, type AppStateStatus } from "react-native";
+import { Alert, AppState, Platform, type AppStateStatus } from "react-native";
 import { supabase } from "../supabase";
 import type { Session } from "@supabase/supabase-js";
-import { useQuery, type QueryClient } from "@tanstack/react-query";
+import {
+  focusManager,
+  useQuery,
+  type QueryClient,
+} from "@tanstack/react-query";
 import { lastUserId } from "../storage";
 import { clearSettingsToStorage, queryKey } from "./useUserSettings";
 import { sessionQueryOptions } from "../queryOptions";
@@ -145,6 +149,12 @@ export function useAuth(queryClient: QueryClient) {
     handleUserChange();
   }, [session?.user?.id, queryClient]); // Solo se ejecuta cuando cambia el ID de usuario
 
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", onAppStateChange);
+
+    return () => subscription.remove();
+  }, []);
+
   return {
     session,
     isInitializing,
@@ -154,4 +164,10 @@ export function useAuth(queryClient: QueryClient) {
 
 function onSignedIn(session: Session, client: QueryClient) {
   // TODO
+}
+
+function onAppStateChange(status: AppStateStatus) {
+  if (Platform.OS !== "web") {
+    focusManager.setFocused(status === "active");
+  }
 }

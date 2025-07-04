@@ -30,7 +30,7 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="solucionesya"/>
-        <data android:scheme="exp+servicios-ya"/>
+        <data android:scheme="exp+apptrabajo"/>
       </intent-filter>
     </activity>
   </application>
