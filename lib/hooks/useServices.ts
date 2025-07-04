@@ -1,15 +1,15 @@
-import {
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { supabase } from "../supabase";
 import type { Servicio } from "../../types/servicios";
 import {
+  query as settingsQuery,
   queryKey,
   queryKey as settingsQueryKey,
   type UserSettings,
 } from "./useUserSettings";
 import { useCallback } from "react";
+import { getLocationParamsFromClient } from "../utils/location";
+import type { WorkerStatus } from "../../types/worker";
 
 const fetchServiciosByCategory = async (
   categoria: string,
@@ -41,7 +41,7 @@ const fetchServiciosCatgoryByRadius = async (
   search_radius_meters: number,
 ) => {
   const { data, error } = await supabase.rpc(
-    "get_services_by_category_in_radius",
+    "get_servicios_with_worker_status",
     {
       search_lat,
       search_lon,
@@ -60,21 +60,30 @@ export const useServicesByCategory = (categoria: string) => {
   return useSuspenseQuery({
     queryKey: ["servicios", categoria],
     queryFn: async ({ client }) => {
-      const settings = client.getQueryData<UserSettings>(settingsQueryKey);
-      if (!settings) {
-        throw Error("La configuracion del usuario no esta disponible.");
-      }
-      // si el gps esta desactivado se utiliza la api global para obtener los servicios
-      if (!settings.useGPS || !settings.lastGPSLocation) {
-        return fetchServiciosByCategory(categoria);
+      const locationParams = getLocationParamsFromClient(client);
+
+      const { data, error } = await supabase.rpc(
+        "get_servicios_with_worker_status",
+        { ...locationParams, p_categoria: categoria },
+      );
+      if (error) {
+        throw new Error(error.message);
       }
 
-      return await fetchServiciosCatgoryByRadius(
-        categoria,
-        settings.lastGPSLocation.latitude,
-        settings.lastGPSLocation.longitude,
-        settings.searchRadius,
-      );
+      return data || [];
+    },
+    // sorting: ONLINE first, then AWAY, then OFFLINE, then others; preserve original order within same status
+    select: (data) => {
+      const statusOrder: Record<string, number> = {
+        ONLINE: 0,
+        AWAY: 1,
+        OFFLINE: 2,
+      };
+      return data.slice().sort((a, b) => {
+        const aOrder = statusOrder[a.worker_status] ?? 99;
+        const bOrder = statusOrder[b.worker_status] ?? 99;
+        return aOrder - bOrder;
+      });
     },
   });
 };
@@ -86,24 +95,14 @@ export function useServicesCount() {
   const servicios = useSuspenseQuery({
     queryKey: servicesCountQuerKey,
     queryFn: async ({ client }) => {
-      const settings = client.getQueryData<UserSettings>(queryKey);
-      if (!settings) {
-        throw Error("No se encontro la configuracion del usuario");
-      }
-      if (!settings.useGPS) {
-        return await fetchServiciosCountByCategory();
-      }
-      const location = settings.lastGPSLocation;
-      if (!location) {
-        throw Error("No se encontro la ubicacion del usuario");
-      }
+      const location = getLocationParamsFromClient(client);
+      const OnlyOnlineWorkers = (await client.ensureQueryData(settingsQuery))
+        .OnlyOnlineWorkers;
+      const worker_status_filter: WorkerStatus[] | null =
+        OnlyOnlineWorkers === true ? ["ONLINE"] : null;
       const { data, error } = await supabase.rpc(
         "count_services_by_status_in_radius",
-        {
-          search_lat: location.latitude,
-          search_lon: location.longitude,
-          search_radius_meters: settings.searchRadius,
-        },
+        { ...location, worker_status_filter, p_categoria: null },
       );
       if (error) {
         throw error;

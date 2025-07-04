@@ -19,6 +19,7 @@ export type MainStackParamList = {
   PerfilesPendientes: undefined;
   PerfilPendienteDetalle: undefined;
   Maps: undefined;
+  OnlineWorkers: undefined;
 };
 
 // This type will be used by components for navigation prop
