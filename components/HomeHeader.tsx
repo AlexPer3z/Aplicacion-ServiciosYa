@@ -21,13 +21,17 @@ import OnlineFilterCheckBox from "./home/OnlineFilterCheckBox";
 interface HomeHeaderProps {
   onSearch: (query: string) => void;
   onShowCountsOnlyChange: (value: boolean) => void;
+  notificationsCount: number; // <-- agregado
 }
 
-function HomeHeader({ onSearch, onShowCountsOnlyChange }: HomeHeaderProps) {
+function HomeHeader({
+  onSearch,
+  onShowCountsOnlyChange,
+  notificationsCount, // <-- agregado
+}: HomeHeaderProps) {
   const navigation = useMainNavigation();
   const { settings } = useUserSettings();
   const [soloConServicios, setSoloConServicios] = useState(false);
-  const [notificacionesNoLeidas, setNotificacionesNoLeidas] = useState(0);
   const [busqueda, setBusqueda] = useState("");
   const { data: perfil } = useQuery(perfilQueryOptions);
   const useGPS = settings?.useGPS ?? false;
@@ -39,7 +43,7 @@ function HomeHeader({ onSearch, onShowCountsOnlyChange }: HomeHeaderProps) {
 
   useEffect(() => {
     onShowCountsOnlyChange(soloConServicios);
-  }, [soloConServicios]);
+  }, [soloConServicios, onShowCountsOnlyChange]);
 
   return (
     <View style={styles.header}>
@@ -55,9 +59,9 @@ function HomeHeader({ onSearch, onShowCountsOnlyChange }: HomeHeaderProps) {
               style={styles.iconButton}
             >
               <Ionicons name="notifications-outline" size={26} color="#fff" />
-              {notificacionesNoLeidas > 0 && (
+              {notificationsCount > 0 && (
                 <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{notificacionesNoLeidas}</Text>
+                  <Text style={styles.badgeText}>{notificationsCount}</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -183,26 +187,6 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     borderWidth: 1.5,
     borderColor: "#fff",
-  },
-  checkboxContainer: {
-    backgroundColor: "#FFA13C",
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    elevation: 3, // para dar sombra en Android
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    flexDirection: "row",
-    width: 160,
-    // justifySelf: "center",
-  },
-  checkboxLabel: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: "#fff",
-  },
-  checkIcon: {
-    alignSelf: "center",
   },
   badgeText: {
     color: "#fff",

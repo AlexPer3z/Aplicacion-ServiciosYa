@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Alert,
   Pressable,
+  Text,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -42,7 +43,42 @@ function NavButton({
   );
 }
 
-const BottomNavBar = () => {
+function BadgeNavButton({
+  name,
+  badgeCount = 0,
+  ...linkProps
+}: NavButtonProps & LinkProps<MainStackParamList> & { badgeCount?: number }) {
+  const props = useLinkProps(linkProps);
+  return (
+    <Pressable
+      {...props}
+      style={({ pressed }) => [
+        {
+          backgroundColor: pressed ? "#ffd8b0" : "transparent",
+          borderRadius: 20,
+          padding: 8,
+          marginHorizontal: 2,
+          transform: [{ scale: pressed ? 0.95 : 1 }],
+        },
+      ]}
+    >
+      <Ionicons name={name} size={28} color="#fff" />
+      {badgeCount > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>
+            {badgeCount > 99 ? "99+" : badgeCount}
+          </Text>
+        </View>
+      )}
+    </Pressable>
+  );
+}
+
+interface BottomNavBarProps {
+  unreadMessagesCount?: number;
+}
+
+const BottomNavBar = ({ unreadMessagesCount = 0 }: BottomNavBarProps) => {
   const { rol, isUserRestricted } = useSuspenseProfile();
   const navigation = useMainNavigation();
   const insets = useSafeAreaInsets();
@@ -94,7 +130,12 @@ const BottomNavBar = () => {
         </TouchableOpacity>
       )}
 
-      <NavButton name="chatbubble-ellipses-outline" screen="ChatIA" />
+      <BadgeNavButton
+        name="chatbubble-ellipses-outline"
+        screen="ChatIA"
+        badgeCount={unreadMessagesCount}
+      />
+
       <NavButton name="settings-outline" screen="Configuracion" />
 
       {isAdmin(rol) && (
@@ -122,6 +163,10 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#f26700",
   },
+  navButton: {
+    position: "relative",
+    padding: 6,
+  },
   publishButton: {
     backgroundColor: "#00B9ba",
     padding: 12,
@@ -129,5 +174,25 @@ const styles = StyleSheet.create({
     top: -25,
     elevation: 5,
   },
-  disabledButton: { backgroundColor: "#ccc" },
+  disabledButton: {
+    backgroundColor: "#ccc",
+  },
+  badge: {
+    position: "absolute",
+    top: -5,
+    right: -10,
+    backgroundColor: "#f00",
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  badgeText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
 });

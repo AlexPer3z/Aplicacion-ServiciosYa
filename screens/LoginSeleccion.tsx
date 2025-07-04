@@ -14,6 +14,8 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import BtnLoginGoogle from '../components/BtnLoginGoogle';
 import { saveAuthSession } from '../lib/storage';
 
+import AppleSignInButton from "../components/AppleSignInButton";
+
 WebBrowser.maybeCompleteAuthSession();
 
 const LoginButton = ({ icon, label, onPress, style = {} }) => (
@@ -112,6 +114,7 @@ export default function LoginSelect({ navigation }) {
             onPress={handleHuellaLogin}
           />
           <BtnLoginGoogle onLogin={handleLoginGoogle} />
+          <AppleSignInButton />
         </View>
 
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>

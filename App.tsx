@@ -12,7 +12,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import queryClient from "./lib/reactQuery";
 import AnimatedSwitcher from "./components/AnimatedSwitcher";
 import ToastManager from "toastify-react-native";
-
+import { AppProvider } from './lib/context/AppContext';
 import MainStackNavigator from "./navigation/MainAppStackNavigator";
 import AuthStackNavigator from "./navigation/AuthStackNavigator";
 import { navegationLinkin } from "./lib/utils/navegation";
@@ -33,6 +33,7 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
+          <AppProvider>
           <NavigationContainer
             ref={navigationRef}
             linking={navegationLinkin}
@@ -44,6 +45,7 @@ export default function App() {
             </AnimatedSwitcher>
             <ToastManager showCloseIcon={false} />
           </NavigationContainer>
+          </AppProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

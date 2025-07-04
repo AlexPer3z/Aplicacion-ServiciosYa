@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ActivityIndicator,
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,15 +27,17 @@ export default function ChatIndividual({ route, navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [estrellas, setEstrellas] = useState(0);
 
+  const [loadingMsg, setLoadingMsg] = useState(true);
+
   useEffect(() => {
-    obtenerUsuarioYMensajes();
-
-    intervalRef.current = setInterval(() => {
-      cargarMensajes();
-    }, 3000);
-
+    obtenerUsuarioYMensajes(); 
+    
+    // Función de limpieza que se ejecutará al desmontar el componente
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     };
   }, [chatId]);
 
@@ -47,15 +50,27 @@ export default function ChatIndividual({ route, navigation }) {
       if (error || !user) {
         console.error('No se pudo obtener el usuario:', error);
         return;
-      }
+      } 
       setUsuarioId(user.id);
-      cargarMensajes();
+      iniciarCargarMensajes(user.id);
     } catch (error) {
       console.error('Error en obtenerUsuarioYMensajes:', error);
     }
   };
 
-  const cargarMensajes = async () => {
+  const iniciarCargarMensajes = async (userId) => {
+      // Limpiar intervalo existente si hay uno
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+
+      // Configurar intervalo para cargar mensajes periódicamente
+      intervalRef.current = setInterval(() => {
+        cargarMensajes(userId);
+      }, 3000);
+  }
+
+  const cargarMensajes = async (userId) => {
   try {
     const { data, error } = await supabase
       .from('mensajes')
@@ -68,13 +83,13 @@ export default function ChatIndividual({ route, navigation }) {
       return;
     }
 
-    setMensajes(data);
+    setLoadingMsg(false)
+    setMensajes(data); 
 
     // Marcar como leídos los mensajes que no son míos (yo soy el receptor)
     const mensajesNoLeidos = data.filter(
-      (msg) => msg.remitente_id !== usuarioId && !msg.leido_por_receptor
-    );
-
+      (msg) => msg.remitente_id?.toString().trim() !== userId?.toString().trim() && !msg.leido_por_receptor
+    ); 
     if (mensajesNoLeidos.length > 0) {
       const ids = mensajesNoLeidos.map((msg) => msg.id);
       await supabase
@@ -82,6 +97,7 @@ export default function ChatIndividual({ route, navigation }) {
         .update({ leido_por_receptor: true })
         .in('id', ids);
     }
+      
 
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
@@ -102,13 +118,13 @@ export default function ChatIndividual({ route, navigation }) {
       remitente_id: usuarioId,
       contenido: nuevoMensaje.trim(),
       leido_por_emisor: true, // Emisor ya lo leyó
+      leido_por_receptor: false,
     });
 
     if (error) {
       console.error('Error al enviar mensaje:', error.message);
     } else {
-      setNuevoMensaje('');
-      cargarMensajes();
+      setNuevoMensaje(''); 
     }
   } catch (error) {
     console.error('Error en enviarMensaje:', error);
@@ -191,6 +207,13 @@ export default function ChatIndividual({ route, navigation }) {
         </TouchableOpacity>
       </View>
 
+      {loadingMsg  && (
+        <View style={styles.spinnerContainer}>
+          <ActivityIndicator size="large" color="#FFA13C" />
+          <Text style={styles.spinnerText}>Cargando mensajes...</Text>
+        </View>
+      )}
+      
       <FlatList
         ref={flatListRef}
         data={mensajes}
@@ -259,6 +282,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#E8FAF7', // Turquesa clarito
+  },
+  spinnerContainer: { 
+    justifyContent: 'center',
+    alignItems: 'center', 
+  },
+  spinnerText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#555',
   },
   header: {
     flexDirection: 'row',

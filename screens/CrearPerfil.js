@@ -31,7 +31,6 @@ const [fotoFrente, setFotoFrente] = useState(null);
 const [fotoDorso, setFotoDorso] = useState(null);
 const [aceptaTerminos, setAceptaTerminos] = useState(false);
 const [subiendo, setSubiendo] = useState(false);
-const [ciudad, setCiudad] = useState('');
 const [domicilio, setDomicilio] = useState('');
 const [calle, setCalle] = useState('');
 
@@ -43,7 +42,6 @@ dni: false,
 fotoPerfil: false,
 fotoFrente: false,
 fotoDorso: false,
-ciudad: false,
 domicilio: false,
 calle: false,
 terminos: false,
@@ -51,20 +49,6 @@ terminos: false,
 
 const navigation = useNavigation();
 
-const ciudadesCatamarca = [
-'San Fernando del Valle de Catamarca',
-'Belén',
-'Andalgalá',
-'Capayán',
-'Santa María',
-'Tinogasta',
-'Fray Mamerto Esquiú',
-'El Alto',
-'La Paz',
-'Antofagasta de la Sierra',
-'Pomán',
-'Poman',
-];
 
 const seleccionarImagen = async (setImage, tipo) => {
 try {
@@ -138,7 +122,7 @@ return publicUrlData.publicUrl;
 };
 
 const enviarFormulario = async () => {
-if (!nombre || !apellido || !edad || !dni || !fotoFrente || !fotoDorso || !fotoPerfil || !ciudad || !domicilio || !calle) {
+if (!nombre || !apellido || !edad || !dni || !fotoFrente || !fotoDorso || !fotoPerfil || !domicilio || !calle) {
 Alert.alert('Faltan datos', 'Por favor completá todos los campos.');
 return;
 }
@@ -169,16 +153,17 @@ try {
       dni_dorso: urlDorso,
       dni_verificado: false,
       perfil_completo: true,
-      ciudad,
       domicilio,
       calle,
     })
     .eq('id', user.id);
 
+    
   // Invalidar la caché del perfil, necesario cada vez que se hagan cambios al perfil del usuario
   await queryClient.invalidateQueries({ queryKey: perfilQueryKey });
   Alert.alert('✅ Éxito', 'Datos guardados correctamente.');
-  navigation.navigate('Home');
+  navigation.navigate('pagoInicial');
+
 } catch (error) {
   console.log('Error al enviar:', error);
   Alert.alert('❌ Error', 'No se pudo enviar la información.');
@@ -295,29 +280,7 @@ return (
   {fotoDorso && <Image source={{ uri: fotoDorso }} style={styles.imagen} />}
   {validaciones.fotoDorso && <Text style={styles.validacion}>✔️ Imagen seleccionada</Text>}
 
-  <Text style={styles.subtitulo}>Ciudad</Text>
-  <View style={[styles.pickerContainer, !validaciones.ciudad && ciudad !== '' ? styles.inputError : null]}>
-    <Picker
-      selectedValue={ciudad}
-      onValueChange={(value) => {
-        setCiudad(value);
-        setValidaciones((prev) => ({ ...prev, ciudad: value !== '' }));
-      }}
-      enabled={!subiendo}
-      style={styles.picker}
-      dropdownIconColor="#1E90FF"
-    >
-      <Picker.Item label="Seleccione una ciudad" value="" />
-      {ciudadesCatamarca.map((c, index) => (
-        <Picker.Item key={index} label={c} value={c} />
-      ))}
-    </Picker>
-  </View>
-  {validaciones.ciudad ? (
-    <Text style={styles.validacion}>✔️ Ciudad seleccionada</Text>
-  ) : (
-    ciudad !== '' && <Text style={styles.invalidacion}>⚠️ Debes seleccionar una ciudad.</Text>
-  )}
+  
 
   <TextInput
     style={[styles.input, !validaciones.domicilio && domicilio !== '' ? styles.inputError : null]}

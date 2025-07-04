@@ -92,8 +92,8 @@ android {
         applicationId 'com.alex_6775.appTrabajo'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0.1"
+        versionCode 8
+        versionName "8.0.0"
     }
     signingConfigs {
         debug {
