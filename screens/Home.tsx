@@ -105,6 +105,7 @@ function Home({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      
       <ImageBackground
         source={require("../assets/fondo_home.png")}
         style={styles.background}
@@ -118,7 +119,7 @@ function Home({ navigation }: Props) {
               unreadMessagesCount={unreadMessagesCount}
             />
 
-
+          
           {askProfileCompletion && (
             <ProfileIncompleteWarning
               onPress={() => navigation.navigate("CrearPerfil")}
@@ -126,16 +127,17 @@ function Home({ navigation }: Props) {
           )}
 
           {askDniVerification && <DniPendingWarning />}
+          
+       
+  <CategoryList
+    busqueda={busqueda}
+    onCategoryPress={handleCategoryPress}
+    isUserRestricted={isUserRestricted}
+    refreshing={refreshing}
+    onRefresh={onRefresh}
+  />
 
-          <Suspense fallback={<LoadingView withNavBarMargin />}>
-            <CategoryList
-              busqueda={busqueda}
-              onCategoryPress={handleCategoryPress}
-              isUserRestricted={isUserRestricted}
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-            />
-          </Suspense>
+          
 
           <TouchableOpacity
             onPress={() => setChatVisible(true)}
@@ -156,7 +158,7 @@ function Home({ navigation }: Props) {
         isUserRestricted={isUserRestricted}
         unreadMessagesCount={unreadMessagesCount}
       />
-
+      
     </SafeAreaView>
   );
 }

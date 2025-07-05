@@ -81,41 +81,19 @@ export const useServicesByCategory = (categoria: string) => {
 
 export const servicesCountQuerKey = ["user", "services", "count"];
 
-export function useServicesCount() {
-  const client = useQueryClient();
-  const servicios = useSuspenseQuery({
-    queryKey: servicesCountQuerKey,
-    queryFn: async ({ client }) => {
-      const settings = client.getQueryData<UserSettings>(queryKey);
-      if (!settings) {
-        throw Error("No se encontro la configuracion del usuario");
-      }
-      if (!settings.useGPS) {
-        return await fetchServiciosCountByCategory();
-      }
-      const location = settings.lastGPSLocation;
-      if (!location) {
-        throw Error("No se encontro la ubicacion del usuario");
-      }
-      const { data, error } = await supabase.rpc(
-        "count_services_by_status_in_radius",
-        {
-          search_lat: location.latitude,
-          search_lon: location.longitude,
-          search_radius_meters: settings.searchRadius,
-        },
-      );
-      if (error) {
-        throw error;
-      }
+import { useQuery } from "@tanstack/react-query";
 
-      return data;
+export function useServicesCount() {
+  const servicios = useQuery({
+    queryKey: ["conteo-servicios"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("count_active_by_category");
+
+      if (error) throw new Error(error.message);
+      return data; // debe ser un array tipo [{ categoria: string, count: number }]
     },
   });
 
-  const refetch = useCallback(() => {
-    client.invalidateQueries({ queryKey: servicesCountQuerKey });
-  }, [client]);
-
-  return { servicios, refetch };
+  return { servicios };
 }
+

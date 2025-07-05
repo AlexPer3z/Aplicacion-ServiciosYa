@@ -1,31 +1,63 @@
-// components/AppleSignInButton.tsx
-import * as React from "react";
-import { Alert } from "react-native";
-import * as WebBrowser from "expo-web-browser";
-import * as AuthSession from "expo-auth-session";
-import { Button } from "react-native";
-import { supabase } from "../lib/supabase"; // Ajustar según tu path
-
-WebBrowser.maybeCompleteAuthSession();
-
-const redirectUri = AuthSession.makeRedirectUri({
-  scheme: "apptrabajo",
-});
+import React from "react";
+import { Alert, Platform } from "react-native";
+import * as AppleAuthentication from "expo-apple-authentication";
+import { supabase } from "../lib/supabase";
 
 export default function AppleSignInButton() {
-  const handleAppleLogin = async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "apple",
-      options: {
-        redirectTo: redirectUri,
-      },
-    });
+  const [loading, setLoading] = React.useState(false);
 
-    if (error) {
-      console.log("Error al iniciar sesión con Apple:", error.message);
-      Alert.alert("Error", error.message);
+  const handleAppleLogin = async () => {
+    if (Platform.OS !== "ios") {
+      Alert.alert("Disponible solo en iOS");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const appleCredential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      if (!appleCredential.identityToken) {
+        Alert.alert("Error", "No se obtuvo token de Apple.");
+        return;
+      }
+
+      const { error } = await supabase.auth.signInWithIdToken({
+        provider: "apple",
+        token: appleCredential.identityToken,
+      });
+
+      if (error) {
+        console.log("Error Supabase:", error.message);
+        Alert.alert("Error", error.message);
+      } else {
+        Alert.alert("¡Sesión iniciada con Apple!");
+      }
+    } catch (error: any) {
+      if (error.code === "ERR_CANCELED") {
+        Alert.alert("Cancelado por el usuario");
+      } else {
+        console.error("Apple login error", error);
+        Alert.alert("Error", "No se pudo iniciar sesión.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
-  return <Button title="Iniciar sesión con Apple" onPress={handleAppleLogin} />;
+  return (
+    <AppleAuthentication.AppleAuthenticationButton
+      buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+      buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+      cornerRadius={10}
+      style={{ width: "100%", height: 50 }}
+      onPress={handleAppleLogin}
+      disabled={loading}
+    />
+  );
 }
