@@ -1,19 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Pressable,
   View,
   Text,
   StyleSheet,
-  ScrollView,
-  Alert,
   TouchableOpacity,
   Modal,
   Dimensions,
+  FlatList,
 } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
 import { supabase } from "../lib/supabase";
 import NavInferior from "../components/NavInferior";
-import { useUserData } from "../lib/hooks/useUserData";
 import { Ionicons } from "@expo/vector-icons";
 import ReportServiceModal from "../components/servicios/ReporteModal";
 import {
@@ -21,13 +18,16 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type { MainStackParamList } from "../navigation/MainAppStackNavigator";
+import type { MainStackParamList } from "../types/navigation";
 import { useServicesByCategory } from "../lib/hooks/useServices";
 import type { Servicio } from "../types/servicios";
 import { useUser } from "../lib/hooks/useUser";
-import { Toast } from "toastify-react-native";
 import LoadingView from "../components/LoadingView";
 import showToast from "../lib/toast";
+import { withSuspense } from "../components/withSuspense";
+import ServicioItem from "../components/servicios/ServicioItem";
+import EmptyListComponent from "../components/EmptyListComponent";
+import BottomNavBar from "../components/home/BottomNavBar";
 
 const screenHeight = Dimensions.get("window").height;
 
@@ -36,8 +36,7 @@ type Props = NativeStackScreenProps<
   "ServiciosPorCategoria"
 >;
 
-export default function ServiciosPorCategoria({ route }: Props) {
-  const navigation = useNavigation();
+function ServiciosPorCategoria({ route, navigation }: Props) {
   const { categoria } = route.params;
   const { data: servicios, isPending } = useServicesByCategory(categoria);
   const { user } = useUser();
@@ -46,6 +45,7 @@ export default function ServiciosPorCategoria({ route }: Props) {
   const [confirmacionVisible, setConfirmacionVisible] = useState(false);
   const [reportVisible, setReportVisible] = useState(false);
   const insets = useSafeAreaInsets();
+
 
   // Estado para servicios contratados (array de IDs)
   const [serviciosContratados, setServiciosContratados] = useState<string[]>([]);
@@ -171,64 +171,44 @@ export default function ServiciosPorCategoria({ route }: Props) {
       style={{ flex: 1, paddingTop: 24, backgroundColor: "#F8F8F8" }}
     >
       <View style={{ flex: 1 }}>
-        <ScrollView
-          contentContainerStyle={[
-            styles.container,
-            { paddingBottom: insets.bottom + 24 },
-          ]}
+        <Text style={styles.title}>Servicios de {categoria}</Text>
+
+        <TouchableOpacity
+          style={styles.botonMapa}
+          onPress={() =>
+            navigation.navigate("Maps", {
+              categoria,
+              servicios,
+            })
+          }
         >
-          <Text style={styles.title}>Servicios de {categoria}</Text>
+          <Text style={styles.botonMapaTexto}>Ver en Mapa 🗺️</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.botonMapa}
-            onPress={() =>
-              navigation.navigate("Maps", {
-                categoria,
-                servicios,
-              })
-            }
-          >
-            <Text style={styles.botonMapaTexto}>Ver en Mapa 🗺️</Text>
-          </TouchableOpacity>
-
-          {servicios.length === 0 ? (
-            <Text style={styles.noServicios}>
-              No hay servicios disponibles en esta categoría.
-            </Text>
-          ) : (
-            servicios.map((servicio) => (
-              <TouchableOpacity
-                key={servicio.id}
-                style={styles.servicioCard}
-                onPress={() => {
-                  if (servicio.estado !== "pausado") {
-                    abrirModal(servicio);
-                  } else {
-                    Alert.alert(
-                      "Este servicio está pausado",
-                      "No se puede contratar este servicio por el momento.",
-                    );
-                  }
-                }}
-              >
-                <Text style={styles.servicioTitle}>{servicio.titulo}</Text>
-                <Text style={styles.servicioText}>
-                  Precio: {servicio.precio}
-                </Text>
-                <Text style={styles.servicioText}>
-                  Horario: {servicio.horario}
-                </Text>
-
-                {servicio.estado === "pausado" && (
-                  <View style={styles.pausadoOverlay}>
-                    <Text style={styles.pausadoText}>
-                      Anuncio pausado temporalmente por el dueño
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))
+        <FlatList
+          data={servicios}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <ServicioItem
+              servicio={item}
+              workerStatus={item.worker_status}
+              onPress={(id) => abrirModal(id)}
+            />
           )}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          ListEmptyComponent={
+            <EmptyListComponent
+              icon="wifi-off"
+              message="No hay servicios disponibles en esta categoría."
+            />
+          }
+          contentContainerStyle={{
+            paddingBottom: insets.bottom + 30,
+            paddingHorizontal: 12,
+            flexGrow: 1,
+          }}
+        />
+
 
           {/* MODAL DETALLE DEL SERVICIO */}
           <Modal
@@ -275,14 +255,15 @@ export default function ServiciosPorCategoria({ route }: Props) {
                         <Text style={styles.textoReportar}>Reportar</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity onPress={cerrarModal}>
-                      <Text style={styles.cancelar}>Cerrar</Text>
-                    </TouchableOpacity>
-                  </>
-                )}
-              </View>
+                  <TouchableOpacity onPress={cerrarModal}>
+                    <Text style={styles.cancelar}>Cerrar</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
-          </Modal>
+          </View>
+        </Modal>
+
 
           {/* MODAL DE CONFIRMACIÓN */}
           <Modal
@@ -345,13 +326,13 @@ export default function ServiciosPorCategoria({ route }: Props) {
             currentUserId={0}
           />
         )}
-
-        {/* NAV INFERIOR */}
-        <NavInferior />
       </View>
+      <BottomNavBar />
     </SafeAreaView>
   );
 }
+
+export default withSuspense(ServiciosPorCategoria, <LoadingView />);
 
 const styles = StyleSheet.create({
   container: {
@@ -509,6 +490,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 0.1,
   },
+
   botonReportar: {
   backgroundColor: '#FF4C4C',
   paddingVertical: 10,
@@ -524,5 +506,4 @@ textoReportar: {
   fontWeight: 'bold',
   fontSize: 14,
 },
-
 });

@@ -1,5 +1,5 @@
 // hooks/useLocation.ts
-import { type QueryFunction, queryOptions, useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import * as Location from "expo-location";
 import type { LocationData } from "../../types/location";
 

@@ -3,6 +3,7 @@ import {
   useMutation,
   useQueryClient,
   useSuspenseQuery,
+  queryOptions,
 } from "@tanstack/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { LocationData } from "../../types/location";
@@ -21,6 +22,7 @@ export interface UserSettings {
   lastGPSLocation: LocationData | null;
   searchRadius: number;
   showAllCategories: boolean;
+  OnlyOnlineWorkers: boolean;
 }
 
 /**
@@ -46,6 +48,7 @@ const defaultSettings: UserSettings = {
   lastGPSLocation: null,
   searchRadius: 10000,
   showAllCategories: true,
+  OnlyOnlineWorkers: false,
 };
 
 /**
@@ -53,7 +56,6 @@ const defaultSettings: UserSettings = {
  * Si no se encuentra configuración o hay un error de análisis, retorna la configuración predeterminada.
  */
 export async function getSettingsFromStorage(): Promise<UserSettings> {
-  console.log("leer");
   try {
     const rawSettings = await AsyncStorage.getItem(SETTINGS_STORAGE_KEY);
     if (rawSettings) {
@@ -99,6 +101,12 @@ export async function clearSettingsToStorage() {
   }
 }
 
+export const query = queryOptions({
+  queryKey,
+  queryFn: getSettingsFromStorage,
+  staleTime: Number.POSITIVE_INFINITY,
+});
+
 /**
  * Un wrapper de React Query para gestionar la configuración del usuario en la app.
  *
@@ -116,17 +124,13 @@ export function useUserSettings() {
     isLoading,
     isError,
     error,
-  } = useQuery({
-    queryKey,
-    queryFn: getSettingsFromStorage,
-    staleTime: Number.POSITIVE_INFINITY,
-  });
+  } = useSuspenseQuery(query);
 
   // The hook `useMutation` to handle updates.
   // THIS IS THE MODIFIED PART
   const { mutate, isPending: isUpdating } = useMutation({
     // The new mutation function now accepts a PARTIAL settings object.
-    mutationFn: async (newPartialSettings: Partial<UserSettings>) => {
+    mutationFn: (newPartialSettings: Partial<UserSettings>) => {
       // 1. Get the current state from the query cache.
       const currentSettings =
         queryClient.getQueryData<UserSettings>(queryKey) || defaultSettings;
@@ -168,9 +172,5 @@ export function useUserSettings() {
 }
 
 export function useUserSettingsSuspense() {
-  return useSuspenseQuery({
-    queryKey,
-    queryFn: getSettingsFromStorage,
-    staleTime: Number.POSITIVE_INFINITY,
-  });
+  return useSuspenseQuery(query);
 }

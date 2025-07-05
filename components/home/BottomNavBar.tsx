@@ -1,45 +1,66 @@
-import React from "react";
-import { View, TouchableOpacity, StyleSheet, Alert, Text } from "react-native";
+import React, { memo } from "react";
+import {
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  Pressable,
+  Text,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-interface BottomNavBarProps {
-  rol: string;
-  isUserRestricted: boolean;
-  unreadMessagesCount?: number;
-}
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { isAdmin, isUser, isWorker } from "../../lib/utils/user";
+import { useMainNavigation } from "../../lib/hooks/useNavigation";
+import { useSuspenseProfile } from "../../lib/hooks/useUser";
+import type { MainStackParamList } from "../../types/navigation";
+import { useLinkProps, type LinkProps } from "@react-navigation/native";
 
 interface NavButtonProps {
   name: string;
-  screen: string;
-  badgeCount?: number;  // para el badge de notificaciones/mensajes
 }
 
-export const BottomNavBar = ({
-  rol,
-  isUserRestricted,
-  unreadMessagesCount = 0,
-}: BottomNavBarProps) => {
-  const navigation = useNavigation();
-  const insets = useSafeAreaInsets();
+function NavButton({
+  name,
+  ...linkProps
+}: NavButtonProps & LinkProps<MainStackParamList>) {
+  const props = useLinkProps(linkProps);
+  return (
+    <Pressable
+      {...props}
+      style={({ pressed }) => [
+        {
+          backgroundColor: pressed ? "#ffd8b0" : "transparent",
+          borderRadius: 20,
+          padding: 8,
+          marginHorizontal: 2,
+          transform: [{ scale: pressed ? 0.95 : 1 }],
+        },
+      ]}
+    >
+      <Ionicons name={name} size={28} color="#fff" />
+    </Pressable>
+  );
+}
 
-  const handlePressOfferService = () => {
-    if (isUserRestricted) {
-      Alert.alert(
-        "Acción no permitida",
-        "Debes completar y verificar tu perfil para ofrecer un servicio."
-      );
-      return;
-    }
-    navigation.navigate("OfrecerServicio");
-  };
-
-  // Botón Nav que puede mostrar badge
-  const NavButton = ({ name, screen, badgeCount = 0 }: NavButtonProps) => (
-    <TouchableOpacity
-      onPress={() => navigation.navigate(screen)}
-      style={styles.navButton}
+function BadgeNavButton({
+  name,
+  badgeCount = 0,
+  ...linkProps
+}: NavButtonProps & LinkProps<MainStackParamList> & { badgeCount?: number }) {
+  const props = useLinkProps(linkProps);
+  return (
+    <Pressable
+      {...props}
+      style={({ pressed }) => [
+        {
+          backgroundColor: pressed ? "#ffd8b0" : "transparent",
+          borderRadius: 20,
+          padding: 8,
+          marginHorizontal: 2,
+          transform: [{ scale: pressed ? 0.95 : 1 }],
+        },
+      ]}
     >
       <Ionicons name={name} size={28} color="#fff" />
       {badgeCount > 0 && (
@@ -49,23 +70,67 @@ export const BottomNavBar = ({
           </Text>
         </View>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
+}
+
+interface BottomNavBarProps {
+  unreadMessagesCount?: number;
+}
+
+const BottomNavBar = ({ unreadMessagesCount = 0 }: BottomNavBarProps) => {
+  const { rol, isUserRestricted } = useSuspenseProfile();
+  const navigation = useMainNavigation();
+  const insets = useSafeAreaInsets();
+
+  const handlePressOfferService = () => {
+    if (isUserRestricted) {
+      Alert.alert(
+        "Acción no permitida",
+        "Debes completar y verificar tu perfil para ofrecer un servicio.",
+      );
+      return;
+    }
+    navigation.navigate("OfrecerServicio");
+  };
+
+  const hanndleCenterPress = () => {
+    if (isUser(rol)) {
+      navigation.navigate("OnlineWorkers");
+      return;
+    }
+
+    handlePressOfferService();
+  };
 
   return (
-    <View style={[styles.navContainer, { paddingBottom: insets.bottom }]}>
+    <View style={[styles.navContainer, { marginBottom: insets.bottom }]}>
       <NavButton name="home-outline" screen="Home" />
       <NavButton name="list-outline" screen="MisServicios" />
 
-      <TouchableOpacity
-        onPress={handlePressOfferService}
-        style={[styles.publishButton, isUserRestricted && styles.disabledButton]}
-        disabled={isUserRestricted}
-      >
-        <Ionicons name="add-circle-outline" size={36} color="#fff" />
-      </TouchableOpacity>
+      {!isAdmin(rol) && (
+        <TouchableOpacity
+          onPress={hanndleCenterPress}
+          style={[
+            styles.publishButton,
+            isUserRestricted && styles.disabledButton,
+          ]}
+          disabled={isUserRestricted}
+        >
+          {isUser(rol) && (
+            <MaterialCommunityIcons
+              name="clipboard-list"
+              size={36}
+              color="white"
+            />
+          )}
+          {isWorker(rol) && (
+            <Ionicons name="add-circle-outline" size={36} color="#fff" />
+          )}
+        </TouchableOpacity>
+      )}
 
-      <NavButton
+      <BadgeNavButton
         name="chatbubble-ellipses-outline"
         screen="ChatIA"
         badgeCount={unreadMessagesCount}
@@ -73,12 +138,17 @@ export const BottomNavBar = ({
 
       <NavButton name="settings-outline" screen="Configuracion" />
 
-      {(rol === "admin" || rol === "verificador") && (
-        <NavButton name="shield-checkmark-outline" screen="PerfilesPendientes" />
+      {isAdmin(rol) && (
+        <NavButton
+          name="shield-checkmark-outline"
+          screen="PerfilesPendientes"
+        />
       )}
     </View>
   );
 };
+
+export default memo(BottomNavBar);
 
 const styles = StyleSheet.create({
   navContainer: {
@@ -89,7 +159,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    paddingVertical: 10,
     backgroundColor: "#FFA13C",
     borderTopWidth: 1,
     borderTopColor: "#f26700",

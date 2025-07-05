@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "../types/database.types";
+import type { Database } from "../types/db.overrides.types";
 
 // Configuración de Supabase (asegúrate de reemplazar con tus claves de Supabase)
 const supabaseUrl = "https://dhhhftzdfpqthzvkrqoz.supabase.co"; // Reemplaza con tu URL de Supabase

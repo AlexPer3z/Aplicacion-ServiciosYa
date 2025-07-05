@@ -64,7 +64,7 @@ export default function LoginSelect({ navigation }) {
   }, []);
 
   useEffect(() => {
-    registrarTokenPush();
+    // registrarTokenPush();
   }, []);
 
   const handleEmailLogin = () => navigation.navigate('Login');

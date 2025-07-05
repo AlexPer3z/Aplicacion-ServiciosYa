@@ -24,8 +24,10 @@ export const sessionQueryOptions = queryOptions({
   refetchOnMount: false,
 });
 
+export const perfilQueryKey = ["user", "perfil"];
+
 export const perfilQueryOptions = queryOptions({
-  queryKey: ["user", "perfil"],
+  queryKey: perfilQueryKey,
   queryFn: async ({ client }) => {
     const session = client.getQueryData<Session>(sessionQueryKey);
     // Get the user ID from the session
@@ -102,3 +104,24 @@ export const serviciosCategoriaQueryOptions = (lat: number, lng: number) =>
       return data;
     },
   });
+
+export const workerStatusQueryOptions = queryOptions({
+  queryKey: ["user", "worker", "status"],
+  queryFn: async ({ client }) => {
+    const session = client.getQueryData<Session>(sessionQueryKey);
+    if (!session || !session.user) {
+      throw new Error("No session or user found");
+    }
+    const { data, error } = await supabase
+      .from("workers")
+      .select("status")
+      .eq("user_id", session.user.id)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+    return data.status;
+  },
+  refetchInterval: 60 * 1000, // Refetch every minute
+});
