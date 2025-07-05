@@ -90,6 +90,8 @@ export const useServicesByCategory = (categoria: string) => {
 
 export const servicesCountQuerKey = ["user", "services", "count"];
 
+import { useQuery } from "@tanstack/react-query";
+
 export function useServicesCount() {
   const client = useQueryClient();
   const servicios = useSuspenseQuery({
@@ -107,14 +109,11 @@ export function useServicesCount() {
       if (error) {
         throw error;
       }
-
-      return data;
+      return data; // debe ser un array tipo [{ categoria: string, count: number }]
     },
   });
 
-  const refetch = useCallback(() => {
-    client.invalidateQueries({ queryKey: servicesCountQuerKey });
-  }, [client]);
-
-  return { servicios, refetch };
+  return { servicios };
 }
+
+

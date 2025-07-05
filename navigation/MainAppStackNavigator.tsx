@@ -26,6 +26,13 @@ import type { FC, PropsWithChildren } from "react";
 import OnlineWorkers from "../screens/OnlineWorkers";
 import { useNotifications } from "../lib/hooks/useNotifications";
 
+import SeleccionRol from "../screens/SeleccionRol";
+import RegistroCliente from "../screens/RegistroCliente";
+import RegistroTrabajador from "../screens/RegistroTrabajador";
+
+
+import InicioRouter from '../screens/InicioRouter'; 
+
 const withSafeArea = <P extends object>(Component: FC<P>) => {
   const WrappedComponent: FC<P> = (props: PropsWithChildren<P>) => (
     <SafeAreaView style={styles.screenContainer}>
@@ -44,8 +51,13 @@ export default function MainStackNavigator() {
   return (
     <Stack.Navigator
       screenOptions={{ headerShown: false }}
-      initialRouteName="Home"
+      initialRouteName="InicioRouter"
     >
+      <Stack.Screen name="InicioRouter" component={InicioRouter} />
+      <Stack.Screen name="SeleccionRol" component={withSafeArea(SeleccionRol)} />
+<Stack.Screen name="RegistroCliente" component={withSafeArea(RegistroCliente)} />
+<Stack.Screen name="RegistroTrabajador" component={withSafeArea(RegistroTrabajador)} />
+
       <Stack.Screen name="Home" component={Home} />
       <Stack.Screen name="CrearPerfil" component={withSafeArea(CrearPerfil)} />
       <Stack.Screen name="Perfil" component={withSafeArea(Perfil)} />

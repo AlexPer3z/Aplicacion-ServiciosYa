@@ -71,7 +71,7 @@ export default function PagoInicial() {
   return (
     <View style={styles.container}>
       <Text style={styles.mensajePrincipal}>
-        Para completar tu registro es necesario realizar un único pago de registro de <Text style={{ fontWeight: 'bold' }}>$1.500</Text>.
+        Para completar tu registro y por tu seguridad necesitamos realizar una verificación de pagos para validar tu identidad  <Text style={{ fontWeight: 'bold' }}>$1.500</Text>.
       </Text>
       <Text style={styles.mensajeAclaracion}>
         Este es un pago único y exclusivo por el alta de tu cuenta.{"\n"}
@@ -81,9 +81,24 @@ export default function PagoInicial() {
       {loading ? (
         <ActivityIndicator size="large" color="#FFA13C" />
       ) : (
+        <>
         <TouchableOpacity style={styles.botonPago} onPress={iniciarPago}>
           <Text style={styles.textoBoton}>Pagar $1.500 y registrar cuenta</Text>
         </TouchableOpacity>
+        {/* BOTÓN DE PRUEBA */}
+        <TouchableOpacity
+          style={[styles.botonPago, { backgroundColor: '#4A7C84', marginTop: 16 }]}
+          onPress={() => {
+            Alert.alert(
+              'Registro exitoso',
+              'Tu cuenta ha sido registrada correctamente. ¡Bienvenido!'
+            );
+            navigation.navigate('Home');
+          }}
+        >
+          <Text style={styles.textoBoton}>Botón de prueba (simular pago exitoso)</Text>
+        </TouchableOpacity>
+        </>
       )}
     </View>
   );

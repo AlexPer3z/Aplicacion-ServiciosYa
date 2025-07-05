@@ -1,10 +1,11 @@
 import React, { useCallback, useMemo } from "react";
-import { RefreshControl } from "react-native";
+import { RefreshControl, Text, View } from "react-native";
 import Animated, { FadeInDown, Layout } from "react-native-reanimated";
 import { CategorySection } from "./CategorySection";
 import { categoriasPorSeccion } from "../../lib/utils/categorias";
 import { useServicesCount } from "../../lib/hooks/useServices";
 import { useUserSettings } from "../../lib/hooks/useUserSettings";
+import LoadingView from "../../components/LoadingView";
 
 interface CategoryListProps {
   busqueda: string;
@@ -23,18 +24,25 @@ export const CategoryList = ({
   refreshing,
   onRefresh,
 }: CategoryListProps) => {
-  const {
-    servicios: { data: conteos, isFetching },
-    refetch,
-  } = useServicesCount();
+  const { servicios: serviciosCount } = useServicesCount();
+  const conteos = serviciosCount?.data;
+  const isLoading = serviciosCount?.isLoading;
+  const isFetching = serviciosCount?.isFetching;
+  const error = serviciosCount?.error;
+  const refetch = serviciosCount?.refetch;
+
+  console.log("Conteos:", conteos);
+
   const { settings } = useUserSettings();
   const showAllCategories = settings?.showAllCategories ?? true;
 
   const conteosMap = useMemo(() => {
-    return conteos.reduce((acc: Record<string, number>, item) => {
+    const map = (conteos ?? []).reduce((acc: Record<string, number>, item) => {
       acc[item.categoria] = item.count;
       return acc;
     }, {});
+    console.log("ConteosMap:", map);
+    return map;
   }, [conteos]);
 
   const filteredCategorias = useMemo(() => {
@@ -49,13 +57,28 @@ export const CategoryList = ({
         });
         return acc;
       },
-      {} as Record<string, string[]>,
+      {} as Record<string, string[]>
     );
   }, [showAllCategories, busqueda, conteosMap]);
 
   const handleOnRefresh = useCallback(() => {
-    refetch();
-  }, [refetch]);
+    if (refetch) refetch();
+    onRefresh();
+  }, [refetch, onRefresh]);
+
+  if (isLoading) {
+    return <LoadingView withNavBarMargin />;
+  }
+
+  if (error instanceof Error) {
+    return (
+      <View style={{ padding: 20 }}>
+        <Text style={{ color: "red", textAlign: "center" }}>
+          Error al cargar las categorías: {error.message}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <AnimatedScrollView
@@ -63,7 +86,7 @@ export const CategoryList = ({
       refreshControl={
         <RefreshControl
           colors={["#00B8A9", "#FFA13C"]}
-          refreshing={isFetching}
+          refreshing={isFetching || refreshing}
           onRefresh={handleOnRefresh}
         />
       }
@@ -71,7 +94,6 @@ export const CategoryList = ({
     >
       {Object.entries(filteredCategorias).map(
         ([seccion, categorias], index) => {
-          // Skip rendering empty sections
           if (categorias.length === 0) return null;
 
           return (
@@ -91,7 +113,7 @@ export const CategoryList = ({
               />
             </Animated.View>
           );
-        },
+        }
       )}
     </AnimatedScrollView>
   );

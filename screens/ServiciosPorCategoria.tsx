@@ -46,9 +46,36 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
   const [reportVisible, setReportVisible] = useState(false);
   const insets = useSafeAreaInsets();
 
-  const abrirModal = (id: number) => {
-    const servicio = servicios.find((s) => s.id === id);
-    if (!servicio) return;
+
+  // Estado para servicios contratados (array de IDs)
+  const [serviciosContratados, setServiciosContratados] = useState<string[]>([]);
+  // Estado para mensaje del modal de confirmación
+  const [mensajeModal, setMensajeModal] = useState("");
+
+  // Función para controlar la contratación con límite y sin repetidos
+  const handleContratarServicio = (servicioId: string) => {
+    if (serviciosContratados.includes(servicioId)) {
+      Alert.alert("Ya contratado", "Este servicio ya fue contratado.");
+      return false;
+    }
+
+    if (serviciosContratados.length >= 5) {
+      Alert.alert("Límite alcanzado", "Solo podés contratar hasta 5 servicios.", [
+        {
+          text: "Ir al inicio",
+          onPress: () => navigation.navigate("Home" as never),
+        },
+      ]);
+      return false;
+    }
+
+    const nuevosContratados = [...serviciosContratados, servicioId];
+    setServiciosContratados(nuevosContratados);
+    console.log("Servicios contratados:", nuevosContratados.length);
+    return true;
+  };
+
+  const abrirModal = (servicio: Servicio) => {
     setServicioSeleccionado(servicio);
     setModalVisible(true);
   };
@@ -60,17 +87,20 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
 
   const contratarServicio = async () => {
     cerrarModal();
-    setConfirmacionVisible(true);
+
+    if (!servicioSeleccionado) {
+      setMensajeModal("❌ No hay servicio seleccionado.");
+      setConfirmacionVisible(true);
+      return;
+    }
+
+    // Primero validar que se pueda contratar (límite y no repetidos)
+    const permitido = handleContratarServicio(servicioSeleccionado.id);
+    if (!permitido) return;
 
     try {
       if (!user) {
         throw new Error("No se pudo obtener el usuario actual");
-      }
-      if (!servicioSeleccionado) {
-        throw new Error("No hay servicio seleccionado");
-      }
-      if (!servicioSeleccionado.user_id) {
-        throw new Error("No hay servicio seleccionado");
       }
 
       const compradorId = user.id;
@@ -114,12 +144,17 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
           }),
         });
       }
-    } catch (error) {
-      showToast.error("Contratar servicio", error.message);
+
+      setMensajeModal("✅ Tu propuesta fue enviada.");
+      setConfirmacionVisible(true);
+    } catch (error: any) {
+      setMensajeModal("❌ Error al contratar el servicio.");
+      setConfirmacionVisible(true);
+      showToast.error("Contratar servicio", error.message || error.toString());
     }
   };
 
-  // Necesitamos cerral el modal que esta abierto, para luego abrir el del reporte
+  // Cerramos el modal actual y abrimos el reporte
   const handleReport = (servicio: Servicio) => {
     cerrarModal();
     setServicioSeleccionado(servicio);
@@ -129,6 +164,7 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
   if (isPending) {
     return <LoadingView />;
   }
+
 
   return (
     <SafeAreaView
@@ -173,47 +209,51 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
           }}
         />
 
-        {/* MODAL DETALLE DEL SERVICIO */}
-        <Modal
-          visible={modalVisible}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={cerrarModal}
-        >
-          <View style={styles.modalFondo}>
-            <View style={styles.modalContenido}>
-              {servicioSeleccionado && (
-                <>
-                  <View style={styles.modalTituloContainer}>
-                    <Text style={styles.modalTitulo}>
-                      {servicioSeleccionado.titulo}
-                    </Text>
-                    <Pressable
-                      onPress={() => handleReport(servicioSeleccionado)}
-                    >
-                      <Ionicons
-                        name="warning-outline"
-                        size={20}
-                        color="#FF0000"
-                      />
-                    </Pressable>
-                  </View>
-                  <Text style={styles.modalTexto}>
-                    Precio: {servicioSeleccionado.precio}
-                  </Text>
-                  <Text style={styles.modalTexto}>
-                    Horario: {servicioSeleccionado.horario}
-                  </Text>
-                  <Text style={styles.modalTexto}>
-                    Descripción: {servicioSeleccionado.descripcion}
-                  </Text>
 
-                  <TouchableOpacity
-                    style={styles.botonContratar}
-                    onPress={contratarServicio}
-                  >
-                    <Text style={styles.botonTexto}>Contratar</Text>
-                  </TouchableOpacity>
+          {/* MODAL DETALLE DEL SERVICIO */}
+          <Modal
+            visible={modalVisible}
+            animationType="slide"
+            transparent={true}
+            onRequestClose={cerrarModal}
+          >
+            <View style={styles.modalFondo}>
+              <View style={styles.modalContenido}>
+                {servicioSeleccionado && (
+                  <>
+                    <View style={styles.modalTituloContainer}>
+                      <Text style={styles.modalTitulo}>
+                        {servicioSeleccionado.titulo}
+                      </Text>
+                      
+
+                    </View>
+                    <Text style={styles.modalTexto}>
+                      Precio: {servicioSeleccionado.precio}
+                    </Text>
+                    <Text style={styles.modalTexto}>
+                      Horario: {servicioSeleccionado.horario}
+                    </Text>
+                    <Text style={styles.modalTexto}>
+                      Descripción: {servicioSeleccionado.descripcion}
+                    </Text>
+
+                    <TouchableOpacity
+  style={styles.botonContratar}
+  onPress={() => {
+    handleContratarServicio(servicioSeleccionado?.id ?? "");
+    contratarServicio();
+  }}
+>
+  <Text style={styles.botonTexto}>Contratar</Text>
+</TouchableOpacity>
+                    
+                    <TouchableOpacity
+                        style={styles.botonReportar}
+                         onPress={() => handleReport(servicioSeleccionado)}
+                          >
+                        <Text style={styles.textoReportar}>Reportar</Text>
+                    </TouchableOpacity>
 
                   <TouchableOpacity onPress={cerrarModal}>
                     <Text style={styles.cancelar}>Cerrar</Text>
@@ -224,31 +264,58 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
           </View>
         </Modal>
 
-        {/* MODAL DE CONFIRMACIÓN */}
-        <Modal
-          visible={confirmacionVisible}
-          animationType="fade"
-          transparent={true}
-          onRequestClose={() => setConfirmacionVisible(false)}
-        >
-          <View style={styles.modalFondo}>
-            <View style={styles.modalConfirmacion}>
-              <Text style={styles.mensajeConfirmacion}>
-                ✅ La propuesta fue enviada al trabajador. Ahora debes esperar
-                que acepte la solicitud.
-              </Text>
-              <TouchableOpacity
-                style={styles.botonVolver}
-                onPress={() => {
-                  setConfirmacionVisible(false);
-                  navigation.navigate("Home");
-                }}
-              >
-                <Text style={styles.botonTexto}>Volver</Text>
-              </TouchableOpacity>
-            </View>
+
+          {/* MODAL DE CONFIRMACIÓN */}
+          <Modal
+  visible={confirmacionVisible}
+  animationType="fade"
+  transparent={true}
+  onRequestClose={() => setConfirmacionVisible(false)}
+>
+  <View style={styles.modalFondo}>
+    <View style={styles.modalConfirmacion}>
+      <Text style={styles.mensajeConfirmacion}>{mensajeModal}</Text>
+
+      {mensajeModal === "✅ Tu propuesta fue enviada." && (
+        <>
+          <Text style={[styles.mensajeConfirmacion, { marginTop: 10 }]}>
+            Aún puedes contratar {5 - serviciosContratados.length} servicios.
+          </Text>
+
+          <View style={{ flexDirection: "column", marginTop: 20, justifyContent: "space-around" }}>
+            <TouchableOpacity
+              style={[styles.botonVolver, { backgroundColor: "#4caf50" }]}
+              onPress={() => setConfirmacionVisible(false)}
+            >
+              <Text style={styles.botonTexto}>Contratar otro</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.botonVolver}
+              onPress={() => {
+                setConfirmacionVisible(false);
+                navigation.navigate("Home");
+              }}
+            >
+              <Text style={styles.botonTexto}>Volver al inicio</Text>
+            </TouchableOpacity>
           </View>
-        </Modal>
+        </>
+      )}
+
+      {mensajeModal !== "✅ Tu propuesta fue enviada." && (
+        <TouchableOpacity
+          style={styles.botonVolver}
+          onPress={() => setConfirmacionVisible(false)}
+        >
+          <Text style={styles.botonTexto}>Cerrar</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  </View>
+</Modal>
+
+        </ScrollView>
 
         {/* MODAL DE REPORTE */}
         {servicioSeleccionado && (
@@ -374,6 +441,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "bold",
     letterSpacing: 0.3,
+    width:100,
   },
   cancelar: {
     marginTop: 15,
@@ -422,12 +490,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 0.1,
   },
-  separator: {
-    height: 8,
-  },
-  modalTituloContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
+
+  botonReportar: {
+  backgroundColor: '#FF4C4C',
+  paddingVertical: 10,
+  paddingHorizontal: 50,
+  borderRadius: 20,
+  alignSelf: 'center',
+  marginHorizontal: 30,
+  marginTop:10,
+},
+
+textoReportar: {
+  color: '#fff',
+  fontWeight: 'bold',
+  fontSize: 14,
+},
 });

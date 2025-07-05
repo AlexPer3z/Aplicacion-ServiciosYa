@@ -93,6 +93,7 @@ export default function PasarelaPago() {
             <Text style={styles.textoBoton}>Pagar $1.500</Text>
           </TouchableOpacity>
 
+
           <TouchableOpacity style={styles.botonPrueba} onPress={irAModoPrueba}>
             <Text style={styles.textoBotonPrueba}>Modo de prueba</Text>
           </TouchableOpacity>

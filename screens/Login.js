@@ -99,7 +99,7 @@ export default function Login({ navigation }) {
     await guardarCorreo(email);
     // guardar la sesion para despues utilizarlo con el login biometrico
     await saveCredentials(email, password);
-    // navigation.replace('Home');
+    //navigation.replace('Home');
   };
 
   const ErrorBox = ({ message }) => (
