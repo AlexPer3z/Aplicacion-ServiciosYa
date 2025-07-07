@@ -3,6 +3,7 @@ import type { ToastShowParams } from "toastify-react-native/utils/interfaces";
 
 const toast = ({ position = "bottom", ...params }: ToastShowParams) => {
   Toast.show({
+    ...params,
     position: "bottom",
   });
 };
