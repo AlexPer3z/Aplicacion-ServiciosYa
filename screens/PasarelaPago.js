@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Linking } from 'react-native';
+import { supabase } from '../lib/supabase'; // Asegúrate que esta ruta esté correcta
+
+import BotonSuscribirme from '../components/BotonSuscribirme';
 
 const CATEGORIAS_VALIDAS = [/* ... tus categorías ... */];
 
@@ -73,9 +76,46 @@ export default function PasarelaPago() {
     return null;
   }
 
-  const irAModoPrueba = () => {
+  const accesoLibre = () => {
     navigation.navigate('ServiciosPorCategoria', { categoria });
   };
+
+  const [suscriptor, setsuscriptor] = useState(false);
+const [verificando, setVerificando] = useState(true);
+
+useEffect(() => {
+  const verificarSuscripcion = async () => {
+    try {
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError || !authData?.user) {
+        console.error('Error al obtener el usuario:', authError);
+        setVerificando(false);
+        return;
+      }
+
+      const userId = authData.user.id;
+
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('suscriptor')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error al obtener la suscripción:', error);
+      } else {
+        setsuscriptor(data?.suscriptor === true);
+      }
+    } catch (err) {
+      console.error('Error inesperado:', err);
+    } finally {
+      setVerificando(false);
+    }
+  };
+
+  verificarSuscripcion();
+}, []);
+
 
   return (
     <View style={styles.container}>
@@ -85,20 +125,29 @@ export default function PasarelaPago() {
         Para explorar todos nuestros profesionales en {categoria}, debe abonar un pago de $1.500 pesos argentinos.
       </Text>
 
-      {loading ? (
-        <ActivityIndicator size="large" color="#27ae60" />
-      ) : (
-        <>
-          <TouchableOpacity style={styles.boton} onPress={iniciarPago}>
-            <Text style={styles.textoBoton}>Pagar $1.500</Text>
-          </TouchableOpacity>
+      {loading || verificando ? (
+  <ActivityIndicator size="large" color="#27ae60" />
+) : suscriptor ? (
+  <TouchableOpacity
+  style={[styles.boton, { backgroundColor: '#4CAF50' }]}
+  onPress={accesoLibre}
+>
+  <Text style={styles.textoBoton}>✅ Suscripción activa: tienes acceso ilimitado</Text>
+</TouchableOpacity>
+) : (
+  <>
+    <TouchableOpacity style={styles.boton} onPress={iniciarPago}>
+      <Text style={styles.textoBoton}>Pagar $1.500</Text>
+    </TouchableOpacity>
 
+    <BotonSuscribirme />
 
-          <TouchableOpacity style={styles.botonPrueba} onPress={irAModoPrueba}>
-            <Text style={styles.textoBotonPrueba}>Modo de prueba</Text>
-          </TouchableOpacity>
-        </>
-      )}
+    <TouchableOpacity style={styles.botonPrueba} onPress={accesoLibre}>
+      <Text style={styles.textoBotonPrueba}>Modo invitado</Text>
+    </TouchableOpacity>
+  </>
+)}
+
     </View>
   );
 }

@@ -18,7 +18,7 @@
       "android",
       "web"
     ],
-    "version": "10.0.0",
+    "version": "12.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -37,7 +37,7 @@
     "ios": {
       "supportsTablet": false,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Usamos tu ubicación para mostrarte los trabajadores mas cercanos a tu ubicacion actual para priorizarte el servicio mas rapido para el cliente.",
+        "NSLocationWhenInUseUsageDescription": "Usamos tu ubicación para mostrar trabajadores cercanos y ayudarte a recibir el servicio más rápido posible.",
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleURLTypes": [
           {
@@ -52,7 +52,7 @@
     },
   
     "android": {
-      "versionCode": 10,
+      "versionCode": 12,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"

@@ -83,11 +83,13 @@ const BottomNavBar = ({ unreadMessagesCount = 0 }: BottomNavBarProps) => {
   const navigation = useMainNavigation();
   const insets = useSafeAreaInsets();
 
+  const isDisabled = rol === "guest" || isUserRestricted;
+
   const handlePressOfferService = () => {
-    if (isUserRestricted) {
+    if (isDisabled) {
       Alert.alert(
         "Acción no permitida",
-        "Debes completar y verificar tu perfil para ofrecer un servicio.",
+        "Debes registrarte y verificar tu perfil para ofrecer un servicio.",
       );
       return;
     }
@@ -113,9 +115,9 @@ const BottomNavBar = ({ unreadMessagesCount = 0 }: BottomNavBarProps) => {
           onPress={hanndleCenterPress}
           style={[
             styles.publishButton,
-            isUserRestricted && styles.disabledButton,
+            isDisabled && styles.disabledButton,
           ]}
-          disabled={isUserRestricted}
+          disabled={isDisabled}
         >
           {isUser(rol) && (
             <MaterialCommunityIcons

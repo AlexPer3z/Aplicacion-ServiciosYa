@@ -94,6 +94,27 @@ export default function LoginSelect({ navigation }) {
   const handleFacebookSuccess = () => {
     // navigation.replace('Home');
   };
+  const handleGuestLogin = async () => {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: 'guest@example.com',
+    password: 'guestpassword',
+  });
+
+  if (error) {
+    console.log('Error al loguear invitado:', error.message);
+    return;
+  }
+
+  navigation.reset({
+    index: 0,
+    routes: [{ name: 'InicioRouter' }],
+  });
+};
+
+
+
+
+
 
   return (
     <ImageBackground source={fondo} style={styles.background} resizeMode="cover">
@@ -115,6 +136,13 @@ export default function LoginSelect({ navigation }) {
           />
           <BtnLoginGoogle onLogin={handleLoginGoogle} />
           <AppleSignInButton />
+          <LoginButton
+  icon="person-outline"
+  label="Entrar como invitado"
+  onPress={handleGuestLogin}
+  style={{ backgroundColor: '#A9A9A9' }} // gris suave
+/>
+
         </View>
 
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>

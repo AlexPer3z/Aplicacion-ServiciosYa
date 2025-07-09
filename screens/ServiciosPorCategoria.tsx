@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Pressable,
   View,
@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Modal,
+  Alert,
   Dimensions,
   FlatList,
 } from "react-native";
@@ -44,8 +45,45 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
   const [servicioSeleccionado, setServicioSeleccionado] = useState<Servicio>();
   const [confirmacionVisible, setConfirmacionVisible] = useState(false);
   const [reportVisible, setReportVisible] = useState(false);
+  const [suscriptor, setSuscriptor] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null); // <-- Estado para el rol del usuario
   const insets = useSafeAreaInsets();
 
+  useEffect(() => {
+    const verificarSuscripcion = async () => {
+      if (!user) return;
+      const { data, error } = await supabase
+        .from("usuarios")
+        .select("suscriptor")
+        .eq("id", user.id)
+        .single();
+
+      if (!error && data?.suscriptor === true) {
+        setSuscriptor(true);
+      } else {
+        setSuscriptor(false);
+      }
+    };
+
+    const fetchUserRole = async () => {
+      if (!user) return;
+      const { data, error } = await supabase
+        .from("usuarios")
+        .select("rol")  // asumiendo que el campo es "role"
+        .eq("id", user.id)
+        .single();
+
+      if (error) {
+        console.error("Error obteniendo rol:", error);
+        setUserRole(null);
+      } else {
+        setUserRole(data?.rol ?? null);
+      }
+    };
+
+    verificarSuscripcion();
+    fetchUserRole();
+  }, [user]);
 
   // Estado para servicios contratados (array de IDs)
   const [serviciosContratados, setServiciosContratados] = useState<string[]>([]);
@@ -59,13 +97,24 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
       return false;
     }
 
-    if (serviciosContratados.length >= 5) {
-      Alert.alert("Límite alcanzado", "Solo podés contratar hasta 5 servicios.", [
-        {
-          text: "Ir al inicio",
-          onPress: () => navigation.navigate("Home" as never),
-        },
-      ]);
+    if (userRole === "guest") {
+      Alert.alert("Acceso denegado", "Los usuarios invitados no pueden contratar servicios.");
+      return false;
+    }
+
+    const limite = suscriptor ? 6 : 5;
+
+    if (serviciosContratados.length >= limite) {
+      Alert.alert(
+        "Límite alcanzado",
+        `Solo podés contratar hasta ${limite} servicios.`,
+        [
+          {
+            text: "Ir al inicio",
+            onPress: () => navigation.navigate("Home" as never),
+          },
+        ]
+      );
       return false;
     }
 
@@ -94,7 +143,7 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
       return;
     }
 
-    // Primero validar que se pueda contratar (límite y no repetidos)
+    // Primero validar que se pueda contratar (límite y no repetidos y rol)
     const permitido = handleContratarServicio(servicioSeleccionado.id);
     if (!permitido) return;
 
@@ -165,7 +214,6 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
     return <LoadingView />;
   }
 
-
   return (
     <SafeAreaView
       style={{ flex: 1, paddingTop: 24, backgroundColor: "#F8F8F8" }}
@@ -192,7 +240,7 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
             <ServicioItem
               servicio={item}
               workerStatus={item.worker_status}
-              onPress={(id) => abrirModal(id)}
+              onPress={() => abrirModal(item)} // ✅ Pasamos el objeto servicio completo
             />
           )}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -208,7 +256,6 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
             flexGrow: 1,
           }}
         />
-
 
           {/* MODAL DETALLE DEL SERVICIO */}
           <Modal
@@ -240,10 +287,7 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
 
                     <TouchableOpacity
   style={styles.botonContratar}
-  onPress={() => {
-    handleContratarServicio(servicioSeleccionado?.id ?? "");
-    contratarServicio();
-  }}
+  onPress={contratarServicio}
 >
   <Text style={styles.botonTexto}>Contratar</Text>
 </TouchableOpacity>
@@ -279,8 +323,8 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
       {mensajeModal === "✅ Tu propuesta fue enviada." && (
         <>
           <Text style={[styles.mensajeConfirmacion, { marginTop: 10 }]}>
-            Aún puedes contratar {5 - serviciosContratados.length} servicios.
-          </Text>
+  Aún puedes contratar {(suscriptor ? 6 : 5) - serviciosContratados.length} servicios.
+</Text>
 
           <View style={{ flexDirection: "column", marginTop: 20, justifyContent: "space-around" }}>
             <TouchableOpacity
@@ -315,7 +359,6 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
   </View>
 </Modal>
 
-        </ScrollView>
 
         {/* MODAL DE REPORTE */}
         {servicioSeleccionado && (
@@ -506,4 +549,12 @@ textoReportar: {
   fontWeight: 'bold',
   fontSize: 14,
 },
+separator: {
+    height: 8,
+  },
+  modalTituloContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
 });
