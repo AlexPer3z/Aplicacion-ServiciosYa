@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "appTrabajo.app"
-               BlueprintName = "appTrabajo"
-               ReferencedContainer = "container:appTrabajo.xcodeproj">
+               BuildableName = "ServiciosYa.app"
+               BlueprintName = "ServiciosYa"
+               ReferencedContainer = "container:ServiciosYa.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "appTrabajoTests.xctest"
-               BlueprintName = "appTrabajoTests"
-               ReferencedContainer = "container:appTrabajo.xcodeproj">
+               BuildableName = "ServiciosYaTests.xctest"
+               BlueprintName = "ServiciosYaTests"
+               ReferencedContainer = "container:ServiciosYa.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "appTrabajo.app"
-            BlueprintName = "appTrabajo"
-            ReferencedContainer = "container:appTrabajo.xcodeproj">
+            BuildableName = "ServiciosYa.app"
+            BlueprintName = "ServiciosYa"
+            ReferencedContainer = "container:ServiciosYa.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "appTrabajo.app"
-            BlueprintName = "appTrabajo"
-            ReferencedContainer = "container:appTrabajo.xcodeproj">
+            BuildableName = "ServiciosYa.app"
+            BlueprintName = "ServiciosYa"
+            ReferencedContainer = "container:ServiciosYa.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

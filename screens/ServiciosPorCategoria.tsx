@@ -314,8 +314,7 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
     </View>
   </View>
 </Modal>
-
-        </ScrollView>
+ 
 
         {/* MODAL DE REPORTE */}
         {servicioSeleccionado && (
