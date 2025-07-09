@@ -36,6 +36,7 @@
     ],
     "ios": {
       "supportsTablet": false,
+      "usesAppleSignIn": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Usamos tu ubicación para mostrar trabajadores cercanos y ayudarte a recibir el servicio más rápido posible.",
         "ITSAppUsesNonExemptEncryption": false,
@@ -48,9 +49,9 @@
           }
         ]
       },
-      "bundleIdentifier": "com.alex-6775.appTrabajo"
+      "bundleIdentifier": "com.alex-6775.appTrabajo",
+      "appleTeamId": "HHY5MJ22J3"
     },
-  
     "android": {
       "versionCode": 12,
       "adaptiveIcon": {
@@ -73,6 +74,7 @@
     "plugins": [
       "expo-notifications",
       "expo-secure-store",
+      "expo-apple-authentication",
       "@maplibre/maplibre-react-native",
       [
         "@react-native-google-signin/google-signin",
