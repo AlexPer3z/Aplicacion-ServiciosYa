@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -10,15 +10,41 @@ import {
 } from 'react-native'
 import { supabase } from '../lib/supabase'
 import { removeAuthSession } from '../lib/storage'
-import { useUserSettings } from '../lib/hooks/useUserSettings';
+import { useUserSettings } from '../lib/hooks/useUserSettings'
 
 export default function Configuracion({ navigation }) {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [isAbsent, setIsAbsent] = useState(false)
   const [passwordValid, setPasswordValid] = useState(true)
   const [passwordMatch, setPasswordMatch] = useState(true)
-  const { settings } = useUserSettings();
+  const [rol, setRol] = useState(null)
+
+  const { settings } = useUserSettings()
+
+  useEffect(() => {
+    const fetchRol = async () => {
+      const { data: userData, error: userError } = await supabase.auth.getUser()
+      if (userError || !userData?.user) {
+        Alert.alert('Error', 'No se pudo obtener el usuario autenticado.')
+        return
+      }
+
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('rol')
+        .eq('id', userData.user.id)
+        .single()
+
+      if (error) {
+        Alert.alert('Error', 'No se pudo obtener el rol del usuario.')
+        return
+      }
+
+      setRol(data.rol)
+    }
+
+    fetchRol()
+  }, [])
 
   const validarContrasena = (password) => {
     const minLength = 8
@@ -79,11 +105,66 @@ export default function Configuracion({ navigation }) {
     }
   }
 
+  const eliminarCuenta = async () => {
+    if (rol === 'guest') {
+      Alert.alert(
+        'Acción no permitida',
+        'Los usuarios invitados no pueden eliminar su cuenta.'
+      )
+      return
+    }
+
+    Alert.alert(
+      'Confirmar eliminación',
+      '¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            const { data: user, error: userError } = await supabase.auth.getUser()
+            if (userError) {
+              Alert.alert('Error', 'No se pudo obtener el usuario.')
+              return
+            }
+
+            const { error: deleteError } = await supabase.rpc('eliminar_usuario', {
+              uid: user.user.id
+            })
+
+            if (deleteError) {
+              Alert.alert('Error', 'No se pudo eliminar la cuenta.')
+              return
+            }
+
+            await supabase.auth.signOut()
+            await removeAuthSession()
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            })
+          },
+        },
+      ]
+    )
+  }
+
   return (
     <ScrollView style={styles.background}>
       <View style={styles.container}>
         <Text style={styles.title}>Configuración</Text>
 
+        {/* Mostrar el rol */}
+        {rol && (
+          <View style={{ marginBottom: 20 }}>
+            <Text style={{ fontWeight: '700', fontSize: 16, color: '#555' }}>
+              Rol: <Text style={{ color: '#19D4C6' }}>{rol}</Text>
+            </Text>
+          </View>
+        )}
+
+        {/* CAMBIAR CONTRASEÑA */}
         <View style={styles.section}>
           <Text style={styles.optionText}>Cambiar Contraseña</Text>
           <TextInput
@@ -126,6 +207,7 @@ export default function Configuracion({ navigation }) {
           </TouchableOpacity>
         </View>
 
+        {/* INVITAR */}
         <View style={styles.section}>
           <Text style={styles.optionText}>Invitar a un Amigo</Text>
           <TouchableOpacity style={styles.buttonTurquoise} onPress={invitarAmigo}>
@@ -133,10 +215,22 @@ export default function Configuracion({ navigation }) {
           </TouchableOpacity>
         </View>
 
+        {/* CERRAR SESIÓN */}
         <View style={styles.section}>
           <Text style={styles.optionText}>Cerrar Sesión</Text>
           <TouchableOpacity style={styles.buttonOrange} onPress={handleLogout}>
             <Text style={styles.buttonText}>Cerrar Sesión</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* ELIMINAR CUENTA */}
+        <View style={styles.section}>
+          <Text style={styles.optionText}>Eliminar Cuenta</Text>
+          <TouchableOpacity
+            style={[styles.buttonOrange, { backgroundColor: '#D9534F' }]}
+            onPress={eliminarCuenta}
+          >
+            <Text style={styles.buttonText}>Eliminar Cuenta</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -215,25 +309,22 @@ const styles = StyleSheet.create({
     shadowRadius: 7,
   },
   buttonText: {
-    color: '#fff',
+    color: 'white',
     fontWeight: '700',
-    fontSize: 16,
-    letterSpacing: 0.5,
+    fontSize: 17,
   },
   requisitosContainer: {
-    marginBottom: 13,
-    marginTop: 5,
+    marginBottom: 16,
   },
   requisito: {
-    fontSize: 15,
-    marginVertical: 2,
-    fontWeight: '500',
-    letterSpacing: 0.2,
+    fontSize: 14,
+    marginVertical: 1,
   },
   valid: {
     color: '#19D4C6',
+    fontWeight: '700',
   },
   invalid: {
-    color: '#FFA13C',
+    color: '#A1A1A1',
   },
 })
