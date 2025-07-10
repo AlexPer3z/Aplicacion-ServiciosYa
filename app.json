@@ -47,7 +47,8 @@
               "com.googleusercontent.apps.453761258131-6anu4ghpi4jv1df72490vo69vj23qq22"
             ]
           }
-        ]
+        ],
+        "LSApplicationQueriesSchemes": ["whatsapp"]
       },
       "bundleIdentifier": "com.alex-6775.appTrabajo",
       "appleTeamId": "HHY5MJ22J3"
