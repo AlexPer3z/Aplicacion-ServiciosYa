@@ -2,9 +2,10 @@ import React, { useCallback, useRef } from "react";
 import CustomTextInput from "../inputs/CustomTextInput";
 import { TouchableOpacity, View, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import MoreSheetModal from "./MoreSheetModal";
+import { theme } from "../../lib/constants/colors";
 
 interface ChatInputBarProps {
   onSend: (message: string) => void;
@@ -41,11 +42,12 @@ function ChatInputBar({ onSend }: ChatInputBarProps) {
           placeholder="Escribe un mensaje..."
           appendComponent={
             <Pressable onPress={MoreButtonPress}>
-              <MaterialCommunityIcons
-                name="plus-circle-outline"
-                size={24}
-                color="#B2DFDB"
+              <MaterialIcons
+                name="video-chat"
+                size={26}
+                color={theme.palettes.primary[60]}
               />
+              
             </Pressable>
           }
           multiline={true}

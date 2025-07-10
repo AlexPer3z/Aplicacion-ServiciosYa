@@ -1,7 +1,7 @@
 import { isWhatsAppInstalled, openWhatsApp } from "../../lib/utils/whatsapp";
 import ListButton from "../buttons/ListButton";
 import SheetContainer from "../sheet/SheetContainer";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useSuspenseProfile } from "../../lib/hooks/useUser";
 import { type RouteProp, useRoute } from "@react-navigation/native";
 import type { MainStackParamList } from "../../types/navigation";
@@ -41,7 +41,7 @@ export const serviceInfoQueryOptions = (chatId: string) =>
 
       if (!data.celular)
         throw Error(
-          "El usuario con el que intenta comunicarse no tiene disponible un número de teléfono.",
+          "El usuario no tiene un número de teléfono registrado.",
           { cause: "PHONE" },
         );
 
@@ -91,7 +91,7 @@ function MoreSheetModal() {
   return (
     <SheetContainer>
       <ListButton
-        icon={<FontAwesome6 name="handshake-simple" size={18} color="white" />}
+        icon={<MaterialIcons name="videocam" size={20} color="white" />}
         title="Videollamada Rápida"
         description="Agenda una videollamada para verificar credenciales y confirmar que es la persona adecuada para tu requerimiento."
         badge="Vía WhatsApp"

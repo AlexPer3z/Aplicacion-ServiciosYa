@@ -105,7 +105,7 @@ interface Theme {
   };
 }
 
-const theme: Theme = {
+export const theme: Theme = {
   description: "Material Theme",
   seed: "#00B8A9",
   coreColors: {
