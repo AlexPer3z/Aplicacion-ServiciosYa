@@ -6,6 +6,8 @@ import { supabase } from '../lib/supabase'; // Asegúrate que esta ruta esté co
 
 import BotonSuscribirme from '../components/BotonSuscribirme';
 
+import BotonVolver from '../components/BotonVolver';
+
 const CATEGORIAS_VALIDAS = [/* ... tus categorías ... */];
 
 export default function PasarelaPago() {
@@ -119,7 +121,10 @@ useEffect(() => {
 
   return (
     <View style={styles.container}>
-      {mensaje && <Text style={styles.mensajeExtra}>{mensaje}</Text>}
+
+      <BotonVolver />
+      {mensaje && <Text style={styles.mensajeExtra}>{mensaje}</Text>} {/* mensaje opcional */}
+
       
       <Text style={styles.mensaje}>
         Para explorar todos nuestros profesionales en {categoria}, debe abonar un pago de $1.500 pesos argentinos.

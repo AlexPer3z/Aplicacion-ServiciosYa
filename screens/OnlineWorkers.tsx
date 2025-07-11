@@ -19,6 +19,7 @@ import { SheetButton } from "../components/sheet/SheetButton";
 import { getUserFromClient } from "../lib/utils/user";
 import showToast from "../lib/toast";
 import { getLocationParamsFromClient } from "../lib/utils/location";
+import BotonVolver from '../components/BotonVolver';
 
 const colors = {
   primary: "#00B8A9",
@@ -66,6 +67,7 @@ function OnlineWorkers() {
 
   return (
     <ScreenContainer style={styles.screenContainer}>
+      <BotonVolver />
       <View style={styles.header}>
         <Text style={styles.title}>Trabajadores en Línea</Text>
         <Text style={styles.subtitle}>
@@ -161,7 +163,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: 46,
     paddingBottom: 12,
     backgroundColor: colors.background,
     borderBottomWidth: 1,

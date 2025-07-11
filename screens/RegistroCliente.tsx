@@ -16,7 +16,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { MainStackParamList } from "../types/navigation";
-
+import BotonVolver from '../components/BotonVolver';
 import * as FileSystem from "expo-file-system";
 import { supabase } from "../lib/supabase";
 import uuid from "react-native-uuid";
@@ -177,6 +177,7 @@ export default function RegistroCliente() {
       style={styles.background}
       resizeMode="cover"
     >
+      <BotonVolver />
       <View style={styles.overlay}>
         <Text style={styles.title}>Registro - Cliente (Paso {step} de 3)</Text>
 

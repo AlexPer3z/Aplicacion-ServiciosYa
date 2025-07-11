@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View, Button, Platform, PermissionsAndroid, Alert, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
-
+import BotonVolver from '../components/BotonVolver';
 export default function Maps() {
   const webviewRef = useRef(null);
   const [locationPermission, setLocationPermission] = useState(false);
@@ -100,6 +100,8 @@ export default function Maps() {
   }
 
   return (
+    <>
+    <BotonVolver />
     <View style={styles.container}>
       {locationPermission && userLocation ? (
         <>
@@ -119,6 +121,7 @@ export default function Maps() {
         </View>
       )}
     </View>
+    </>
   );
 }
 

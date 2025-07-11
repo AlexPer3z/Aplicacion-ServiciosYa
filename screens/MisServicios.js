@@ -10,7 +10,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
-
+import BotonVolver from '../components/BotonVolver';
 export default function MisServicios() {
   const [serviciosPublicados, setServiciosPublicados] = useState([]);
   const navigation = useNavigation();
@@ -104,6 +104,7 @@ export default function MisServicios() {
 
   return (
     <View style={styles.container}>
+      <BotonVolver />
       <Text style={styles.separador}>Mis Ofertas de Servicios</Text>
       <FlatList
         data={serviciosPublicados}
@@ -120,7 +121,7 @@ export default function MisServicios() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9f9f9', padding: 10 },
+  container: { flex: 1, backgroundColor: '#f9f9f9', padding: 10, paddingTop:80 },
   card: {
     backgroundColor: '#fff',
     marginBottom: 15,

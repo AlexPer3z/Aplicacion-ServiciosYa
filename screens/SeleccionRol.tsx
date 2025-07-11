@@ -9,7 +9,6 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { MainStackParamList } from "../types/navigation";
-
 type NavigationProp = NativeStackNavigationProp<MainStackParamList>;
 
 export default function SeleccionRol() {

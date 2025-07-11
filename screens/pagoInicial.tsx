@@ -9,7 +9,7 @@ import {
   Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
+import BotonVolver from '../components/BotonVolver';
 export default function PagoInicial() {
   const navigation = useNavigation();
   const [urlPago, setUrlPago] = useState<string | null>(null);
@@ -70,6 +70,7 @@ export default function PagoInicial() {
 
   return (
     <View style={styles.container}>
+      <BotonVolver />
       <Text style={styles.mensajePrincipal}>
         Para completar tu registro y por tu seguridad necesitamos realizar una verificación de pagos para validar tu identidad  <Text style={{ fontWeight: 'bold' }}>$1.500</Text>.
       </Text>
@@ -84,19 +85,6 @@ export default function PagoInicial() {
         <>
         <TouchableOpacity style={styles.botonPago} onPress={iniciarPago}>
           <Text style={styles.textoBoton}>Pagar $1.500 y registrar cuenta</Text>
-        </TouchableOpacity>
-        {/* BOTÓN DE PRUEBA */}
-        <TouchableOpacity
-          style={[styles.botonPago, { backgroundColor: '#4A7C84', marginTop: 16 }]}
-          onPress={() => {
-            Alert.alert(
-              'Registro exitoso',
-              'Tu cuenta ha sido registrada correctamente. ¡Bienvenido!'
-            );
-            navigation.navigate('Home');
-          }}
-        >
-          <Text style={styles.textoBoton}>Botón de prueba (simular pago exitoso)</Text>
         </TouchableOpacity>
         </>
       )}

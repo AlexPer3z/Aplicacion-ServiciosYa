@@ -29,7 +29,7 @@ import { withSuspense } from "../components/withSuspense";
 import ServicioItem from "../components/servicios/ServicioItem";
 import EmptyListComponent from "../components/EmptyListComponent";
 import BottomNavBar from "../components/home/BottomNavBar";
-
+import BotonVolver from '../components/BotonVolver';
 const screenHeight = Dimensions.get("window").height;
 
 type Props = NativeStackScreenProps<
@@ -218,6 +218,7 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
     <SafeAreaView
       style={{ flex: 1, paddingTop: 24, backgroundColor: "#F8F8F8" }}
     >
+      <BotonVolver />
       <View style={{ flex: 1 }}>
         <Text style={styles.title}>Servicios de {categoria}</Text>
 
@@ -381,6 +382,7 @@ export default withSuspense(ServiciosPorCategoria, <LoadingView />);
 const styles = StyleSheet.create({
   container: {
     padding: 18,
+    
   },
   title: {
     fontSize: 27,
@@ -389,6 +391,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: "#19D4C6",
     letterSpacing: 0.5,
+    paddingTop:30,
   },
   noServicios: {
     fontSize: 17,
