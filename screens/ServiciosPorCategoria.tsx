@@ -361,6 +361,7 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
 </Modal>
 
 
+
         {/* MODAL DE REPORTE */}
         {servicioSeleccionado && (
           <ReportServiceModal

@@ -10,7 +10,11 @@ export type MainStackParamList = {
   ServiciosPorCategoria: { categoria: string };
   PasarelaPago: { categoria: string };
   ChatIA: undefined;
-  ChatIndividual: undefined;
+  ChatIndividual: {
+    chatId: string;
+    nombre: string;
+    servicioId: string | null;
+  };
   MisServicios: undefined;
   EditarServicio: undefined;
   VerificacionPendiente: undefined;

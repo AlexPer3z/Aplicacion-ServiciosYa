@@ -121,8 +121,10 @@ useEffect(() => {
 
   return (
     <View style={styles.container}>
+
       <BotonVolver />
       {mensaje && <Text style={styles.mensajeExtra}>{mensaje}</Text>} {/* mensaje opcional */}
+
       
       <Text style={styles.mensaje}>
         Para explorar todos nuestros profesionales en {categoria}, debe abonar un pago de $1.500 pesos argentinos.
