@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../lib/supabase';
-
+import BotonVolver from '../components/BotonVolver';
 export default function Perfil() {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -111,6 +111,7 @@ export default function Perfil() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <BotonVolver />
       <View style={styles.header}>
         <Image
           source={{ uri: userData.foto_perfil || 'https://via.placeholder.com/150' }}

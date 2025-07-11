@@ -13,7 +13,7 @@ import fondo from '../assets/fondo.png';
 import logo from '../assets/logo.png';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { saveCredentials } from "../lib/storage";
-
+import BotonVolver from '../components/BotonVolver';
 WebBrowser.maybeCompleteAuthSession();
 
 const validateEmail = (email) => {
@@ -110,6 +110,7 @@ export default function Login({ navigation }) {
 
   return (
     <ImageBackground source={fondo} style={styles.background} resizeMode="cover">
+      <BotonVolver />
       <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
         <Image source={logo} style={styles.logo} />
         <Text style={styles.title}>Iniciar Sesión</Text>

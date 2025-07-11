@@ -7,7 +7,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import fondo from '../assets/fondo.png';
 import logo from '../assets/logo.png';
 import { supabase } from '../lib/supabase'; 
-
+import BotonVolver from '../components/BotonVolver';
 export default function Register({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -74,6 +74,7 @@ export default function Register({ navigation }) {
 
   return (
     <ImageBackground source={fondo} style={styles.background} resizeMode="cover">
+      <BotonVolver />
       <View style={styles.container}>
         {showMessage ? (
           <View style={styles.messageContainer}>

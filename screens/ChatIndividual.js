@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
-
+import BotonVolver from '../components/BotonVolver';
 export default function ChatIndividual({ route, navigation }) {
   const { chatId, nombre, servicioId } = route.params;
   const [mensajes, setMensajes] = useState([]);
@@ -191,11 +191,14 @@ export default function ChatIndividual({ route, navigation }) {
   };
 
   return (
+    <>
+    <BotonVolver />
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}
       keyboardVerticalOffset={90}
     >
+      
       <View style={styles.header}>
         <Text style={styles.titulo}>{nombre} - Contratante</Text>
         <TouchableOpacity
@@ -275,6 +278,7 @@ export default function ChatIndividual({ route, navigation }) {
         </View>
       </Modal>
     </KeyboardAvoidingView>
+    </>
   );
 }
 

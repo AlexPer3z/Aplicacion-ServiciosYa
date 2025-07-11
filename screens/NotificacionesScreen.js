@@ -12,7 +12,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
  import { AuthContext } from '../lib/context/AppContext';
-
+import BotonVolver from '../components/BotonVolver';
 export default function Notificaciones() {
   const [notificaciones, setNotificaciones] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -340,6 +340,7 @@ navigation.navigate('ChatIndividual', {
 
   return (
     <View style={styles.container}>
+      <BotonVolver />
       <Text style={styles.titulo}>Notificaciones</Text>
       {notificaciones.length === 0 ? (
         <Text style={styles.sinNotificaciones}>No tienes notificaciones aún.</Text>

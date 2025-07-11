@@ -6,6 +6,8 @@ import { supabase } from '../lib/supabase'; // Asegúrate que esta ruta esté co
 
 import BotonSuscribirme from '../components/BotonSuscribirme';
 
+import BotonVolver from '../components/BotonVolver';
+
 const CATEGORIAS_VALIDAS = [/* ... tus categorías ... */];
 
 export default function PasarelaPago() {
@@ -119,6 +121,7 @@ useEffect(() => {
 
   return (
     <View style={styles.container}>
+      <BotonVolver />
       {mensaje && <Text style={styles.mensajeExtra}>{mensaje}</Text>} {/* mensaje opcional */}
       
       <Text style={styles.mensaje}>

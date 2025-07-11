@@ -18,7 +18,7 @@
       "android",
       "web"
     ],
-    "version": "12.0.0",
+    "version": "15.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -38,7 +38,7 @@
       "supportsTablet": false,
       "usesAppleSignIn": true,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Usamos tu ubicación para mostrar trabajadores cercanos y ayudarte a recibir el servicio más rápido posible.",
+        "NSLocationWhenInUseUsageDescription": "Esta app utiliza tu ubicación para mostrar trabajadores o proveedores de servicios cercanos, como plomeros o electricistas, y ayudarte a recibir asistencia más rápido y eficiente en tu zona.",
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleURLTypes": [
           {
@@ -53,7 +53,7 @@
       "appleTeamId": "HHY5MJ22J3"
     },
     "android": {
-      "versionCode": 12,
+      "versionCode": 15,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"

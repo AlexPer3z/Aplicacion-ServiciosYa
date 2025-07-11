@@ -17,7 +17,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { MainStackParamList } from "../types/navigation";
 import { supabase } from "../lib/supabase";
 import * as ImagePicker from "expo-image-picker";
-
+import BotonVolver from '../components/BotonVolver';
 import * as FileSystem from "expo-file-system";
 import uuid from "react-native-uuid";
 
@@ -264,6 +264,7 @@ const subirImagen = async (uri, nombreBase) => {
       style={styles.background}
       resizeMode="cover"
     >
+      <BotonVolver />
       <ScrollView contentContainerStyle={styles.overlay}>
         <Text style={styles.title}>Registro - Trabajador</Text>
 

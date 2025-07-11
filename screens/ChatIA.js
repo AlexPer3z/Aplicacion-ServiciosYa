@@ -5,6 +5,9 @@ import { AuthContext } from '../lib/context/AppContext';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 
+import BotonVolver from '../components/BotonVolver';
+
+
 export default function Chat() {
   const navigation = useNavigation();
   const [chats, setChats] = useState([]);
@@ -120,7 +123,9 @@ export default function Chat() {
 
   return (
     <View style={styles.container}>
+      
       <Text style={styles.titulo}>📨 Tus chats</Text>
+      <BotonVolver />
       {loading ? (
         <ActivityIndicator size="large" color="#FF7E5F" style={{ marginTop: 40 }} />
       ) : (
@@ -147,6 +152,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#202B3A',
     marginBottom: 20,
+    paddingTop:30,
     textAlign: 'center',
     letterSpacing: 1,
     textShadowColor: '#b6e1ea88',

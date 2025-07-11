@@ -11,7 +11,7 @@ import {
 import { supabase } from '../lib/supabase'
 import { removeAuthSession } from '../lib/storage'
 import { useUserSettings } from '../lib/hooks/useUserSettings'
-
+import BotonVolver from '../components/BotonVolver';
 export default function Configuracion({ navigation }) {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -151,6 +151,8 @@ export default function Configuracion({ navigation }) {
   }
 
   return (
+    <>
+    <BotonVolver />
     <ScrollView style={styles.background}>
       <View style={styles.container}>
         <Text style={styles.title}>Configuración</Text>
@@ -235,6 +237,7 @@ export default function Configuracion({ navigation }) {
         </View>
       </View>
     </ScrollView>
+    </>
   )
 }
 
