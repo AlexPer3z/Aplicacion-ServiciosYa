@@ -19,6 +19,8 @@ export default function PasarelaPago() {
   const [urlPago, setUrlPago] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  
+
   useEffect(() => {
     const handleDeepLink = ({ url }) => {
       if (url.includes('pago-exitoso')) {
@@ -79,11 +81,21 @@ export default function PasarelaPago() {
   }
 
   const accesoLibre = () => {
-    navigation.navigate('ServiciosPorCategoria', { categoria });
-  };
+  if (rol !== 'guest') {
+    Alert.alert(
+      'Acción no permitida',
+      'Solo los usuarios invitados pueden acceder libremente sin pagar.'
+    );
+    return;
+  }
+
+  navigation.navigate('ServiciosPorCategoria', { categoria });
+};
 
   const [suscriptor, setsuscriptor] = useState(false);
 const [verificando, setVerificando] = useState(true);
+
+const [rol, setRol] = useState(null);
 
 useEffect(() => {
   const verificarSuscripcion = async () => {
@@ -99,14 +111,15 @@ useEffect(() => {
 
       const { data, error } = await supabase
         .from('usuarios')
-        .select('suscriptor')
+        .select('suscriptor, rol')
         .eq('id', userId)
         .single();
 
       if (error) {
-        console.error('Error al obtener la suscripción:', error);
+        console.error('Error al obtener datos del usuario:', error);
       } else {
         setsuscriptor(data?.suscriptor === true);
+        setRol(data?.rol || null); // nuevo
       }
     } catch (err) {
       console.error('Error inesperado:', err);
@@ -147,9 +160,11 @@ useEffect(() => {
 
     <BotonSuscribirme />
 
-    <TouchableOpacity style={styles.botonPrueba} onPress={accesoLibre}>
-      <Text style={styles.textoBotonPrueba}>Modo invitado</Text>
-    </TouchableOpacity>
+    {rol === 'guest' && (
+  <TouchableOpacity style={styles.botonPrueba} onPress={accesoLibre}>
+    <Text style={styles.textoBotonPrueba}>Modo invitado</Text>
+  </TouchableOpacity>
+)}
   </>
 )}
 
