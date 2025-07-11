@@ -183,14 +183,16 @@ emisor_id: userId,
 
     navigation.navigate('ChatIndividual', {
       chatId: chatExistente.id,
-      otroUsuarioId: notificacion.emisor_id,
+      usuarioId1: userId,
+      usuarioId2: notificacion.emisor_id,
     });
   })
   .catch((error) => {
     console.error('Error en promesa mensajes:', error.message);
     navigation.navigate('ChatIndividual', {
       chatId: chatExistente.id,
-      otroUsuarioId: notificacion.emisor_id,
+      usuarioId1: userId,
+      usuarioId2: notificacion.emisor_id,
     });
   });
 
@@ -259,7 +261,8 @@ loadUnreadMessages();
 // Redirigir al chat recién creado
 navigation.navigate('ChatIndividual', {
   chatId: nuevoChat.id,
-  otroUsuarioId: notificacion.emisor_id,
+  usuarioId1: userId,
+  usuarioId2: notificacion.emisor_id,
 });
 
   };

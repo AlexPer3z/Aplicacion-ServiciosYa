@@ -88,6 +88,8 @@ export default function Chat() {
           mensaje: ultimoMensaje,
           servicioId: chat.servicio_id, // <--- agrego servicioId aquí
           noLeidos: cantidadNoLeidos,
+          usuario_1: chat.usuario_1,
+          usuario_2: chat.usuario_2
         };
       })
     );
@@ -102,6 +104,8 @@ export default function Chat() {
       onPress={() => navigation.navigate('ChatIndividual', {
         chatId: item.id,
         nombre: item.nombre,
+        usuarioId1:item.usuario_1,
+        usuarioId2:item.usuario_2,
         servicioId: item.servicioId, // <--- paso servicioId
       })}
     >

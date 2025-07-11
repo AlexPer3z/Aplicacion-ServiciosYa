@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+ 
 
 interface HiredService {
   id: string;

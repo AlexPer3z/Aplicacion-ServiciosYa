@@ -20,7 +20,8 @@ import BotonVolver from '../components/BotonVolver';
 
 function ChatIndividual({ route, navigation }) {
   
-  const { chatId, nombre, servicioId } = route.params;
+  const { chatId, nombre, usuarioId1, usuarioId2, servicioId } = route.params; 
+
   const [mensajes, setMensajes] = useState([]);
   const [nuevoMensaje, setNuevoMensaje] = useState("");
   const [usuarioId, setUsuarioId] = useState(null);
@@ -85,7 +86,7 @@ function ChatIndividual({ route, navigation }) {
       if (error) {
         console.error("Error al cargar mensajes:", error.message);
         return;
-      }
+      } 
 
       setLoadingMsg(false);
       setMensajes(data);
@@ -128,9 +129,77 @@ function ChatIndividual({ route, navigation }) {
         console.error("Error al enviar mensaje:", error.message);
       } else {
         setNuevoMensaje("");
+
+        console.log(`usuarioId ${usuarioId}`);
+        console.log(`usuarioId1 ${usuarioId1}`);
+        console.log(`usuarioId2 ${usuarioId2}`);
+
+        // Llamar la función que envía la notificación
+        await enviarNotificacionPush({
+          mensaje: mensaje.trim(),
+          usuarioId,
+          usuarioId1,
+          usuarioId2,
+          supabase
+        });
       }
     } catch (error) {
       console.error("Error en enviarMensaje:", error);
+    }
+  };
+
+  const enviarNotificacionPush = async ({
+    mensaje,
+    usuarioId,
+    usuarioId1,
+    usuarioId2,
+    supabase
+  }) => {
+    try {
+      const receptorId = usuarioId === usuarioId1 ? usuarioId2 : usuarioId1;
+
+      
+
+      const { data: receptorData, error: receptorError } = await supabase
+        .from("usuarios")
+        .select("expo_token")
+        .eq("id", receptorId)
+        .single();
+
+      if (receptorError || !receptorData?.expo_token) {
+        console.warn("No se encontró el token del receptor o hubo un error:", receptorError);
+        return;
+      }
+
+      const expoToken = receptorData.expo_token;
+
+      const res = await fetch("https://exp.host/--/api/v2/push/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer HqAsPKHR0s-jilCTTYKwQhUhY5g57rnOlUYb_H6c`,
+        },
+        body: JSON.stringify({
+          to: expoToken,
+          priority: "high",
+          sound: "default",
+          title: "Nuevo mensaje",
+          body: mensaje,
+          data: JSON.stringify({ screen: "ChatIndividual", params: {
+            chatId: chatId,
+            nombre: '',
+            usuarioId1: usuarioId1,
+            usuarioId2: usuarioId2,
+            servicioId: servicioId
+          } }),
+        }),
+      });
+
+      const responseData = await res.json();
+      console.log("Notificación enviada:", responseData);
+
+    } catch (error) {
+      console.error("Error al enviar notificación push:", error);
     }
   };
 
