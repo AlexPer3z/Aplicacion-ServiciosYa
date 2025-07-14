@@ -94,7 +94,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Permitir que $(PRODUCT_NAME) utilice su ubicación."
+          "locationAlwaysAndWhenInUsePermission": "Permitir que $(PRODUCT_NAME) acceda a tu ubicación en todo momento para mostrarte trabajadores o proveedores de servicios cercanos y ayudarte a recibir asistencia más rápida y eficiente en tu zona."
         }
       ],
       "react-native-edge-to-edge",
@@ -102,7 +102,7 @@
         "expo-maps",
         {
           "requestLocationPermission": true,
-          "locationPermission": "Allow $(PRODUCT_NAME) to use your location"
+          "locationPermission": "Permitir que $(PRODUCT_NAME) utiliza tu ubicación para mostrar trabajadores o proveedores de servicios cercanos, como plomeros o electricistas, y ayudarte a recibir asistencia más rápido y eficiente en tu zona."
         }
       ]
     ],
