@@ -39,6 +39,7 @@
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Esta app utiliza tu ubicación para mostrar trabajadores o proveedores de servicios cercanos, como plomeros o electricistas, y ayudarte a recibir asistencia más rápido y eficiente en tu zona.",
+        "NSUserNotificationsUsageDescription": "Esta app necesita enviarte notificaciones para alertarte cuando recibas un mensaje nuevo o cuando tu servicio haya sido contratado, manteniéndote informado sobre las actualizaciones importantes.",
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleURLTypes": [
           {
