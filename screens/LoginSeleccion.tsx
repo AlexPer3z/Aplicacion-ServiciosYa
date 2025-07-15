@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ImageBackground, Image, Animated, Easing,
-  ToastAndroid
+  ToastAndroid, Linking
 } from 'react-native';
 import { supabase } from '../lib/supabase';
 import * as WebBrowser from 'expo-web-browser';
@@ -95,25 +95,25 @@ export default function LoginSelect({ navigation }) {
     // navigation.replace('Home');
   };
   const handleGuestLogin = async () => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: 'guest@example.com',
-    password: 'guestpassword',
-  });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: 'guest@example.com',
+      password: 'guestpassword',
+    });
 
-  if (error) {
-    console.log('Error al loguear invitado:', error.message);
-    return;
-  }
+    if (error) {
+      console.log('Error al loguear invitado:', error.message);
+      return;
+    }
 
-  navigation.reset({
-    index: 0,
-    routes: [{ name: 'InicioRouter' }],
-  });
-};
-
-
-
-
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'InicioRouter' }],
+    });
+  };
+  
+  const openURL = (url: string) => {
+    Linking.openURL(url).catch(err => console.error("Error al abrir el enlace:", err));
+  };
 
 
   return (
@@ -137,17 +137,36 @@ export default function LoginSelect({ navigation }) {
           <BtnLoginGoogle onLogin={handleLoginGoogle} />
           <AppleSignInButton />
           <LoginButton
-  icon="person-outline"
-  label="Entrar como invitado"
-  onPress={handleGuestLogin}
-  style={{ backgroundColor: '#A9A9A9' }} // gris suave
-/>
+            icon="person-outline"
+            label="Entrar como invitado"
+            onPress={handleGuestLogin}
+            style={{ backgroundColor: '#A9A9A9' }} // gris suave
+          />
 
         </View>
 
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
           <Text style={styles.registerText}>¿No tienes cuenta? Regístrate</Text>
         </TouchableOpacity>
+ 
+ 
+        <Text style={[styles.text,{marginTop:25}]}>
+          Al usar esta aplicación, aceptas nuestros{' '}
+          <Text 
+            style={styles.link}
+            onPress={() => openURL('https://inicio.serviciosya.info/Terminos-y-condiciones.html')}
+          >
+            Términos y Condiciones
+          </Text>{' '}
+          y nuestra{' '}
+          <Text 
+            style={styles.link}
+            onPress={() => openURL('https://inicio.serviciosya.info/politicas-de-privacidad.html')}
+          >
+            Política de Privacidad
+          </Text>.
+        </Text> 
+
       </Animated.View>
     </ImageBackground>
   );
@@ -243,5 +262,14 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 15,
     fontWeight: '700',
+  },
+    text: {
+    textAlign: 'center',
+    fontSize: 14,
+    color: '#666',
+  },
+  link: {
+    color: '#007AFF',
+    fontWeight: 'bold',
   },
 });
