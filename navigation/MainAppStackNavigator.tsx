@@ -89,10 +89,6 @@ export default function MainStackNavigator() {
       />
       <Stack.Screen name="EditarServicio" component={EditarServicio} />
       <Stack.Screen
-        name="VerificacionPendiente"
-        component={withSafeArea(VerificacionPendiente)}
-      />
-      <Stack.Screen
         name="NotificacionesScreen"
         component={withSafeArea(NotificacionesScreen)}
       />

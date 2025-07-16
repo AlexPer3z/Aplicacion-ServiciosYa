@@ -1,10 +1,12 @@
-import React from 'react';
+import type React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginSelect from '../screens/LoginSeleccion';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StyleSheet } from 'react-native';
 import Login from '../screens/Login';
 import Register from '../screens/Register';
+import type { AuthStackParamList } from '../types/navigation';
+import VerificacionPendiente from '../screens/VerificacionPendiente';
 
 interface WithSafeAreaProps {
     [key: string]: any;
@@ -18,12 +20,6 @@ function withSafeArea<P extends WithSafeAreaProps>(Component: React.ComponentTyp
     );
 }
 
-type AuthStackParamList = {
-    LoginSelect: undefined;
-    Login: undefined;
-    Register: undefined;
-};
-
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export default function AuthStackNavigator() {
@@ -32,6 +28,10 @@ export default function AuthStackNavigator() {
             <Stack.Screen name="LoginSelect" component={withSafeArea(LoginSelect)} />
             <Stack.Screen name="Login" component={withSafeArea(Login)} />
             <Stack.Screen name="Register" component={withSafeArea(Register)} />
+            <Stack.Screen
+                name="VerificacionPendiente"
+                component={withSafeArea(VerificacionPendiente)}
+            />
         </Stack.Navigator>
     );
 }
