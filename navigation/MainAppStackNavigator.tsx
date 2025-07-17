@@ -29,7 +29,7 @@ import { useNotifications } from "../lib/hooks/useNotifications";
 import SeleccionRol from "../screens/SeleccionRol";
 import RegistroCliente from "../screens/RegistroCliente";
 import RegistroTrabajador from "../screens/RegistroTrabajador";
-
+import PasarelaPagoWorker from '../screens/PasarelaPagoWorker';
 
 import InicioRouter from '../screens/InicioRouter'; 
 
@@ -78,6 +78,11 @@ export default function MainStackNavigator() {
         name="PasarelaPago"
         component={withSafeArea(PasarelaPago)}
       />
+      <Stack.Screen
+  name="PasarelaPagoWorker"
+  component={PasarelaPagoWorker}
+  options={{ headerShown: false }}
+/>
       <Stack.Screen name="ChatIA" component={withSafeArea(ChatIA)} />
       <Stack.Screen
         name="ChatIndividual"
