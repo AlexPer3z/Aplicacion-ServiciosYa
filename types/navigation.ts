@@ -26,6 +26,13 @@ export type MainStackParamList = {
   OnlineWorkers: undefined;
 };
 
+export type AuthStackParamList = {
+    LoginSelect: undefined;
+    Login: undefined;
+    Register: undefined;
+    VerificacionPendiente: undefined;
+};
+
 // This type will be used by components for navigation prop
 export type MainStackNavigationProp =
   NativeStackNavigationProp<MainStackParamList>;
