@@ -82,12 +82,51 @@ export default function LoginSelect({ navigation }) {
       setErrorMessage(errorResponse);
       return;
     }
+
+    // Iniciar sesión con el token de Google
     const { data, error } = await supabase.auth.signInWithIdToken({
       provider: 'google',
       token: response.data.idToken,
     });
     if (error) {
       setErrorMessage('Error al iniciar sesión con Google.');
+    }
+
+    // Verificar si el usuario existe en la tabla "usuarios"
+    const userId = data.user?.id;
+    const userEmail = data.user?.email;
+
+    if (!userId || !userEmail) {
+      setErrorMessage('No se pudo obtener información del usuario.');
+      return;
+    }
+
+    try {
+      const { data: existingUser, error: fetchError } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('id', userId)
+        .single();
+
+      // Si no se encuentra, insertarlo
+      if (!existingUser && !fetchError) {
+        const { error: insertError } = await supabase
+          .from('usuarios')
+          .insert([{ id: userId, email: userEmail }]);
+
+        if (insertError) {
+          console.error('Error insertando nuevo usuario:', insertError);
+          setErrorMessage('Error al guardar información del usuario.');
+          return;
+        }
+      }
+
+      // Continúa el flujo normal
+      console.log('Inicio de sesión exitoso con Google');
+
+    } catch (err) {
+      console.error('Error verificando/insertando usuario:', err);
+      setErrorMessage('Error al procesar el usuario.');
     }
   };
 

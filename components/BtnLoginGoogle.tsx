@@ -36,11 +36,11 @@ export default function BtnLoginGoogle({ onLogin }) {
   return (
     <SocialButton
       onPress={signIn}
-      icon={<Ionicons name="logo-google" size={28} color="#fff" />}
-      text="Iniciar sesión con Google"
+      icon={<Ionicons name="logo-google" size={24} color="#fff" />}
+      text="Iniciar con Google"
       backgroundColor="#EA4335"
       textColor="#fff"
-      style={{ justifyContent: 'flex-start', paddingLeft: 20 }}
+      style={{ justifyContent: 'center' }}
       />
   );
 }

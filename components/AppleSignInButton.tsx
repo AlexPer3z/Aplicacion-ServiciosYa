@@ -27,7 +27,8 @@ export default function AppleSignInButton() {
         return;
       }
 
-      const { error } = await supabase.auth.signInWithIdToken({
+      // Iniciar sesión con el token de Apple
+      const { data, error } = await supabase.auth.signInWithIdToken({
         provider: "apple",
         token: appleCredential.identityToken,
       });
@@ -35,9 +36,38 @@ export default function AppleSignInButton() {
       if (error) {
         console.log("Error Supabase:", error.message);
         Alert.alert("Error", error.message);
-      } else {
-        Alert.alert("¡Sesión iniciada con Apple!");
+        return;
       }
+
+      // Verificar si el usuario ya existe en la tabla "usuarios"
+      const userId = data.user?.id;
+      const userEmail = data.user?.email;
+
+      if (!userId || !userEmail) {
+        Alert.alert("Error", "No se pudo obtener información del usuario.");
+        return;
+      }
+
+      const { data: existingUser, error: fetchError } = await supabase
+        .from("usuarios")
+        .select("id")
+        .eq("id", userId)
+        .single();
+
+      if (!existingUser && !fetchError) {
+        const { error: insertError } = await supabase
+          .from("usuarios")
+          .insert([{ id: userId, email: userEmail }]);
+
+        if (insertError) {
+          console.error("Error insertando nuevo usuario:", insertError);
+          Alert.alert("Error", "No se pudo registrar el usuario.");
+          return;
+        }
+      }
+
+      Alert.alert("¡Sesión iniciada con Apple!");
+
     } catch (error: any) {
       if (error.code === "ERR_CANCELED") {
         Alert.alert("Cancelado por el usuario");
