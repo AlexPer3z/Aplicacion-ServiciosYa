@@ -109,7 +109,7 @@ export default function LoginSelect({ navigation }) {
         .single();
 
       // Si no se encuentra, insertarlo
-      if (!existingUser && !fetchError) {
+      if (existingUser == null) { 
         const { error: insertError } = await supabase
           .from('usuarios')
           .insert([{ id: userId, email: userEmail }]);

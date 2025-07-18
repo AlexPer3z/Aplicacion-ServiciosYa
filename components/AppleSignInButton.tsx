@@ -54,7 +54,8 @@ export default function AppleSignInButton() {
         .eq("id", userId)
         .single();
 
-      if (!existingUser && !fetchError) {
+      // Si no se encuentra, insertarlo
+      if (existingUser == null) { 
         const { error: insertError } = await supabase
           .from("usuarios")
           .insert([{ id: userId, email: userEmail }]);
