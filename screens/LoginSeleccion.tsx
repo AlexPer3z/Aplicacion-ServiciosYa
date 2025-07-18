@@ -108,8 +108,11 @@ export default function LoginSelect({ navigation }) {
         .eq('id', userId)
         .single();
 
+      console.log('existingUser ',existingUser);
+
       // Si no se encuentra, insertarlo
-      if (!existingUser && !fetchError) {
+      if (existingUser == null) { 
+        console.log('registrar usuario ');
         const { error: insertError } = await supabase
           .from('usuarios')
           .insert([{ id: userId, email: userEmail }]);
