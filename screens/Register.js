@@ -8,6 +8,8 @@ import fondo from '../assets/fondo.png';
 import logo from '../assets/logo.png';
 import { supabase } from '../lib/supabase'; 
 import BotonVolver from '../components/BotonVolver';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+
 export default function Register({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -74,88 +76,90 @@ export default function Register({ navigation }) {
 
   return (
     <ImageBackground source={fondo} style={styles.background} resizeMode="cover">
-      <BotonVolver />
-      <View style={styles.container}>
-        {showMessage ? (
-          <View style={styles.messageContainer}>
-            <Icon name="check-circle" size={44} color="#19D4C6" style={{ marginBottom: 14 }} />
-            <Text style={styles.modalTitle}>¡Verificá tu correo!</Text>
-            <Text style={styles.modalMessage}>
-              Te enviamos un correo para confirmar tu cuenta. Una vez verificado, podrás iniciar sesión.
-            </Text>
-            <TouchableOpacity
-              style={styles.modalButton}
-              onPress={() => {
-                setShowMessage(false);
-                navigation.navigate('Login');
-              }}
-            >
-              <Text style={styles.modalButtonText}>Ir a Iniciar sesión</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <>
-            <Image source={logo} style={styles.logo} />
-            <Text style={styles.title}>Crear Cuenta</Text>
-            <TextInput
-              placeholder="Correo Electrónico"
-              placeholderTextColor="#7bc1ba"
-              onChangeText={setEmail}
-              value={email}
-              style={styles.input}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-
-            <View style={styles.passwordContainer}>
-              <TextInput
-                placeholder="Contraseña"
-                placeholderTextColor="#7bc1ba"
-                secureTextEntry={!showPassword}
-                onChangeText={setPassword}
-                value={password}
-                style={styles.passwordInput}
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                <Icon name={showPassword ? 'visibility-off' : 'visibility'} size={24} color="#19D4C6" />
+        <BotonVolver />
+        <View style={styles.container}>
+          {showMessage ? (
+            <View style={styles.messageContainer}>
+              <Icon name="check-circle" size={44} color="#19D4C6" style={{ marginBottom: 14 }} />
+              <Text style={styles.modalTitle}>¡Verificá tu correo!</Text>
+              <Text style={styles.modalMessage}>
+                Te enviamos un correo para confirmar tu cuenta. Una vez verificado, podrás iniciar sesión.
+              </Text>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => {
+                  setShowMessage(false);
+                  navigation.navigate('Login');
+                }}
+              >
+                <Text style={styles.modalButtonText}>Ir a Iniciar sesión</Text>
               </TouchableOpacity>
             </View>
+          ) : (
+            <>
+              <KeyboardAwareScrollView>
+                <Image source={logo} style={styles.logo} />
+                <Text style={styles.title}>Crear Cuenta</Text>
+                <TextInput
+                  placeholder="Correo Electrónico"
+                  placeholderTextColor="#7bc1ba"
+                  onChangeText={setEmail}
+                  value={email}
+                  style={styles.input}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
 
-            <View style={styles.requisitosContainer}>
-              {renderRequisito(requisitos.longitud, 'Mínimo 8 caracteres')}
-              {renderRequisito(requisitos.mayuscula, 'Una mayúscula')}
-              {renderRequisito(requisitos.minuscula, 'Una minúscula')}
-              {renderRequisito(requisitos.numero, 'Un número')}
-              {renderRequisito(requisitos.simbolo, 'Un símbolo')}
-            </View>
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    placeholder="Contraseña"
+                    placeholderTextColor="#7bc1ba"
+                    secureTextEntry={!showPassword}
+                    onChangeText={setPassword}
+                    value={password}
+                    style={styles.passwordInput}
+                  />
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                    <Icon name={showPassword ? 'visibility-off' : 'visibility'} size={24} color="#19D4C6" />
+                  </TouchableOpacity>
+                </View>
 
-            <TextInput
-              placeholder="Repetir Contraseña"
-              placeholderTextColor="#7bc1ba"
-              secureTextEntry={!showPassword}
-              onChangeText={setRepeatPassword}
-              value={repeatPassword}
-              style={styles.input}
-            />
+                <View style={styles.requisitosContainer}>
+                  {renderRequisito(requisitos.longitud, 'Mínimo 8 caracteres')}
+                  {renderRequisito(requisitos.mayuscula, 'Una mayúscula')}
+                  {renderRequisito(requisitos.minuscula, 'Una minúscula')}
+                  {renderRequisito(requisitos.numero, 'Un número')}
+                  {renderRequisito(requisitos.simbolo, 'Un símbolo')}
+                </View>
 
-            <TouchableOpacity
-              style={[
-                styles.button,
-                (!email || !esSegura || password !== repeatPassword) && { backgroundColor: '#a0a0a0' }
-              ]}
-              //onPress={handleRegister}
-              onPress={() => handleRegister()}
-              disabled={!email || !esSegura || password !== repeatPassword}
-            >
-              <Text style={styles.buttonText}>Registrarme</Text>
-            </TouchableOpacity>
+                <TextInput
+                  placeholder="Repetir Contraseña"
+                  placeholderTextColor="#7bc1ba"
+                  secureTextEntry={!showPassword}
+                  onChangeText={setRepeatPassword}
+                  value={repeatPassword}
+                  style={styles.input}
+                />
 
-            <TouchableOpacity onPress={() => navigation.navigate('LoginSelect')}>
-              <Text style={styles.registerText}>¿Ya tienes cuenta? Inicia sesión</Text>
-            </TouchableOpacity>
-          </>
-        )}
-      </View>
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    (!email || !esSegura || password !== repeatPassword) && { backgroundColor: '#a0a0a0' }
+                  ]}
+                  //onPress={handleRegister}
+                  onPress={() => handleRegister()}
+                  disabled={!email || !esSegura || password !== repeatPassword}
+                >
+                  <Text style={styles.buttonText}>Registrarme</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => navigation.navigate('LoginSelect')}>
+                  <Text style={styles.registerText}>¿Ya tienes cuenta? Inicia sesión</Text>
+                </TouchableOpacity>
+              </KeyboardAwareScrollView>
+            </>
+          )}
+        </View>
     </ImageBackground>
   );
 }

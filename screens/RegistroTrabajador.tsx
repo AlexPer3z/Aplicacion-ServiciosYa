@@ -20,6 +20,8 @@ import * as ImagePicker from "expo-image-picker";
 import BotonVolver from '../components/BotonVolver';
 import * as FileSystem from "expo-file-system";
 import uuid from "react-native-uuid";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import SelectDropdown from 'react-native-select-dropdown' 
 
 type NavigationProp = NativeStackNavigationProp<MainStackParamList>;
 async function mostrarUsuario() {
@@ -275,64 +277,88 @@ export default function RegistroTrabajador() {
       style={styles.background}
       resizeMode="cover"
     >
-      <BotonVolver />
-      <ScrollView contentContainerStyle={styles.overlay}>
-        <Text style={styles.title}>Registro - Trabajador</Text>
+      <BotonVolver /> 
+        <View style={styles.overlay}>
+          <Text style={styles.title}>Registro - Trabajador</Text>
 
-        {step === 1 && (
-          <>
-            <TextInput
-              placeholder="Nombre"
-              placeholderTextColor="#4e827d"
-              value={nombre}
-              onChangeText={setNombre}
-              style={styles.input}
-            />
-            <TextInput
-              placeholder="Apellido"
-              placeholderTextColor="#4e827d"
-              value={apellido}
-              onChangeText={setApellido}
-              style={styles.input}
-            />
-            <TextInput
-              placeholder="Edad"
-              placeholderTextColor="#4e827d"
-              value={edad}
-              onChangeText={setEdad}
-              keyboardType="numeric"
-              style={styles.input}
-            />
-            <TextInput
-              placeholder="Sexo"
-              placeholderTextColor="#4e827d"
-              value={sexo}
-              onChangeText={setSexo}
-              style={styles.input}
-            />
-            <TextInput
-              placeholder="Número de celular"
-              placeholderTextColor="#4e827d"
-              value={numeroCelular}
-              onChangeText={setNumeroCelular}
-              keyboardType="phone-pad"
-              style={styles.input}
-            />
-            <View style={styles.switchContainer}>
-              <Switch
-                value={aceptaResponsabilidad}
-                onValueChange={setAceptaResponsabilidad}
-                trackColor={{ false: "#767577", true: "#E8C547" }}
-                thumbColor={aceptaResponsabilidad ? "#A4D4AE" : "#f4f3f4"}
-              />
-              <Text style={styles.switchLabel}>
-                Declaro ser máximo responsable de los servicios ofrecidos
-              </Text>
-            </View>
-          </>
-        )}
+          <KeyboardAwareScrollView style={{width:'100%'}}>
+            {step === 1 && (
+              <>
+                <TextInput
+                  placeholder="Nombre"
+                  placeholderTextColor="#4e827d"
+                  value={nombre}
+                  onChangeText={setNombre}
+                  style={styles.input}
+                />
+                <TextInput
+                  placeholder="Apellido"
+                  placeholderTextColor="#4e827d"
+                  value={apellido}
+                  onChangeText={setApellido}
+                  style={styles.input}
+                />
+                <TextInput
+                  placeholder="Edad"
+                  placeholderTextColor="#4e827d"
+                  value={edad}
+                  onChangeText={setEdad}
+                  keyboardType="numeric"
+                  style={styles.input}
+                /> 
+                 <SelectDropdown
+                    data={[
+                      {title: 'Masculino', value: 'masculino'},
+                      {title: 'Femenino', value: 'femenino'},
+                    ]}
+                    onSelect={(selectedItem, index) => {
+                      setSexo(selectedItem.value)
+                    }}
+                    renderButton={(selectedItem, isOpened) => {
+                      return (
+                        <View style={styles.dropdownButtonStyle}>
+                          <Text style={[
+                            styles.dropdownButtonTxtStyle,
+                            !selectedItem && {color: '#999'}
+                          ]}>
+                            {(selectedItem && selectedItem.title) || 'Sexo'}
+                          </Text>
+                        </View>
+                      );
+                    }}
+                    renderItem={(item, index, isSelected) => {
+                      return (
+                        <View style={{...styles.dropdownItemStyle, ...(isSelected && {backgroundColor: '#D2D9DF'})}}>
+                          <Text style={styles.dropdownItemTxtStyle}>{item.title}</Text>
+                        </View>
+                      );
+                    }}
+                    showsVerticalScrollIndicator={false}
+                    dropdownStyle={styles.dropdownMenuStyle}
+                  />
+                <TextInput
+                  placeholder="Número de celular"
+                  placeholderTextColor="#4e827d"
+                  value={numeroCelular}
+                  onChangeText={setNumeroCelular}
+                  keyboardType="phone-pad"
+                  style={styles.input}
+                />
+                <View style={styles.switchContainer}>
+                  <Switch
+                    value={aceptaResponsabilidad}
+                    onValueChange={setAceptaResponsabilidad}
+                    trackColor={{ false: "#767577", true: "#E8C547" }}
+                    thumbColor={aceptaResponsabilidad ? "#A4D4AE" : "#f4f3f4"}
+                  />
+                  <Text style={styles.switchLabel}>
+                    Declaro ser máximo responsable de los servicios ofrecidos
+                  </Text>
+                </View>
+              </>
+            )}
 
-        {step === 2 && (
+            {step === 2 && (
   <>
     <TextInput
       placeholder="Número de DNI"
@@ -375,89 +401,89 @@ export default function RegistroTrabajador() {
   </>
 )}
 
+            {step === 3 && (
+              <>
+                <TextInput
+                  placeholder="Descripción de experiencia laboral (mínimo 70 caracteres)"
+                  placeholderTextColor="#4e827d"
+                  value={experiencia}
+                  onChangeText={setExperiencia}
+                  multiline
+                  numberOfLines={4}
+                  style={[styles.input, { height: 100, textAlignVertical: "top" }]}
+                />
+                <TextInput
+                  placeholder="Referencias laborales (opcional)"
+                  placeholderTextColor="#4e827d"
+                  value={referencias}
+                  onChangeText={setReferencias}
+                  multiline
+                  numberOfLines={3}
+                  style={[styles.input, { height: 80, textAlignVertical: "top" }]}
+                />
+                <TextInput
+                  placeholder="Experiencia académica"
+                  placeholderTextColor="#4e827d"
+                  value={experienciaAcademica}
+                  onChangeText={setExperienciaAcademica}
+                  multiline
+                  numberOfLines={3}
+                  style={[styles.input, { height: 80, textAlignVertical: "top" }]}
+                />
+              </>
+            )}
 
-        {step === 3 && (
-          <>
-            <TextInput
-              placeholder="Descripción de experiencia laboral (mínimo 70 caracteres)"
-              placeholderTextColor="#4e827d"
-              value={experiencia}
-              onChangeText={setExperiencia}
-              multiline
-              numberOfLines={4}
-              style={[styles.input, { height: 100, textAlignVertical: "top" }]}
-            />
-            <TextInput
-              placeholder="Referencias laborales (opcional)"
-              placeholderTextColor="#4e827d"
-              value={referencias}
-              onChangeText={setReferencias}
-              multiline
-              numberOfLines={3}
-              style={[styles.input, { height: 80, textAlignVertical: "top" }]}
-            />
-            <TextInput
-              placeholder="Experiencia académica"
-              placeholderTextColor="#4e827d"
-              value={experienciaAcademica}
-              onChangeText={setExperienciaAcademica}
-              multiline
-              numberOfLines={3}
-              style={[styles.input, { height: 80, textAlignVertical: "top" }]}
-            />
-          </>
-        )}
+            {step === 4 && (
+              <>
+                <Text
+                  style={styles.link}
+                  onPress={() =>
+                    Linking.openURL(
+                      "https://inicio.serviciosya.info/politicas-de-privacidad.html"
+                    )
+                  }
+                >
+                  Políticas de Privacidad
+                </Text>
+                <Text
+                  style={styles.link}
+                  onPress={() =>
+                    Linking.openURL(
+                      "https://inicio.serviciosya.info/Terminos-y-condiciones.html"
+                    )
+                  }
+                >
+                  Términos y Condiciones
+                </Text>
 
-        {step === 4 && (
-          <>
-            <Text
-              style={styles.link}
-              onPress={() =>
-                Linking.openURL(
-                  "https://inicio.serviciosya.info/politicas-de-privacidad.html"
-                )
-              }
-            >
-              Políticas de Privacidad
-            </Text>
-            <Text
-              style={styles.link}
-              onPress={() =>
-                Linking.openURL(
-                  "https://inicio.serviciosya.info/Terminos-y-condiciones.html"
-                )
-              }
-            >
-              Términos y Condiciones
-            </Text>
+                <View style={styles.switchContainer}>
+                  <Switch
+                    value={aceptaTerminos}
+                    onValueChange={setAceptaTerminos}
+                    trackColor={{ false: "#767577", true: "#E8C547" }}
+                    thumbColor={aceptaTerminos ? "#A4D4AE" : "#f4f3f4"}
+                  />
+                  <Text style={styles.switchLabel}>Acepto las políticas y términos</Text>
+                </View>
 
-            <View style={styles.switchContainer}>
-              <Switch
-                value={aceptaTerminos}
-                onValueChange={setAceptaTerminos}
-                trackColor={{ false: "#767577", true: "#E8C547" }}
-                thumbColor={aceptaTerminos ? "#A4D4AE" : "#f4f3f4"}
-              />
-              <Text style={styles.switchLabel}>Acepto las políticas y términos</Text>
+                <Text style={styles.subtitulo}>
+                  ServiciosYa es una plataforma de conexión entre trabajadores y clientes, y no asume responsabilidad alguna por las tareas o el desempeño de los trabajadores.
+                </Text>
+              </>
+            )}
+
+            <View style={styles.buttonsRow}>
+              {step > 1 && (
+                <TouchableOpacity style={[styles.button, styles.buttonBack]} onPress={handleBack}>
+                  <Text style={[styles.buttonText, styles.buttonTextBack]}>Atrás</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity style={styles.button} onPress={handleNext}>
+                <Text style={styles.buttonText}>{step === 4 ? "Finalizar" : "Siguiente"}</Text>
+              </TouchableOpacity>
             </View>
-
-            <Text style={styles.subtitulo}>
-              ServiciosYa es una plataforma de conexión entre trabajadores y clientes, y no asume responsabilidad alguna por las tareas o el desempeño de los trabajadores.
-            </Text>
-          </>
-        )}
-
-        <View style={styles.buttonsRow}>
-          {step > 1 && (
-            <TouchableOpacity style={[styles.button, styles.buttonBack]} onPress={handleBack}>
-              <Text style={[styles.buttonText, styles.buttonTextBack]}>Atrás</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity style={styles.button} onPress={handleNext}>
-            <Text style={styles.buttonText}>{step === 4 ? "Finalizar" : "Siguiente"}</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+          </KeyboardAwareScrollView>
+        </View> 
     </ImageBackground>
   );
 }
@@ -469,7 +495,7 @@ const styles = StyleSheet.create({
     height: "130%",
   },
   overlay: {
-    flexGrow: 1,
+    marginTop: 100,
     backgroundColor: "rgba(255,255,255,0.8)",
     justifyContent: "center",
     alignItems: "center",
@@ -542,7 +568,9 @@ const styles = StyleSheet.create({
   },
   buttonsRow: {
     flexDirection: "row",
+    justifyContent:'space-evenly',
     marginTop: 20,
+    marginBottom:50
   },
   fotosContainer: {
     flexDirection: "column",
@@ -581,4 +609,53 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
   },
+  dropdownButtonStyle: {
+      width: '100%',
+      height: 50, 
+      borderRadius: 12,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+
+      backgroundColor: "#fff", 
+      padding: 14,
+      marginVertical: 10,
+      fontSize: 16,
+      borderColor: "#E8C547",
+      borderWidth: 1, 
+    },
+    dropdownButtonTxtStyle: {
+      flex: 1,
+      fontSize: 16, 
+    },
+    dropdownButtonArrowStyle: {
+      fontSize: 28,
+    },
+    dropdownButtonIconStyle: {
+      fontSize: 28,
+      marginRight: 8,
+    },
+    dropdownMenuStyle: {
+      backgroundColor: '#E9ECEF',
+      borderRadius: 8,
+    },
+    dropdownItemStyle: {
+      width: '100%',
+      flexDirection: 'row',
+      paddingHorizontal: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingVertical: 8,
+    },
+    dropdownItemTxtStyle: {
+      flex: 1,
+      fontSize: 20,
+      fontWeight: '500',
+      color: '#151E26',
+    },
+    dropdownItemIconStyle: {
+      fontSize: 28,
+      marginRight: 8,
+    },
 });

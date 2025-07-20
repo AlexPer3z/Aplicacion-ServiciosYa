@@ -105,6 +105,13 @@
           "requestLocationPermission": true,
           "locationPermission": "Permitir que $(PRODUCT_NAME) utiliza tu ubicación para mostrar trabajadores o proveedores de servicios cercanos, como plomeros o electricistas, y ayudarte a recibir asistencia más rápido y eficiente en tu zona."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+         "photosPermission": "Permitir acceso a tu galería para subir imágenes en la aplicación.",
+         "cameraPermission": "Permitir acceso a tu cámara para tomar fotos dentro de la aplicación."
+        }
       ]
     ],
     "extra": {

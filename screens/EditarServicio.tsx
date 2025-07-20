@@ -19,6 +19,8 @@ import { withDropDownProvider } from "../components/forms/withDropDownProvider";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { locationQueryString } from "../lib/utils/location";
 import showToast from "../lib/toast";
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import BotonVolver from "../components/BotonVolver";
 
 type Props = NativeStackScreenProps<MainStackParamList, "EditarServicio">;
 
@@ -74,88 +76,90 @@ function EditarServicio({ route, navigation }: Props) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#E8FAF7" }}>
-      <ScrollView
-        style={styles.background}
-        contentContainerStyle={styles.scrollContent}
+      <View
+        style={[styles.background,styles.scrollContent]} 
       >
+        <BotonVolver />
         <View style={styles.card}>
-          <Text style={styles.titulo}>Editar Servicio</Text>
+          <KeyboardAwareScrollView>
+            <Text style={styles.titulo}>Editar Servicio</Text>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Título del servicio"
-            value={titulo}
-            onChangeText={setTitulo}
-            placeholderTextColor="#b6e1ea"
-          />
+            <TextInput
+              style={styles.input}
+              placeholder="Título del servicio"
+              value={titulo}
+              onChangeText={setTitulo}
+              placeholderTextColor="#b6e1ea"
+            />
 
-          <TextInput
-            style={[styles.input, { height: 80 }]}
-            placeholder="Descripción (máx. 300 caracteres)"
-            value={descripcion}
-            onChangeText={setDescripcion}
-            multiline
-            maxLength={300}
-            placeholderTextColor="#b6e1ea"
-          />
-          <LocationInput
-            onChange={(value) => handleUpdateLocation(value)}
-            initialValue={{ lat: servicio.latitude, lng: servicio.longitude }}
-          />
+            <TextInput
+              style={[styles.input, { height: 80 }]}
+              placeholder="Descripción (máx. 300 caracteres)"
+              value={descripcion}
+              onChangeText={setDescripcion}
+              multiline
+              maxLength={300}
+              placeholderTextColor="#b6e1ea"
+            />
+            <LocationInput
+              onChange={(value) => handleUpdateLocation(value)}
+              initialValue={{ lat: servicio.latitude, lng: servicio.longitude }}
+            />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Precio"
-            keyboardType="numeric"
-            value={precio}
-            onChangeText={setPrecio}
-            placeholderTextColor="#b6e1ea"
-          />
+            <TextInput
+              style={styles.input}
+              placeholder="Precio"
+              keyboardType="numeric"
+              value={precio}
+              onChangeText={setPrecio}
+              placeholderTextColor="#b6e1ea"
+            />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Horario disponible"
-            value={horario}
-            onChangeText={setHorario}
-            placeholderTextColor="#b6e1ea"
-          />
+            <TextInput
+              style={styles.input}
+              placeholder="Horario disponible"
+              value={horario}
+              onChangeText={setHorario}
+              placeholderTextColor="#b6e1ea"
+            />
 
-          <Text style={styles.label}>Categoría</Text>
-          <ScrollView
-            style={styles.categoriasScroll}
-            contentContainerStyle={styles.categoriasContainer}
-          >
-            {categoriasDisponibles.map((cat) => (
-              <TouchableOpacity
-                key={cat}
-                style={[
-                  styles.categoriaBtn,
-                  categoria === cat && styles.categoriaSeleccionada,
-                ]}
-                onPress={() => setCategoria(cat)}
-                activeOpacity={0.85}
-              >
-                <Text
+            <Text style={styles.label}>Categoría</Text>
+            <ScrollView
+              style={styles.categoriasScroll}
+              contentContainerStyle={styles.categoriasContainer}
+            >
+              {categoriasDisponibles.map((cat) => (
+                <TouchableOpacity
+                  key={cat}
                   style={[
-                    styles.categoriaText,
-                    categoria === cat && styles.categoriaTextSelected,
+                    styles.categoriaBtn,
+                    categoria === cat && styles.categoriaSeleccionada,
                   ]}
+                  onPress={() => setCategoria(cat)}
+                  activeOpacity={0.85}
                 >
-                  {cat}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+                  <Text
+                    style={[
+                      styles.categoriaText,
+                      categoria === cat && styles.categoriaTextSelected,
+                    ]}
+                  >
+                    {cat}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
 
-          <TouchableOpacity
-            style={styles.boton}
-            onPress={handleActualizar}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.botonTexto}>Guardar Cambios</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.boton}
+              onPress={handleActualizar}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.botonTexto}>Guardar Cambios</Text>
+            </TouchableOpacity>
+          </KeyboardAwareScrollView>
         </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -172,6 +176,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   card: {
+    marginTop:50,
     width: "100%",
     maxWidth: 460,
     backgroundColor: "#fff",

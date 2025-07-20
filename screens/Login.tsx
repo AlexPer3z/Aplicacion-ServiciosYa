@@ -21,6 +21,7 @@ import { saveCredentials } from "../lib/storage";
 import BotonVolver from "../components/BotonVolver";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AuthStackParamList } from "../types/navigation";
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -279,52 +280,54 @@ export default function Login({ navigation }: Props) {
           { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
         ]}
       >
-        <Image source={logo} style={styles.logo} />
-        <Text style={styles.title}>Iniciar Sesión</Text>
+        <KeyboardAwareScrollView style={{width:'100%'}}>
+          <Image source={logo} style={styles.logo} />
+          <Text style={styles.title}>Iniciar Sesión</Text>
 
-        {errorMessage !== "" && <ErrorBox message={errorMessage} />}
+          {errorMessage !== "" && <ErrorBox message={errorMessage} />}
 
-        <View style={styles.inputContainer}>
-          <TextInput
-            placeholder="Correo Electrónico o Celular"
-            placeholderTextColor="#999"
-            onChangeText={(text) => {
-              setIdentifier(text);
-              // Show help text if user is typing numbers (likely a phone number)
-              setShowPhoneHelp(isPhoneNumber(text) && text.length > 0);
-            }}
-            value={identifier}
-            style={styles.input}
-            autoCapitalize="none"
-            keyboardType="default"
-            editable={!isLoading}
-          />
+          <View style={styles.inputContainer}>
+            <TextInput
+              placeholder="Correo Electrónico o Celular"
+              placeholderTextColor="#999"
+              onChangeText={(text) => {
+                setIdentifier(text);
+                // Show help text if user is typing numbers (likely a phone number)
+                setShowPhoneHelp(isPhoneNumber(text) && text.length > 0);
+              }}
+              value={identifier}
+              style={styles.input}
+              autoCapitalize="none"
+              keyboardType="default"
+              editable={!isLoading}
+            />
 
-          <HelpText
-            message="Ingrese solo números sin espacios ni guiones, usa el formato internacional (ej: 5491123456789)"
-            visible={showPhoneHelp}
-          />
+            <HelpText
+              message="Ingrese solo números sin espacios ni guiones, usa el formato internacional (ej: 5491123456789)"
+              visible={showPhoneHelp}
+            />
 
-          <PasswordInput
-            value={password}
-            onChangeText={setPassword}
-            showPassword={showPassword}
-            onTogglePassword={() => setShowPassword(!showPassword)}
-          />
-        </View>
+            <PasswordInput
+              value={password}
+              onChangeText={setPassword}
+              showPassword={showPassword}
+              onTogglePassword={() => setShowPassword(!showPassword)}
+            />
+          </View>
 
-        <TouchableOpacity
-          style={[
-            styles.loginButton,
-            (!isFormValid || isLoading) && styles.loginButtonDisabled,
-          ]}
-          onPress={handleLogin}
-          disabled={!isFormValid || isLoading}
-        >
-          <Text style={styles.loginButtonText}>
-            {isLoading ? "Ingresando..." : "Ingresar"}
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.loginButton,
+              (!isFormValid || isLoading) && styles.loginButtonDisabled,
+            ]}
+            onPress={handleLogin}
+            disabled={!isFormValid || isLoading}
+          >
+            <Text style={styles.loginButtonText}>
+              {isLoading ? "Ingresando..." : "Ingresar"}
+            </Text>
+          </TouchableOpacity>
+        </KeyboardAwareScrollView>
       </Animated.View>
     </ImageBackground>
   );

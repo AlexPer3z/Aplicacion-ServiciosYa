@@ -271,7 +271,7 @@ function ChatIndividual({ route, navigation }) {
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={styles.container}
-      keyboardVerticalOffset={90}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0:90}
     >
       
       <View style={styles.header}>
