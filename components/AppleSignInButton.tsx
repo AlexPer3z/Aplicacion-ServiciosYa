@@ -87,9 +87,9 @@ export default function AppleSignInButton() {
   return (
     <AppleAuthentication.AppleAuthenticationButton
       buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-      buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-      cornerRadius={10}
-      style={{ width: "100%", height: 50 }}
+      buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK} 
+      cornerRadius={30}
+      style={{ width: "100%", height: 55, paddingVertical: 15, borderRadius: 30 }}
       onPress={handleAppleLogin}
       disabled={loading}
     />
