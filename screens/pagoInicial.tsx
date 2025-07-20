@@ -41,26 +41,35 @@ export default function PagoInicial() {
   }, []);
 
   const iniciarPago = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('https://backend-pagos.onrender.com/crear-pago-registro', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ motivo: 'Registro de cuenta' }),
-      });
+  setLoading(true);
+  try {
+    const res = await fetch('https://backend-pagos.onrender.com/crear-pago-registro', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({
+        descripcion: 'Pago único de registro de cuenta',
+        monto: 1500,
+        email: 'usuario@ejemplo.com',
+      }),
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (res.ok && data.init_point) {
-        setUrlPago(data.init_point);
-      } else {
-        Alert.alert('Error', data.error || 'No se pudo generar el link de pago.');
-      }
-    } catch (error) {
-      Alert.alert('Error de conexión', 'No se pudo conectar con el servidor.');
+    if (res.ok && data.url) {
+      setUrlPago(data.url);
+    } else {
+      Alert.alert('Error', data.error || 'No se pudo generar el link de pago.');
     }
-    setLoading(false);
-  };
+  } catch (error) {
+    Alert.alert('Error de conexión', 'No se pudo conectar con el servidor.');
+  }
+  setLoading(false);
+};
+
+
 
   useEffect(() => {
     if (urlPago) {

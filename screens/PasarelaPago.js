@@ -3,12 +3,14 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } fr
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Linking } from 'react-native';
 import { supabase } from '../lib/supabase'; // Asegúrate que esta ruta esté correcta
+import { categoriasDisponibles } from '../lib/utils/categorias';
+
 
 import BotonSuscribirme from '../components/BotonSuscribirme';
 
 import BotonVolver from '../components/BotonVolver';
 
-const CATEGORIAS_VALIDAS = [/* ... tus categorías ... */];
+const CATEGORIAS_VALIDAS = categoriasDisponibles;
 
 export default function PasarelaPago() {
   const route = useRoute();
@@ -22,21 +24,44 @@ export default function PasarelaPago() {
   
 
   useEffect(() => {
-    const handleDeepLink = ({ url }) => {
-      if (url.includes('pago-exitoso')) {
-        Alert.alert(
-          'Solicitud enviada',
-          'Tu solicitud fue enviada correctamente, ahora espera que el trabajador acepte.'
-        );
-        navigation.navigate('ServiciosPorCategoria', { categoria });
-      } else if (url.includes('pago-fallido')) {
-        Alert.alert('Pago fallido', 'No se pudo completar el pago.');
-        navigation.goBack();
-      } else if (url.includes('pago-pendiente')) {
-        Alert.alert('Pago pendiente', 'Tu pago está siendo procesado.');
-        navigation.goBack();
+    const handleDeepLink = async ({ url }) => {
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData?.user) {
+    Alert.alert("Error", "No se pudo identificar al usuario.");
+    return;
+  }
+
+  const userId = authData.user.id;
+
+  if (url.includes('pago-exitoso')) {
+    try {
+      // ✅ Sumamos 1 crédito al usuario
+      const { error: updateError } = await supabase
+        .from('usuarios')
+        .update({ creditos: supabase.rpc('incrementar_credito', { user_id_input: userId }) }) // alternativa directa usando una función RPC
+        .eq('id', userId);
+
+      if (updateError) {
+        console.error("Error al sumar crédito:", updateError);
+        Alert.alert("Error", "El pago fue exitoso pero no se pudo actualizar tu crédito.");
+      } else {
+        Alert.alert("✅ Crédito agregado", "Tu pago fue exitoso y ahora tienes un crédito disponible.");
       }
-    };
+
+      navigation.navigate('ServiciosPorCategoria', { categoria });
+    } catch (err) {
+      console.error("Error inesperado al sumar crédito:", err);
+      Alert.alert("Error", "Algo salió mal al procesar tu pago.");
+    }
+  } else if (url.includes('pago-fallido')) {
+    Alert.alert('Pago fallido', 'No se pudo completar el pago.');
+    navigation.goBack();
+  } else if (url.includes('pago-pendiente')) {
+    Alert.alert('Pago pendiente', 'Tu pago está siendo procesado.');
+    navigation.goBack();
+  }
+};
+
 
     const subscription = Linking.addEventListener('url', handleDeepLink);
     Linking.getInitialURL().then((url) => {
@@ -75,10 +100,16 @@ export default function PasarelaPago() {
     setLoading(false);
   };
 
+  useEffect(() => {
   if (urlPago) {
     Linking.openURL(urlPago);
-    return null;
   }
+}, [urlPago]);
+
+
+  const accesoVip = () => {
+  navigation.navigate('ServiciosPorCategoria', { categoria });
+};
 
   const accesoLibre = () => {
   if (rol !== 'guest') {
@@ -140,7 +171,7 @@ useEffect(() => {
 
       
       <Text style={styles.mensaje}>
-        Para explorar todos nuestros profesionales en {categoria}, debe abonar un pago de $1.500 pesos argentinos.
+        Para contratar uno de nuestros profesionales en {categoria}, debe abonar un pago de $1.000 pesos argentinos.
       </Text>
 
       {loading || verificando ? (
@@ -148,14 +179,14 @@ useEffect(() => {
 ) : suscriptor ? (
   <TouchableOpacity
   style={[styles.boton, { backgroundColor: '#4CAF50' }]}
-  onPress={accesoLibre}
+  onPress={accesoVip}
 >
   <Text style={styles.textoBoton}>✅ Suscripción activa: tienes acceso ilimitado</Text>
 </TouchableOpacity>
 ) : (
   <>
     <TouchableOpacity style={styles.boton} onPress={iniciarPago}>
-      <Text style={styles.textoBoton}>Pagar $1.500</Text>
+      <Text style={styles.textoBoton}>Pagar $1.000</Text>
     </TouchableOpacity>
 
     <BotonSuscribirme />

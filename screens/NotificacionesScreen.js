@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useContext } from 'react';
 import {
   View,
@@ -305,11 +306,11 @@ navigation.navigate('ChatIndividual', {
         {!item.leido ? (
           <>
             <TouchableOpacity 
-              style={[styles.boton, styles.botonAceptar]}
-              onPress={() => aceptarNotificacion(item)}
-            >
-              <Text style={styles.botonTexto}>Aceptar</Text>
-            </TouchableOpacity>
+  style={[styles.boton, styles.botonAceptar]}
+  onPress={() => navigation.navigate('PasarelaPagoWorker', { notificacion: item })}
+>
+  <Text style={styles.botonTexto}>Aceptar</Text>
+</TouchableOpacity>
             <TouchableOpacity
               style={[styles.boton, styles.botonRechazar]}
               onPress={() => rechazarNotificacion(item.id)}
