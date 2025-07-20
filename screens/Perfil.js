@@ -137,15 +137,6 @@ export default function Perfil() {
 
         <Text style={styles.label}>Domicilio</Text>
         <Text style={styles.info}>{userData.domicilio}</Text>
-
-        <Text style={styles.label}>Código Postal</Text>
-        <Text style={styles.info}>{userData.codigo_postal}</Text>
-
-        <Text style={styles.label}>Ciudad</Text>
-        <Text style={styles.info}>{userData.ciudad}</Text>
-
-        <Text style={styles.label}>Provincia</Text>
-        <Text style={styles.info}>{userData.provincia}</Text>
       </View>
     </ScrollView>
   );

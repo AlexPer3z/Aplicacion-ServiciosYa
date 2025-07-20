@@ -48,42 +48,59 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
   const [suscriptor, setSuscriptor] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null); // <-- Estado para el rol del usuario
   const insets = useSafeAreaInsets();
+  const [creditos, setCreditos] = useState<number | null>(null);
 
   useEffect(() => {
-    const verificarSuscripcion = async () => {
-      if (!user) return;
-      const { data, error } = await supabase
-        .from("usuarios")
-        .select("suscriptor")
-        .eq("id", user.id)
-        .single();
+  const verificarSuscripcion = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select("suscriptor")
+      .eq("id", user.id)
+      .single();
 
-      if (!error && data?.suscriptor === true) {
-        setSuscriptor(true);
-      } else {
-        setSuscriptor(false);
-      }
-    };
+    if (!error && data?.suscriptor === true) {
+      setSuscriptor(true);
+    } else {
+      setSuscriptor(false);
+    }
+  };
 
-    const fetchUserRole = async () => {
-      if (!user) return;
-      const { data, error } = await supabase
-        .from("usuarios")
-        .select("rol")  // asumiendo que el campo es "role"
-        .eq("id", user.id)
-        .single();
+  const fetchUserRole = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select("rol")
+      .eq("id", user.id)
+      .single();
 
-      if (error) {
-        console.error("Error obteniendo rol:", error);
-        setUserRole(null);
-      } else {
-        setUserRole(data?.rol ?? null);
-      }
-    };
+    if (error) {
+      console.error("Error obteniendo rol:", error);
+      setUserRole(null);
+    } else {
+      setUserRole(data?.rol ?? null);
+    }
+  };
 
-    verificarSuscripcion();
-    fetchUserRole();
-  }, [user]);
+  // Defino fetchCreditos aquí, fuera de fetchUserRole
+  const fetchCreditos = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select("creditos")
+      .eq("id", user.id)
+      .single();
+
+    if (!error && data?.creditos !== undefined) {
+      setCreditos(data.creditos);
+    }
+  };
+
+  verificarSuscripcion();
+  fetchUserRole();
+  fetchCreditos();
+}, [user]);
+
 
   // Estado para servicios contratados (array de IDs)
   const [serviciosContratados, setServiciosContratados] = useState<string[]>([]);
@@ -92,37 +109,36 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
 
   // Función para controlar la contratación con límite y sin repetidos
   const handleContratarServicio = (servicioId: string) => {
-    if (serviciosContratados.includes(servicioId)) {
-      Alert.alert("Ya contratado", "Este servicio ya fue contratado.");
-      return false;
-    }
+  if (serviciosContratados.includes(servicioId)) {
+    Alert.alert("Ya contratado", "Este servicio ya fue contratado.");
+    return false;
+  }
 
-    if (userRole === "guest") {
-      Alert.alert("Acceso denegado", "Los usuarios invitados no pueden contratar servicios.");
-      return false;
-    }
+  if (userRole === "guest") {
+    Alert.alert("Acceso denegado", "Los usuarios invitados no pueden contratar servicios.");
+    return false;
+  }
 
-    const limite = suscriptor ? 6 : 5;
+  if ((creditos ?? 0) <= 0) {
+    Alert.alert(
+      "Sin créditos",
+      "No tenés créditos disponibles. Vas a ser redirigido para comprar uno.",
+      [
+        {
+          text: "Comprar crédito",
+          onPress: () => navigation.navigate("PasarelaPago"),
+        },
+        { text: "Cancelar", style: "cancel" },
+      ]
+    );
+    return false;
+  }
 
-    if (serviciosContratados.length >= limite) {
-      Alert.alert(
-        "Límite alcanzado",
-        `Solo podés contratar hasta ${limite} servicios.`,
-        [
-          {
-            text: "Ir al inicio",
-            onPress: () => navigation.navigate("Home" as never),
-          },
-        ]
-      );
-      return false;
-    }
+  const nuevosContratados = [...serviciosContratados, servicioId];
+  setServiciosContratados(nuevosContratados);
+  return true;
+};
 
-    const nuevosContratados = [...serviciosContratados, servicioId];
-    setServiciosContratados(nuevosContratados);
-    console.log("Servicios contratados:", nuevosContratados.length);
-    return true;
-  };
 
   const abrirModal = (servicio: Servicio) => {
     setServicioSeleccionado(servicio);
@@ -171,6 +187,20 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
         created_at: createdAt,
       });
 
+      // Descontar 1 crédito al usuario
+const { error: updateError } = await supabase
+  .from("usuarios")
+  .update({ creditos: (creditos ?? 1) - 1 })
+  .eq("id", user.id);
+
+if (updateError) {
+  throw new Error("Error al descontar crédito.");
+}
+
+// Actualizamos el estado local
+setCreditos((prev) => (prev ?? 1) - 1);
+
+
       const { data: receptorUsuario } = await supabase
         .from("usuarios")
         .select("expo_token")
@@ -193,7 +223,7 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
           }),
         });
       }
-
+console.log("Expo token del receptor:", receptorUsuario?.expo_token)
       setMensajeModal("✅ Tu propuesta fue enviada.");
       setConfirmacionVisible(true);
     } catch (error: any) {
@@ -279,6 +309,8 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
                     <Text style={styles.modalTexto}>
                       Precio: {servicioSeleccionado.precio}
                     </Text>
+                    
+
                     <Text style={styles.modalTexto}>
                       Horario: {servicioSeleccionado.horario}
                     </Text>
@@ -292,6 +324,11 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
 >
   <Text style={styles.botonTexto}>Contratar</Text>
 </TouchableOpacity>
+{creditos !== null && (
+  <Text style={styles.modalTextoCreditos}>
+    Créditos disponibles: {creditos}
+  </Text>
+)}
                     
                     <TouchableOpacity
                         style={styles.botonReportar}
@@ -471,6 +508,13 @@ const styles = StyleSheet.create({
     color: "#333",
     marginBottom: 6,
     lineHeight: 21,
+  },
+  modalTextoCreditos: {
+    fontSize: 18,
+    color: "#090",
+    margin: 6,
+    lineHeight: 21,
+    textAlign:'center',
   },
   botonContratar: {
     marginTop: 22,

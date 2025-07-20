@@ -101,7 +101,7 @@ function Home({ navigation }: Props) {
   );
 
   const handleCategoryPress = (categoria: string) => {
-    navigation.navigate("PasarelaPago", { categoria });
+    navigation.navigate("ServiciosPorCategoria", { categoria });
   };
 
   const isUserRestricted = askDniVerification || askProfileCompletion;

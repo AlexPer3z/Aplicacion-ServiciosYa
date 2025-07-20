@@ -22,11 +22,20 @@ import * as FileSystem from "expo-file-system";
 import uuid from "react-native-uuid";
 
 type NavigationProp = NativeStackNavigationProp<MainStackParamList>;
+async function mostrarUsuario() {
+  const { data, error } = await supabase.auth.getUser();
+  if (error) {
+    console.error("Error obteniendo usuario:", error);
+  } else {
+    console.log("El usuario obtenido es:", data.user);
+  }
+}
+
+mostrarUsuario();
 
 export default function RegistroTrabajador() {
   const navigation = useNavigation<NavigationProp>();
   const [step, setStep] = useState(1);
-
   // Paso 1
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
@@ -36,9 +45,10 @@ export default function RegistroTrabajador() {
   const [aceptaResponsabilidad, setAceptaResponsabilidad] = useState(false);
 
   // Paso 2
-  const [dniFrontal, setDniFrontal] = useState<string | null>(null);
-  const [dniTrasero, setDniTrasero] = useState<string | null>(null);
+  const [direccionDni, setDireccionDni] = useState("");
+  const [fechaNacimiento, setFechaNacimiento] = useState("");
   const [numeroDni, setNumeroDni] = useState("");
+  const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
 
   // Paso 3
   const [experiencia, setExperiencia] = useState("");
@@ -48,80 +58,72 @@ export default function RegistroTrabajador() {
   // Paso 4
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
 
-  // Toma de fotos
-  const pedirFoto = async (
-    setFoto: React.Dispatch<React.SetStateAction<string | null>>
-  ) => {
-    const permiso = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permiso.granted) {
-      Alert.alert(
-        "Permiso denegado",
-        "Para tomar la foto necesitamos permiso de cámara."
-      );
-      return;
-    }
+  // Función para pedir foto con expo-image-picker
+    const pedirFoto = async (setFoto: React.Dispatch<React.SetStateAction<string | null>>) => {
+      let permiso = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permiso.granted) {
+        Alert.alert("Permiso denegado", "Para tomar la foto necesitamos permiso de cámara.");
+        return;
+      }
+      let resultado = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.5,
+      });
+      if (!resultado.canceled) {
+        setFoto(resultado.assets[0].uri);
+      }
+    };
 
-    const resultado = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.5,
-    });
-
-    if (!resultado.canceled) {
-      setFoto(resultado.assets[0].uri);
-    }
-  };
 
   const handleNext = async () => {
+    console.log(`Avanzando al paso ${step + 1}...`);
+
     if (step === 1) {
-      if (
-        !nombre.trim() ||
-        !apellido.trim() ||
-        !edad ||
-        !sexo.trim() ||
-        !numeroCelular.trim()
-      ) {
+      console.log("Validando datos del paso 1...");
+      if (!nombre.trim() || !apellido.trim() || !edad || !sexo.trim() || !numeroCelular.trim()) {
         Alert.alert("Error", "Todos los campos son obligatorios.");
         return;
       }
+
       const edadNum = parseInt(edad);
       if (isNaN(edadNum) || edadNum < 16 || edadNum > 100) {
         Alert.alert("Edad inválida", "Debes ser mayor de 16 años.");
         return;
       }
+
       if (numeroCelular.length < 8) {
-        Alert.alert(
-          "Celular inválido",
-          "El número de celular debe tener al menos 8 dígitos."
-        );
+        Alert.alert("Celular inválido", "El número de celular debe tener al menos 8 dígitos.");
         return;
       }
+
       if (!aceptaResponsabilidad) {
-        Alert.alert(
-          "Requiere aceptar",
-          "Debes aceptar la responsabilidad para continuar."
-        );
+        Alert.alert("Requiere aceptar", "Debes aceptar la responsabilidad para continuar.");
         return;
       }
     }
 
     if (step === 2) {
-      if (!dniFrontal || !dniTrasero) {
-        Alert.alert("Falta foto del DNI", "Debes subir ambas fotos del DNI.");
-        return;
-      }
-      if (!/^\d{7,8}$/.test(numeroDni)) {
-        Alert.alert("DNI inválido", "Debe ser un numero de DNI valido.");
-        return;
-      }
-    }
+  if (!numeroDni.trim() || !direccionDni.trim() || !fechaNacimiento.trim()) {
+    Alert.alert("Faltan datos", "Debes completar todos los campos del paso 2.");
+    return;
+  }
+  if (!/^\d{7,8}$/.test(numeroDni)) {
+    Alert.alert("DNI inválido", "Debe ser un número de DNI válido.");
+    return;
+  }
+  if (!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(fechaNacimiento)) {
+  Alert.alert("Fecha inválida", "Usá el formato DD/MM/AAAA.");
+  return;
+}
+
+}
+
 
     if (step === 3) {
+      console.log("Validando experiencia...");
       if (experiencia.trim().length < 70) {
-        Alert.alert(
-          "Experiencia insuficiente",
-          "Describe tu experiencia con al menos 70 caracteres."
-        );
+        Alert.alert("Experiencia insuficiente", "Describe tu experiencia con al menos 70 caracteres.");
         return;
       }
       if (!experienciaAcademica.trim()) {
@@ -131,129 +133,138 @@ export default function RegistroTrabajador() {
     }
 
     if (step === 4) {
-      if (!aceptaTerminos) {
-        Alert.alert("Debes aceptar", "Es necesario aceptar los términos y condiciones.");
-        return;
-      }
+  if (!aceptaTerminos) {
+    Alert.alert("Debes aceptar", "Es necesario aceptar los términos y condiciones.");
+    return;
+  }
 
-      try {
-        // Subir imágenes con la lógica ideal
-        const nombreFrontal = `${uuid.v4()}_dni_frontal.jpg`;
-        const nombreTrasero = `${uuid.v4()}_dni_trasero.jpg`;
+  console.log("Subiendo imágenes y guardando en Supabase...");
 
-        const urlFrontal = await subirImagen(dniFrontal!, nombreFrontal);
-        const urlTrasero = await subirImagen(dniTrasero!, nombreTrasero);
+  try {
+    const nombreFrontal = `${uuid.v4()}_dni_frontal.jpg`;
+    const nombreTrasero = `${uuid.v4()}_dni_trasero.jpg`;
 
-        // Insertar en Supabase
-        const { data: { user } } = await supabase.auth.getUser();
-        const { error } = await supabase.from("usuarios").update([
-          {
-            rol: "worker",
-            nombre,
-            apellido,
-            edad: parseInt(edad),
-            sexo,
-            celular: numeroCelular,
-            dni: numeroDni,
-            dni_frente: urlFrontal,
-            dni_dorso: urlTrasero,
-            experiencia,
-            referencias,
-            experiencia_academica: experienciaAcademica,
-            perfil_completo: true,
-          },
-        ])
-        .eq("id", user.id);
 
-        if (error) {
-          console.error("Error al guardar en Supabase:", error.message);
-          Alert.alert("Error", "No se pudo guardar la información. Intenta más tarde.");
-          return;
-        }
-
-        navigation.navigate("pagoInicial");
-      } catch (err) {
-        Alert.alert("Error", "Ocurrió un error al registrar tus datos.");
-        console.error(err);
-      }
-
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    console.log("el usuario obtenido es:", supabase.auth.getUser())
+    if (authError || !user) {
+      console.error("Error obteniendo usuario:", authError);
+      Alert.alert("Error", "No se pudo obtener la información del usuario.");
       return;
     }
+
+    console.log("Verificando si el usuario existe en la tabla 'usuarios'...");
+    const { data: usuarioExistente, error: selectError } = await supabase
+      .from("usuarios")
+      .select("*")
+      .eq("id", user.id);
+
+    if (selectError) {
+      console.error("Error al verificar existencia del usuario:", selectError.message);
+      Alert.alert("Error", "No se pudo verificar la existencia del usuario.");
+      return;
+    }
+
+    if (!usuarioExistente || usuarioExistente.length === 0) {
+      console.warn("El usuario no existe en la tabla 'usuarios'.");
+      Alert.alert("Error", "El usuario no está registrado en la tabla 'usuarios'.");
+      return;
+    }
+
+    console.log("Usuario encontrado. Procediendo a guardar datos...");
+
+    // Subir imágenes con la lógica ideal
+    const nombreFotoPerfil = `${uuid.v4()}_perfil.jpg`;
+    const urlFotoPerfil = fotoPerfil ? await subirImagen(fotoPerfil, nombreFotoPerfil) : null;
+
+
+
+    const { data, error } = await supabase
+      .from("usuarios")
+      .update([
+        {
+          rol: "worker",
+          nombre,
+          apellido,
+          edad: parseInt(edad),
+          sexo,
+          celular: numeroCelular,
+          dni: numeroDni,
+          domicilio: direccionDni,
+          fecha_nacimiento: fechaNacimiento,
+          foto_perfil: urlFotoPerfil,
+          experiencia,
+          referencias,
+          experiencia_academica: experienciaAcademica,
+          perfil_completo: true,
+          creditos: 20,
+          dni_verificado: true
+        },
+      ])
+      .eq("id", user.id)
+      .select(); // <-- esto agrega los datos actualizados al log
+
+    console.log("Resultado del update:", { data, error });
+
+    if (error) {
+      console.error("Error al guardar en Supabase:", error.message);
+      Alert.alert("Error", "No se pudo guardar la información. Intenta más tarde.");
+      return;
+    }
+
+    console.log("Registro completo. Navegando a pagoInicial...");
+    navigation.navigate("pagoInicial");
+  } catch (err) {
+    console.error("Error en el proceso final:", err);
+    Alert.alert("Error", "Ocurrió un error al registrar tus datos.");
+  }
+
+  return;
+}
+
 
     setStep(step + 1);
   };
 
-  const handleBack = () => {
-    if (step > 1) setStep(step - 1);
-  };
+  const subirImagen = async (uri: string, nombreBase: string) => {
+    console.log("Preparando imagen para subir:", nombreBase);
+    const { data: { user } } = await supabase.auth.getUser();
+    const nombreArchivo = `${user.id}-${nombreBase}-${Date.now()}.jpg`;
 
-  // Función subirImagen actualizada para usar base64 + Buffer.from igual que tu lógica ideal
-  const seleccionarImagen = async (setImage, tipo) => {
-  try {
-    let result;
-
-    // Para DNI frente y dorso, usar la cámara
-    if (tipo === 'fotoFrente' || tipo === 'fotoDorso') {
-      const permisoCamara = await ImagePicker.requestCameraPermissionsAsync();
-      if (!permisoCamara.granted) {
-        Alert.alert('Permiso requerido', 'Se necesita permiso para usar la cámara.');
-        return;
-      }
-
-      result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        quality: 0.7,
-      });
-    } else {
-      // Para otros usos (como la foto de perfil), se permite elegir desde galería
-      const permisoGaleria = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permisoGaleria.granted) {
-        Alert.alert('Permiso requerido', 'Se necesita permiso para acceder a la galería.');
-        return;
-      }
-
-      result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        quality: 0.7,
-      });
-    }
-
-    if (!result.canceled && result.assets.length > 0) {
-      const uri = result.assets[0].uri;
-      setImage(uri);
-    }
-  } catch (error) {
-    console.log('Error seleccionando imagen:', error);
-  }
-};
-
-// Función para subir imagen a Supabase Storage (en bucket 'imagenes')
-const subirImagen = async (uri, nombreBase) => {
-  const user = (await supabase.auth.getUser()).data.user;
-  const nombreArchivo = `${user.id}-${nombreBase}-${Date.now()}.jpg`;
-
-  const fileData = await FileSystem.readAsStringAsync(uri, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
-
-  const buffer = Uint8Array.from(atob(fileData), (c) => c.charCodeAt(0));
-
-  const { error } = await supabase.storage
-    .from('imagenes')
-    .upload(nombreArchivo, buffer, {
-      contentType: 'image/jpeg',
-      upsert: true,
+    const fileData = await FileSystem.readAsStringAsync(uri, {
+      encoding: FileSystem.EncodingType.Base64,
     });
 
-  if (error) throw error;
+    const buffer = Uint8Array.from(atob(fileData), (c) => c.charCodeAt(0));
+    console.log("Tamaño de imagen (bytes):", buffer.length);
 
-  const { data: publicUrlData } = supabase.storage
-    .from('imagenes')
-    .getPublicUrl(nombreArchivo);
+    const { error } = await supabase.storage
+      .from("imagenes")
+      .upload(nombreArchivo, buffer, {
+        contentType: "image/jpeg",
+        upsert: true,
+      });
 
-  return publicUrlData.publicUrl;
-};
+    if (error) {
+      console.error("Error subiendo imagen a Supabase Storage:", error.message);
+      throw error;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from("imagenes")
+      .getPublicUrl(nombreArchivo);
+
+    console.log("URL pública generada:", publicUrlData.publicUrl);
+    return publicUrlData.publicUrl;
+  };
+
+  const handleBack = () => {
+    if (step > 1) {
+      console.log(`Retrocediendo al paso ${step - 1}`);
+      setStep(step - 1);
+    }
+  };
+
 
 
   // --- Aquí sigue todo igual (UI, estilos, etc.) ---
@@ -272,18 +283,21 @@ const subirImagen = async (uri, nombreBase) => {
           <>
             <TextInput
               placeholder="Nombre"
+              placeholderTextColor="#4e827d"
               value={nombre}
               onChangeText={setNombre}
               style={styles.input}
             />
             <TextInput
               placeholder="Apellido"
+              placeholderTextColor="#4e827d"
               value={apellido}
               onChangeText={setApellido}
               style={styles.input}
             />
             <TextInput
               placeholder="Edad"
+              placeholderTextColor="#4e827d"
               value={edad}
               onChangeText={setEdad}
               keyboardType="numeric"
@@ -291,12 +305,14 @@ const subirImagen = async (uri, nombreBase) => {
             />
             <TextInput
               placeholder="Sexo"
+              placeholderTextColor="#4e827d"
               value={sexo}
               onChangeText={setSexo}
               style={styles.input}
             />
             <TextInput
               placeholder="Número de celular"
+              placeholderTextColor="#4e827d"
               value={numeroCelular}
               onChangeText={setNumeroCelular}
               keyboardType="phone-pad"
@@ -317,57 +333,54 @@ const subirImagen = async (uri, nombreBase) => {
         )}
 
         {step === 2 && (
-          <>
-            <View style={styles.fotosContainer}>
-              <View style={styles.fotoWrapper}>
-                <Text style={styles.label}>Foto frontal del DNI</Text>
-                {dniFrontal ? (
-                  <Image source={{ uri: dniFrontal }} style={styles.foto} />
-                ) : (
-                  <View style={[styles.foto, styles.fotoPlaceholder]}>
-                    <Text style={{ color: "#999" }}>No hay foto</Text>
-                  </View>
-                )}
-                <TouchableOpacity
-                  style={styles.botonFoto}
-                  onPress={() => pedirFoto(setDniFrontal)}
-                >
-                  <Text style={styles.botonFotoTexto}>Tomar foto</Text>
-                </TouchableOpacity>
-              </View>
+  <>
+    <TextInput
+      placeholder="Número de DNI"
+      placeholderTextColor="#4e827d"
+      value={numeroDni}
+      onChangeText={setNumeroDni}
+      keyboardType="numeric"
+      style={styles.input}
+    />
+    <TextInput
+      placeholder="Dirección (como figura en el DNI)"
+      placeholderTextColor="#4e827d"
+      value={direccionDni}
+      onChangeText={setDireccionDni}
+      style={styles.input}
+    />
+    <TextInput
+      placeholder="Fecha de nacimiento (DD/MM/AAAA)"
+      placeholderTextColor="#4e827d"
+      value={fechaNacimiento}
+      onChangeText={setFechaNacimiento}
+      style={styles.input}
+    />
+    <View style={styles.fotoWrapper}>
+      <Text style={styles.label}>Foto de perfil</Text>
+      {fotoPerfil ? (
+        <Image source={{ uri: fotoPerfil }} style={styles.foto} />
+      ) : (
+        <View style={[styles.foto, styles.fotoPlaceholder]}>
+          <Text style={{ color: "#999" }}>No hay foto</Text>
+        </View>
+      )}
+      <TouchableOpacity
+        style={styles.botonFoto}
+        onPress={() => pedirFoto(setFotoPerfil)}
+      >
+        <Text style={styles.botonFotoTexto}>Tomar foto</Text>
+      </TouchableOpacity>
+    </View>
+  </>
+)}
 
-              <View style={styles.fotoWrapper}>
-                <Text style={styles.label}>Foto trasera del DNI</Text>
-                {dniTrasero ? (
-                  <Image source={{ uri: dniTrasero }} style={styles.foto} />
-                ) : (
-                  <View style={[styles.foto, styles.fotoPlaceholder]}>
-                    <Text style={{ color: "#999" }}>No hay foto</Text>
-                  </View>
-                )}
-                <TouchableOpacity
-                  style={styles.botonFoto}
-                  onPress={() => pedirFoto(setDniTrasero)}
-                >
-                  <Text style={styles.botonFotoTexto}>Tomar foto</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <TextInput
-              placeholder="Número de DNI"
-              value={numeroDni}
-              onChangeText={setNumeroDni}
-              keyboardType="numeric"
-              style={styles.input}
-            />
-          </>
-        )}
 
         {step === 3 && (
           <>
             <TextInput
               placeholder="Descripción de experiencia laboral (mínimo 70 caracteres)"
+              placeholderTextColor="#4e827d"
               value={experiencia}
               onChangeText={setExperiencia}
               multiline
@@ -376,6 +389,7 @@ const subirImagen = async (uri, nombreBase) => {
             />
             <TextInput
               placeholder="Referencias laborales (opcional)"
+              placeholderTextColor="#4e827d"
               value={referencias}
               onChangeText={setReferencias}
               multiline
@@ -384,6 +398,7 @@ const subirImagen = async (uri, nombreBase) => {
             />
             <TextInput
               placeholder="Experiencia académica"
+              placeholderTextColor="#4e827d"
               value={experienciaAcademica}
               onChangeText={setExperienciaAcademica}
               multiline

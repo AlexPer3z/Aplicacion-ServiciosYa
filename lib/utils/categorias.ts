@@ -1,5 +1,7 @@
 export const categoriasDisponibles = [
   // Originales
+  "general",
+  "Servicio",
   "Electricista",
   "Plomero",
   "Pintor",

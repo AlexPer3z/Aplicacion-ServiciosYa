@@ -38,8 +38,8 @@ export default function RegistroCliente() {
   const [numeroCelular, setNumeroCelular] = useState("");
 
   // Paso 2 fotos y dni
-  const [dniFrontal, setDniFrontal] = useState<string | null>(null);
-  const [dniTrasero, setDniTrasero] = useState<string | null>(null);
+  const [direccionDni, setDireccionDni] = useState("");
+  const [fechaNacimiento, setFechaNacimiento] = useState("");
   const [numeroDni, setNumeroDni] = useState("");
   const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
 
@@ -73,10 +73,19 @@ export default function RegistroCliente() {
       }
     }
     if (step === 2) {
-      if (!dniFrontal || !dniTrasero || !numeroDni) {
-        Alert.alert("Subí las fotos del DNI y completá el número");
-        return false;
+      if (!numeroDni.trim() || !direccionDni.trim() || !fechaNacimiento.trim()) {
+        Alert.alert("Faltan datos", "Debes completar todos los campos del paso 2.");
+        return;
       }
+      if (!/^\d{7,8}$/.test(numeroDni)) {
+        Alert.alert("DNI inválido", "Debe ser un número de DNI válido.");
+        return;
+      }
+      if (!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(fechaNacimiento)) {
+  Alert.alert("Fecha inválida", "Usá el formato DD/MM/AAAA.");
+  return;
+}
+
     }
     if (step === 3) {
       if (!acepto) {
@@ -134,12 +143,6 @@ export default function RegistroCliente() {
       return urlPublica;
     };
     // Subir imágenes con la lógica ideal
-        const nombreFrontal = `${uuid.v4()}_dni_frontal.jpg`;
-        const nombreTrasero = `${uuid.v4()}_dni_trasero.jpg`;
-
-        const urlFrontal = await subirImagen(dniFrontal!, nombreFrontal);
-        const urlTrasero = await subirImagen(dniTrasero!, nombreTrasero);
-
         const nombreFotoPerfil = `${uuid.v4()}_perfil.jpg`;
         const urlFotoPerfil = fotoPerfil ? await subirImagen(fotoPerfil, nombreFotoPerfil) : null;
 
@@ -153,17 +156,19 @@ export default function RegistroCliente() {
       sexo,
       celular: numeroCelular,
       dni: numeroDni,
-      dni_frente: urlFrontal,
-      dni_dorso: urlTrasero,
+      domicilio: direccionDni,
+      fecha_nacimiento: fechaNacimiento,
       rol: "user",
       foto_perfil: urlFotoPerfil,
       perfil_completo: true,
+      creditos: 20,
+      dni_verificado: true
     })
     .eq("id", user.id);
 
     if (insertError) throw insertError;
 
-    navigation.navigate("pagoInicial");
+    navigation.navigate("Home");
   } catch (error: any) {
     console.error("Error al registrar usuario:", error.message);
     Alert.alert("Error", "Ocurrió un error al guardar tus datos. Intentá de nuevo.");
@@ -185,18 +190,21 @@ export default function RegistroCliente() {
           <>
             <TextInput
               placeholder="Nombre"
+              placeholderTextColor="#4e827d"
               value={nombre}
               onChangeText={setNombre}
               style={styles.input}
             />
             <TextInput
               placeholder="Apellido"
+              placeholderTextColor="#4e827d"
               value={apellido}
               onChangeText={setApellido}
               style={styles.input}
             />
             <TextInput
               placeholder="Edad"
+              placeholderTextColor="#4e827d"
               value={edad}
               onChangeText={setEdad}
               keyboardType="numeric"
@@ -204,12 +212,14 @@ export default function RegistroCliente() {
             />
             <TextInput
               placeholder="Sexo"
+              placeholderTextColor="#4e827d"
               value={sexo}
               onChangeText={setSexo}
               style={styles.input}
             />
             <TextInput
                           placeholder="Número de celular"
+                          placeholderTextColor="#4e827d"
                           value={numeroCelular}
                           onChangeText={setNumeroCelular}
                           keyboardType="phone-pad"
@@ -220,49 +230,28 @@ export default function RegistroCliente() {
 
         {step === 2 && (
           <>
-            <View style={styles.fotosContainer}>
-              <View style={styles.fotoWrapper}>
-                <Text style={styles.label}>Foto frontal del DNI</Text>
-                {dniFrontal ? (
-                  <Image source={{ uri: dniFrontal }} style={styles.foto} />
-                ) : (
-                  <View style={[styles.foto, styles.fotoPlaceholder]}>
-                    <Text style={{ color: "#999" }}>No hay foto</Text>
-                  </View>
-                )}
-                <TouchableOpacity
-                  style={styles.botonFoto}
-                  onPress={() => pedirFoto(setDniFrontal)}
-                >
-                  <Text style={styles.botonFotoTexto}>Tomar foto</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.fotoWrapper}>
-                <Text style={styles.label}>Foto trasera del DNI</Text>
-                {dniTrasero ? (
-                  <Image source={{ uri: dniTrasero }} style={styles.foto} />
-                ) : (
-                  <View style={[styles.foto, styles.fotoPlaceholder]}>
-                    <Text style={{ color: "#999" }}>No hay foto</Text>
-                  </View>
-                )}
-                <TouchableOpacity
-                  style={styles.botonFoto}
-                  onPress={() => pedirFoto(setDniTrasero)}
-                >
-                  <Text style={styles.botonFotoTexto}>Tomar foto</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
             <TextInput
-              placeholder="Número de DNI"
-              value={numeroDni}
-              onChangeText={setNumeroDni}
-              keyboardType="numeric"
-              style={styles.input}
-            />
+                  placeholder="Número de DNI"
+                  placeholderTextColor="#4e827d"
+                  value={numeroDni}
+                  onChangeText={setNumeroDni}
+                  keyboardType="numeric"
+                  style={styles.input}
+                />
+                <TextInput
+                  placeholder="Dirección (como figura en el DNI)"
+                  placeholderTextColor="#4e827d"
+                  value={direccionDni}
+                  onChangeText={setDireccionDni}
+                  style={styles.input}
+                />
+                <TextInput
+                  placeholder="Fecha de nacimiento (DD/MM/AAAA)"
+                  placeholderTextColor="#4e827d"
+                  value={fechaNacimiento}
+                  onChangeText={setFechaNacimiento}
+                  style={styles.input}
+                />
             <View style={styles.fotoWrapper}>
   <Text style={styles.label}>Foto de perfil</Text>
   {fotoPerfil ? (
