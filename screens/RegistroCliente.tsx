@@ -20,6 +20,8 @@ import BotonVolver from '../components/BotonVolver';
 import * as FileSystem from "expo-file-system";
 import { supabase } from "../lib/supabase";
 import uuid from "react-native-uuid";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import SelectDropdown from 'react-native-select-dropdown' 
 
 
 type NavigationProp = NativeStackNavigationProp<MainStackParamList>;
@@ -181,144 +183,171 @@ export default function RegistroCliente() {
       <View style={styles.overlay}>
         <Text style={styles.title}>Registro - Cliente (Paso {step} de 3)</Text>
 
-        {step === 1 && (
-          <>
-            <TextInput
-              placeholder="Nombre"
-              value={nombre}
-              onChangeText={setNombre}
-              style={styles.input}
-            />
-            <TextInput
-              placeholder="Apellido"
-              value={apellido}
-              onChangeText={setApellido}
-              style={styles.input}
-            />
-            <TextInput
-              placeholder="Edad"
-              value={edad}
-              onChangeText={setEdad}
-              keyboardType="numeric"
-              style={styles.input}
-            />
-            <TextInput
-              placeholder="Sexo"
-              value={sexo}
-              onChangeText={setSexo}
-              style={styles.input}
-            />
-            <TextInput
-                          placeholder="Número de celular"
-                          value={numeroCelular}
-                          onChangeText={setNumeroCelular}
-                          keyboardType="phone-pad"
-                          style={styles.input}
-                        />
-          </>
-        )}
+        <KeyboardAwareScrollView style={{width:'100%'}}>
+          <View style={{justifyContent: "center", alignItems: "center"}}>
+            {step === 1 && (
+              <>
+                <TextInput
+                  placeholder="Nombre"
+                  value={nombre}
+                  onChangeText={setNombre}
+                  style={styles.input}
+                />
+                <TextInput
+                  placeholder="Apellido"
+                  value={apellido}
+                  onChangeText={setApellido}
+                  style={styles.input}
+                />
+                <TextInput
+                  placeholder="Edad"
+                  value={edad}
+                  onChangeText={setEdad}
+                  keyboardType="numeric"
+                  style={styles.input}
+                />
+                 <SelectDropdown
+                  data={[
+                    {title: 'Masculino', value: 'masculino'},
+                    {title: 'Femenino', value: 'femenino'},
+                  ]}
+                  onSelect={(selectedItem, index) => {
+                    setSexo(selectedItem.value)
+                  }}
+                  renderButton={(selectedItem, isOpened) => {
+                    return (
+                      <View style={styles.dropdownButtonStyle}>
+                        <Text style={[
+                          styles.dropdownButtonTxtStyle,
+                          !selectedItem && {color: '#999'}
+                        ]}>
+                          {(selectedItem && selectedItem.title) || 'Sexo'}
+                        </Text>
+                      </View>
+                    );
+                  }}
+                  renderItem={(item, index, isSelected) => {
+                    return (
+                      <View style={{...styles.dropdownItemStyle, ...(isSelected && {backgroundColor: '#D2D9DF'})}}>
+                        <Text style={styles.dropdownItemTxtStyle}>{item.title}</Text>
+                      </View>
+                    );
+                  }}
+                  showsVerticalScrollIndicator={false}
+                  dropdownStyle={styles.dropdownMenuStyle}
+                />
+                <TextInput
+                  placeholder="Número de celular"
+                  value={numeroCelular}
+                  onChangeText={setNumeroCelular}
+                  keyboardType="phone-pad"
+                  style={styles.input}
+                />
+              </>
+            )}
 
-        {step === 2 && (
-          <>
-            <View style={styles.fotosContainer}>
-              <View style={styles.fotoWrapper}>
-                <Text style={styles.label}>Foto frontal del DNI</Text>
-                {dniFrontal ? (
-                  <Image source={{ uri: dniFrontal }} style={styles.foto} />
-                ) : (
-                  <View style={[styles.foto, styles.fotoPlaceholder]}>
-                    <Text style={{ color: "#999" }}>No hay foto</Text>
+            {step === 2 && (
+              <>
+                <View style={styles.fotosContainer}>
+                  <View style={styles.fotoWrapper}>
+                    <Text style={styles.label}>Foto frontal del DNI</Text>
+                    {dniFrontal ? (
+                      <Image source={{ uri: dniFrontal }} style={styles.foto} />
+                    ) : (
+                      <View style={[styles.foto, styles.fotoPlaceholder]}>
+                        <Text style={{ color: "#999" }}>No hay foto</Text>
+                      </View>
+                    )}
+                    <TouchableOpacity
+                      style={styles.botonFoto}
+                      onPress={() => pedirFoto(setDniFrontal)}
+                    >
+                      <Text style={styles.botonFotoTexto}>Tomar foto</Text>
+                    </TouchableOpacity>
                   </View>
-                )}
-                <TouchableOpacity
-                  style={styles.botonFoto}
-                  onPress={() => pedirFoto(setDniFrontal)}
-                >
-                  <Text style={styles.botonFotoTexto}>Tomar foto</Text>
-                </TouchableOpacity>
-              </View>
 
-              <View style={styles.fotoWrapper}>
-                <Text style={styles.label}>Foto trasera del DNI</Text>
-                {dniTrasero ? (
-                  <Image source={{ uri: dniTrasero }} style={styles.foto} />
-                ) : (
-                  <View style={[styles.foto, styles.fotoPlaceholder]}>
-                    <Text style={{ color: "#999" }}>No hay foto</Text>
+                  <View style={styles.fotoWrapper}>
+                    <Text style={styles.label}>Foto trasera del DNI</Text>
+                    {dniTrasero ? (
+                      <Image source={{ uri: dniTrasero }} style={styles.foto} />
+                    ) : (
+                      <View style={[styles.foto, styles.fotoPlaceholder]}>
+                        <Text style={{ color: "#999" }}>No hay foto</Text>
+                      </View>
+                    )}
+                    <TouchableOpacity
+                      style={styles.botonFoto}
+                      onPress={() => pedirFoto(setDniTrasero)}
+                    >
+                      <Text style={styles.botonFotoTexto}>Tomar foto</Text>
+                    </TouchableOpacity>
                   </View>
-                )}
-                <TouchableOpacity
-                  style={styles.botonFoto}
-                  onPress={() => pedirFoto(setDniTrasero)}
-                >
-                  <Text style={styles.botonFotoTexto}>Tomar foto</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+                </View>
 
-            <TextInput
-              placeholder="Número de DNI"
-              value={numeroDni}
-              onChangeText={setNumeroDni}
-              keyboardType="numeric"
-              style={styles.input}
-            />
-            <View style={styles.fotoWrapper}>
-  <Text style={styles.label}>Foto de perfil</Text>
-  {fotoPerfil ? (
-    <Image source={{ uri: fotoPerfil }} style={styles.foto} />
-  ) : (
-    <View style={[styles.foto, styles.fotoPlaceholder]}>
-      <Text style={{ color: "#999" }}>No hay foto</Text>
-    </View>
-  )}
-  <TouchableOpacity
-    style={styles.botonFoto}
-    onPress={() => pedirFoto(setFotoPerfil)}
-  >
-    <Text style={styles.botonFotoTexto}>Tomar foto</Text>
-  </TouchableOpacity>
-</View>
-
-          </>
-        )}
-
-        {step === 3 && (
-          <>
-            <Text style={styles.subtitulo}>Links legales:</Text>
-            <LinkTexto
-              url="https://inicio.serviciosya.info/politicas-de-privacidad.html"
-              texto="Políticas de Privacidad"
-            />
-            <LinkTexto
-              url="https://inicio.serviciosya.info/Terminos-y-condiciones.html"
-              texto="Términos y Condiciones"
-            />
-
-            <View style={styles.switchRow}>
-              <Switch value={acepto} onValueChange={setAcepto} />
-              <Text style={styles.switchText}>Acepto los términos y condiciones</Text>
-            </View>
-
-            <Text style={styles.leyenda}>
-              ServiciosYa es una plataforma de conexión entre trabajadores y clientes, y no asume responsabilidad alguna por las tareas o el desempeño de los trabajadores.
-            </Text>
-          </>
-        )}
-
-        <View style={styles.botonesNav}>
-          {step > 1 && (
-            <TouchableOpacity style={styles.botonNav} onPress={anterior}>
-              <Text style={styles.botonNavTexto}>Anterior</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity style={styles.botonNav} onPress={step < 3 ? siguiente : finalizarRegistro}>
-  <Text style={styles.botonNavTexto}>
-    {step < 3 ? "Siguiente" : "Finalizar"}
-  </Text>
-</TouchableOpacity>
-
+                <TextInput
+                  placeholder="Número de DNI"
+                  value={numeroDni}
+                  onChangeText={setNumeroDni}
+                  keyboardType="numeric"
+                  style={styles.input}
+                />
+                <View style={styles.fotoWrapper}>
+      <Text style={styles.label}>Foto de perfil</Text>
+      {fotoPerfil ? (
+        <Image source={{ uri: fotoPerfil }} style={styles.foto} />
+      ) : (
+        <View style={[styles.foto, styles.fotoPlaceholder]}>
+          <Text style={{ color: "#999" }}>No hay foto</Text>
         </View>
+      )}
+      <TouchableOpacity
+        style={styles.botonFoto}
+        onPress={() => pedirFoto(setFotoPerfil)}
+      >
+        <Text style={styles.botonFotoTexto}>Tomar foto</Text>
+      </TouchableOpacity>
+    </View>
+
+              </>
+            )}
+
+            {step === 3 && (
+              <>
+                <Text style={styles.subtitulo}>Links legales:</Text>
+                <LinkTexto
+                  url="https://inicio.serviciosya.info/politicas-de-privacidad.html"
+                  texto="Políticas de Privacidad"
+                />
+                <LinkTexto
+                  url="https://inicio.serviciosya.info/Terminos-y-condiciones.html"
+                  texto="Términos y Condiciones"
+                />
+
+                <View style={styles.switchRow}>
+                  <Switch value={acepto} onValueChange={setAcepto} />
+                  <Text style={styles.switchText}>Acepto los términos y condiciones</Text>
+                </View>
+
+                <Text style={styles.leyenda}>
+                  ServiciosYa es una plataforma de conexión entre trabajadores y clientes, y no asume responsabilidad alguna por las tareas o el desempeño de los trabajadores.
+                </Text>
+              </>
+            )}
+          </View>
+          <View style={styles.botonesNav}>
+            {step > 1 && (
+              <TouchableOpacity style={styles.botonNav} onPress={anterior}>
+                <Text style={styles.botonNavTexto}>Anterior</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={styles.botonNav} onPress={step < 3 ? siguiente : finalizarRegistro}>
+    <Text style={styles.botonNavTexto}>
+      {step < 3 ? "Siguiente" : "Finalizar"}
+    </Text>
+  </TouchableOpacity>
+
+          </View>
+        </KeyboardAwareScrollView>
       </View>
     </ImageBackground>
   );
@@ -331,11 +360,12 @@ const styles = StyleSheet.create({
     height: "130%",
   },
   overlay: {
-    flex: 1,
-    backgroundColor: "rgba(255,255,255,0.7)",
+    marginTop: 100,
+    backgroundColor: "rgba(255,255,255,0.8)",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 24,
+    paddingVertical: 40,
   },
   title: {
     fontSize: 24,
@@ -419,9 +449,9 @@ const styles = StyleSheet.create({
   },
   botonesNav: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    width: 300,
+    justifyContent:'space-evenly',
     marginTop: 20,
+    marginBottom:50
   },
   botonNav: {
     backgroundColor: "#A4D4AE",
@@ -434,4 +464,53 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 16,
   },
+  dropdownButtonStyle: {
+      width: '100%',
+      height: 50, 
+      borderRadius: 12,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+
+      backgroundColor: "#fff", 
+      padding: 14,
+      marginVertical: 10,
+      fontSize: 16,
+      borderColor: "#E8C547",
+      borderWidth: 1, 
+    },
+    dropdownButtonTxtStyle: {
+      flex: 1,
+      fontSize: 16, 
+    },
+    dropdownButtonArrowStyle: {
+      fontSize: 28,
+    },
+    dropdownButtonIconStyle: {
+      fontSize: 28,
+      marginRight: 8,
+    },
+    dropdownMenuStyle: {
+      backgroundColor: '#E9ECEF',
+      borderRadius: 8,
+    },
+    dropdownItemStyle: {
+      width: '100%',
+      flexDirection: 'row',
+      paddingHorizontal: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingVertical: 8,
+    },
+    dropdownItemTxtStyle: {
+      flex: 1,
+      fontSize: 20,
+      fontWeight: '500',
+      color: '#151E26',
+    },
+    dropdownItemIconStyle: {
+      fontSize: 28,
+      marginRight: 8,
+    },
 });
