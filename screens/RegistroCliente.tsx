@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   dropdownButtonStyle: {
-      width: '100%',
+      width: 300,
       height: 50, 
       borderRadius: 12,
       flexDirection: 'row',
