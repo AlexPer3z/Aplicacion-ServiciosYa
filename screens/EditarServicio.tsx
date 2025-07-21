@@ -26,10 +26,9 @@ type Props = NativeStackScreenProps<MainStackParamList, "EditarServicio">;
 
 function EditarServicio({ route, navigation }: Props) {
   const { servicio } = route.params;
-
   const [titulo, setTitulo] = useState(servicio.titulo);
   const [descripcion, setDescripcion] = useState(servicio.descripcion);
-  const [precio, setPrecio] = useState(servicio.precio);
+  const [precio, setPrecio] = useState(servicio.precio?.toString() || '');
   const [horario, setHorario] = useState(servicio.horario);
   const [categoria, setCategoria] = useState(servicio.categoria);
 
@@ -84,6 +83,7 @@ function EditarServicio({ route, navigation }: Props) {
           <KeyboardAwareScrollView>
             <Text style={styles.titulo}>Editar Servicio</Text>
 
+            <Text style={styles.labelInput}>Título del servicio</Text>
             <TextInput
               style={styles.input}
               placeholder="Título del servicio"
@@ -92,6 +92,7 @@ function EditarServicio({ route, navigation }: Props) {
               placeholderTextColor="#b6e1ea"
             />
 
+            <Text style={styles.labelInput}>Descripción</Text>
             <TextInput
               style={[styles.input, { height: 80 }]}
               placeholder="Descripción (máx. 300 caracteres)"
@@ -106,6 +107,7 @@ function EditarServicio({ route, navigation }: Props) {
               initialValue={{ lat: servicio.latitude, lng: servicio.longitude }}
             />
 
+            <Text style={styles.labelInput}>Precio</Text>
             <TextInput
               style={styles.input}
               placeholder="Precio"
@@ -115,6 +117,7 @@ function EditarServicio({ route, navigation }: Props) {
               placeholderTextColor="#b6e1ea"
             />
 
+            <Text style={styles.labelInput}>Horario</Text>
             <TextInput
               style={styles.input}
               placeholder="Horario disponible"
@@ -123,7 +126,7 @@ function EditarServicio({ route, navigation }: Props) {
               placeholderTextColor="#b6e1ea"
             />
 
-            <Text style={styles.label}>Categoría</Text>
+            <Text style={styles.labelInput}>Categoría</Text>
             <ScrollView
               style={styles.categoriasScroll}
               contentContainerStyle={styles.categoriasContainer}
@@ -207,6 +210,14 @@ const styles = StyleSheet.create({
     borderColor: "#b6e1ea",
     marginBottom: 14,
     color: "#222",
+  },
+  labelInput: {
+    marginTop:5,
+    marginBottom: 9,
+    fontWeight: "700",
+    color: "#19D4C6",
+    fontSize: 16,
+    letterSpacing: 0.2,
   },
   label: {
     marginBottom: 9,

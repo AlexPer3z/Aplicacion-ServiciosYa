@@ -7,17 +7,21 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 import BotonVolver from '../components/BotonVolver';
+import Icon from 'react-native-vector-icons/FontAwesome';
+
 export default function MisServicios() {
   const [serviciosPublicados, setServiciosPublicados] = useState([]);
   const navigation = useNavigation();
 
-  useEffect(() => {
-    obtenerServicios();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      obtenerServicios();
+    }, [])
+  );
 
   const obtenerServicios = async () => {
     const {
@@ -78,26 +82,49 @@ export default function MisServicios() {
     <View style={styles.card}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         <Text style={styles.titulo}>{item.titulo}</Text>
-        <TouchableOpacity onPress={() => editarServicio(item)}>
-          <Ionicons name="create-outline" size={20} color="#555" />
+        <TouchableOpacity 
+          onPress={() => editarServicio(item)}
+          style={[styles.buttonContainer, styles.editButton]}
+        > 
+           <Icon name="edit" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
       <Text>{item.descripcion}</Text>
-      <Text style={styles.estado}>Estado: {item.estado}</Text>
+      <Text style={styles.estado}>
+        Estado: {item.estado ? item.estado.replace(/'/g, '') : ''}
+      </Text>
       <Text>Veces contratado: {item.veces_contratado || 0}</Text>
       <View style={styles.estrellas}>
         {renderEstrellas(item.calificacion_promedio || 0)}
       </View>
 
       <View style={styles.acciones}>
-        <TouchableOpacity onPress={() => pausarServicio(item.id, item.estado)}>
-          <Text style={styles.boton}>
-            {item.estado === 'pausado' ? 'Reanudar' : 'Pausar'}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => eliminarServicio(item.id)}>
-          <Text style={[styles.boton, { color: 'red' }]}>Eliminar</Text>
-        </TouchableOpacity>
+        <TouchableOpacity 
+            onPress={() => pausarServicio(item.id, item.estado)}
+            style={styles.buttonContainer}
+          >
+            <View style={styles.button}>
+              <Icon 
+                name={item.estado === 'pausado' ? 'play' : 'pause'} 
+                size={16} 
+                color="#fff" 
+              />
+              <Text style={styles.buttonText}>
+                {item.estado === 'pausado' ? ' Reanudar' : ' Pausar'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+        
+          <TouchableOpacity 
+            onPress={() => eliminarServicio(item.id)}
+            style={styles.buttonContainer}
+          >
+            <View style={[styles.button, { backgroundColor: '#ff4444' }]}>
+              <Icon name="trash" size={16} color="#fff" />
+              <Text style={styles.buttonText}> Eliminar</Text>
+            </View>
+          </TouchableOpacity>
       </View>
     </View>
   );
@@ -135,7 +162,7 @@ const styles = StyleSheet.create({
   acciones: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 10,
+    marginTop: 25,
   },
   boton: { color: '#007BFF' },
   separador: {
@@ -143,5 +170,38 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginVertical: 15,
     color: '#333',
+  },
+  buttonContainer: {
+    marginHorizontal: 5, // Espacio entre botones
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#007bff', // Azul para el botón de pausa/reanudar
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    elevation: 2, // Sombra en Android
+    shadowColor: '#000', // Sombra en iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+  },
+  editButton: {
+    backgroundColor: '#19D4C6',  
+    width: 40,  
+    height: 40,
+    borderRadius: 20,  
+    justifyContent: 'center',  
+    alignItems: 'center',  
+    elevation: 2, 
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    marginLeft: 5,
   },
 });

@@ -21,6 +21,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import type { LocationItem } from "../types/location";
 import { locationQueryString } from "../lib/utils/location";
 import type { MainStackParamList } from "../types/navigation";
+import BotonVolver from "../components/BotonVolver";
+import SelectDropdown from 'react-native-select-dropdown' 
 
 type Props = NativeStackScreenProps<MainStackParamList, "OfrecerServicio">;
 
@@ -94,6 +96,7 @@ function OfrecerServicio({ navigation }: Props) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#E8FAF7" }}>
+      <BotonVolver/>
       <KeyboardAwareScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContentContainer}
@@ -102,7 +105,7 @@ function OfrecerServicio({ navigation }: Props) {
         extraScrollHeight={Platform.OS === "ios" ? 20 : 0} // Optional: fine-tune scroll distance
         enableOnAndroid={true}
       >
-        <Text style={styles.title}>Publicar un Servicio</Text>
+        <Text style={[styles.title,{marginTop:20}]}>Publicar un Servicio</Text>
 
         <View style={styles.inputContainer}>
           {/* All your inputs remain the same */}
@@ -117,16 +120,33 @@ function OfrecerServicio({ navigation }: Props) {
 
           <Text style={styles.label}>Categoría</Text>
           <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={categoria}
-              onValueChange={(itemValue) => setCategoria(itemValue)}
-              style={styles.picker}
-            >
-              <Picker.Item label="Selecciona una categoría" value="" />
-              {categoriasDisponibles.map((cat, index) => (
-                <Picker.Item key={index} label={cat} value={cat} />
-              ))}
-            </Picker>
+             <SelectDropdown
+                data={categoriasDisponibles}
+                onSelect={(selectedItem, index) => {
+                  setCategoria(selectedItem)
+                }}
+                renderButton={(selectedItem, isOpened) => {
+                  return (
+                    <View style={styles.dropdownButtonStyle}>
+                      <Text style={[
+                        styles.dropdownButtonTxtStyle,
+                        !selectedItem && {color: '#999'}
+                      ]}>
+                        {(selectedItem) || 'Ej: Categoria'}
+                      </Text>
+                    </View>
+                  );
+                }}
+                renderItem={(item, index, isSelected) => {
+                  return (
+                    <View style={{...styles.dropdownItemStyle, ...(isSelected && {backgroundColor: '#D2D9DF'})}}>
+                      <Text style={styles.dropdownItemTxtStyle}>{item}</Text>
+                    </View>
+                  );
+                }}
+                showsVerticalScrollIndicator={false}
+                dropdownStyle={styles.dropdownMenuStyle}
+              />
           </View>
 
           <Text style={styles.label}>Horario</Text>
@@ -256,4 +276,46 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     letterSpacing: 1,
   },
+  dropdownButtonStyle: {
+      height: 50,
+      width: "100%",
+      borderRadius: 12,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+    },
+    dropdownButtonTxtStyle: {
+      flex: 1,
+      fontSize: 16, 
+    },
+    dropdownButtonArrowStyle: {
+      fontSize: 28,
+    },
+    dropdownButtonIconStyle: {
+      fontSize: 28,
+      marginRight: 8,
+    },
+    dropdownMenuStyle: {
+      backgroundColor: '#E9ECEF',
+      borderRadius: 8,
+    },
+    dropdownItemStyle: {
+      width: '100%',
+      flexDirection: 'row',
+      paddingHorizontal: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingVertical: 8,
+    },
+    dropdownItemTxtStyle: {
+      flex: 1,
+      fontSize: 20,
+      fontWeight: '500',
+      color: '#151E26',
+    },
+    dropdownItemIconStyle: {
+      fontSize: 28,
+      marginRight: 8,
+    },
 });

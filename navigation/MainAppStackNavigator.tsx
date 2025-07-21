@@ -55,8 +55,8 @@ export default function MainStackNavigator() {
     >
       <Stack.Screen name="InicioRouter" component={InicioRouter} />
       <Stack.Screen name="SeleccionRol" component={withSafeArea(SeleccionRol)} />
-<Stack.Screen name="RegistroCliente" component={withSafeArea(RegistroCliente)} />
-<Stack.Screen name="RegistroTrabajador" component={withSafeArea(RegistroTrabajador)} />
+      <Stack.Screen name="RegistroCliente" component={withSafeArea(RegistroCliente)} />
+      <Stack.Screen name="RegistroTrabajador" component={withSafeArea(RegistroTrabajador)} />
 
       <Stack.Screen name="Home" component={Home} />
       <Stack.Screen name="CrearPerfil" component={withSafeArea(CrearPerfil)} />
