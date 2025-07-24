@@ -9,12 +9,12 @@ GoogleSignin.configure({
   iosClientId: '453761258131-6anu4ghpi4jv1df72490vo69vj23qq22.apps.googleusercontent.com'
 });
 
-export default function BtnLoginGoogle({ onLogin }) {
+export default function BtnLoginGoogle({ onLogin }:any) {
   const signIn = async () => {
     try {
       await GoogleSignin.hasPlayServices()
-      const userInfo = await GoogleSignin.signIn() 
-      if (userInfo.data.idToken) {
+      const userInfo = await GoogleSignin.signIn()
+      if (userInfo.data?.idToken) {
           onLogin(null, userInfo);
       } else {
         onLogin('no ID token present!',null)

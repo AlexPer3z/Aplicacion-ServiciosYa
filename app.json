@@ -112,7 +112,8 @@
          "photosPermission": "Permitir acceso a tu galería para subir imágenes en la aplicación.",
          "cameraPermission": "Permitir acceso a tu cámara para tomar fotos dentro de la aplicación."
         }
-      ]
+      ],
+      "expo-av"
     ],
     "extra": {
       "eas": {

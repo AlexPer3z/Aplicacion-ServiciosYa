@@ -21,13 +21,15 @@ import OnlineFilterCheckBox from "./home/OnlineFilterCheckBox";
 interface HomeHeaderProps {
   onSearch: (query: string) => void;
   onShowCountsOnlyChange: (value: boolean) => void;
-  notificationsCount: number; // <-- agregado
+  notificationsCount: number;
+  unreadMessagesCount: number;
 }
 
 function HomeHeader({
   onSearch,
   onShowCountsOnlyChange,
-  notificationsCount, // <-- agregado
+  notificationsCount,
+  unreadMessagesCount,
 }: HomeHeaderProps) {
   const navigation = useMainNavigation();
   const { settings } = useUserSettings();

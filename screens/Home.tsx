@@ -5,6 +5,8 @@ import {
   ImageBackground,
   TouchableOpacity,
   Alert,
+  Animated,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -31,6 +33,8 @@ import type { MainStackParamList } from "../types/navigation";
 import FloatingButtonMenu from "../components/FloatingButtonMenu";
 import { withSuspense } from "../components/withSuspense";
 import { supabase } from "../lib/supabase";
+import FloatingActionButtonMenu from "../components/FloatingActionButtonMenu";
+import HelpVideoModal from "../components/HelpVideoModal";
 
 type Props = NativeStackScreenProps<MainStackParamList, "Home">;
 
@@ -38,6 +42,7 @@ function Home({ navigation }: Props) {
   const [busqueda, setBusqueda] = useState("");
   const [showCountsOnly, setShowCountsOnly] = useState(false);
   const [chatVisible, setChatVisible] = useState(false);
+  const [videoVisible, setVideoVisible] = useState(false);
 
   // Custom Hooks
   const { startOnboarding } = useOnboarding();
@@ -115,7 +120,7 @@ function Home({ navigation }: Props) {
         resizeMode="cover"
       >
         <View style={styles.container}>
-          <HomeHeader
+            <HomeHeader
               onSearch={setBusqueda}
               onShowCountsOnlyChange={(value) => setShowCountsOnly(value)}
               notificationsCount={notificationsCount}
@@ -132,22 +137,25 @@ function Home({ navigation }: Props) {
           {askDniVerification && <DniPendingWarning />}
           
        
-  <CategoryList
-    busqueda={busqueda}
-    onCategoryPress={handleCategoryPress}
-    isUserRestricted={isUserRestricted}
-    refreshing={refreshing}
-    onRefresh={onRefresh}
-  />
-
+          <CategoryList
+            busqueda={busqueda}
+            onCategoryPress={handleCategoryPress}
+            isUserRestricted={isUserRestricted}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          /> 
           
+          <FloatingActionButtonMenu
+            onHelpPress={() => setVideoVisible(true)}
+            onChatPress={() => setChatVisible(true)}
+          />
+                  
 
-          {/* <TouchableOpacity
-            onPress={() => setChatVisible(true)}
-            style={styles.fab}
-          >
-            <Ionicons name="chatbubble-ellipses" size={28} color="#fff" />
-          </TouchableOpacity> */}
+          <HelpVideoModal
+            visible={videoVisible}
+            onClose={() => setVideoVisible(false)}
+            videoSource={require("../assets/video.mp4")}
+          />
 
           <ChatBotModal
             visible={chatVisible}
@@ -170,16 +178,4 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#00B8A9" },
   background: { flex: 1 },
   container: { flex: 1, backgroundColor: "rgba(255, 255, 255, 0.40)" },
-  fab: {
-    position: "absolute",
-    bottom: 90,
-    right: 24,
-    backgroundColor: "#FFA13C",
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 8,
-  },
 });
