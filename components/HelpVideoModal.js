@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -8,35 +8,55 @@ import {
   SafeAreaView,
   Dimensions,
 } from 'react-native';
-import { Video } from "expo-av";
+import { Video } from 'expo-av';
 
 const { width } = Dimensions.get("window");
-const VIDEO_HEIGHT = width * 1; // 16:9 aspect ratio
+const VIDEO_HEIGHT = width * 1;
 
 export default function HelpVideoModal({ visible, onClose, videoSource }) {
   const videoRef = useRef(null);
 
+  useEffect(() => {
+    if (visible && videoRef.current) {
+      videoRef.current.setStatusAsync({
+        shouldPlay: true,
+        positionMillis: 0,
+        isLooping: true,
+      });
+    } else if (videoRef.current) {
+      videoRef.current.setStatusAsync({
+        shouldPlay: false,
+        positionMillis: 0,
+      });
+    }
+  }, [visible]);
+
+  const handleClose = async () => {
+    if (videoRef.current) {
+      await videoRef.current.setStatusAsync({ shouldPlay: false, positionMillis: 0 });
+    }
+    onClose();
+  };
+
   return (
-    <Modal animationType="fade" transparent={true} visible={visible} onRequestClose={onClose}>
+    <Modal animationType="fade" transparent={true} visible={visible} onRequestClose={handleClose}>
       <SafeAreaView style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
-          {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Video de ayuda</Text>
-            <TouchableOpacity onPress={onClose} style={styles.cerrarBtn}>
+            <TouchableOpacity onPress={handleClose} style={styles.cerrarBtn}>
               <Text style={styles.cerrarTexto}>Cerrar</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Video */}
           <Video
             ref={videoRef}
-            style={styles.video}
             source={videoSource}
-            useNativeControls
+            style={styles.video}
             resizeMode="contain"
-            isLooping={false}
-            shouldPlay={true}
+            shouldPlay
+            isLooping
+            useNativeControls
           />
         </View>
       </SafeAreaView>
@@ -81,6 +101,6 @@ const styles = StyleSheet.create({
   },
   video: {
     width: '100%',
-    height: VIDEO_HEIGHT
+    height: VIDEO_HEIGHT,
   },
 });

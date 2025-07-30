@@ -8,7 +8,9 @@ import {
   StyleSheet,
   SafeAreaView,
   TextInput,
+  Linking
 } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 
 const preguntasFrecuentes = [
   { id: '1', pregunta: '¿Cómo publicar un servicio?', respuesta: 'Ingresa a la sección "Ofrecer Servicio", completa los campos requeridos como título, descripción y categoría, y pulsa "Publicar".' },
@@ -45,6 +47,23 @@ export default function ChatBotModal({ visible, onClose }) {
     p.pregunta.toLowerCase().includes(filtro.toLowerCase())
   );
 
+  const sendWhatsapp = () => { 
+    const phoneNumber = '5493834035427';
+    const defaultMessage = 'Hola, tengo una pregunta sobre la app'; // Mensaje personalizado
+    
+    const url = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(defaultMessage)}`;
+    
+    Linking.canOpenURL(url)
+      .then((supported) => {
+        if (!supported) {
+          const webUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(defaultMessage)}`;
+          return Linking.openURL(webUrl);
+        }
+        return Linking.openURL(url);
+      })
+      .catch((err) => console.error('Error al abrir WhatsApp:', err));
+  };
+
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
       <SafeAreaView style={styles.modalOverlay}>
@@ -66,51 +85,66 @@ export default function ChatBotModal({ visible, onClose }) {
             {conversacion.length === 0 && (
               <Text style={styles.sinMensajes}>Selecciona una pregunta para comenzar.</Text>
             )}
-            {conversacion.map((msg) => (
-              <View
-                key={msg.id}
-                style={[
-                  styles.burbuja,
-                  msg.tipo === 'usuario' ? styles.burbujaUsuario : styles.burbujaBot,
-                ]}
-              >
-                <Text
+            
+            <View style={{marginBottom:25}}>
+              {conversacion.map((msg) => (
+                <View
+                  key={msg.id}
                   style={[
-                    styles.texto,
-                    msg.tipo === 'usuario' ? styles.textoUsuario : styles.textoBot,
+                    styles.burbuja,
+                    msg.tipo === 'usuario' ? styles.burbujaUsuario : styles.burbujaBot,
                   ]}
                 >
-                  {msg.texto}
-                </Text>
-              </View>
-            ))}
+                  <Text
+                    style={[
+                      styles.texto,
+                      msg.tipo === 'usuario' ? styles.textoUsuario : styles.textoBot,
+                    ]}
+                  >
+                    {msg.texto}
+                  </Text>
+                </View>
+              ))}
+            </View>
           </ScrollView>
 
           {/* Preguntas frecuentes en dos filas */}
+          <View style={[styles.container, {borderTopWidth: 1, borderColor: '#ccc'}]}>
+            <Text style={styles.titleText}>Para pregunta más personalizada escríbenos</Text>
+            
+            <TouchableOpacity 
+              style={styles.whatsappButton} 
+              onPress={sendWhatsapp}
+              activeOpacity={0.7}
+            >
+              <FontAwesome name="whatsapp" size={20} color="white" />
+              <Text style={styles.buttonText}>WhatsApp</Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.preguntasContainer}>
-  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-    <View style={styles.preguntasWrap}>
-      {preguntasFiltradas.map((p) => (
-        <TouchableOpacity
-          key={p.id}
-          style={styles.preguntaBtn}
-          onPress={() => enviarPregunta(p)}
-        >
-          <Text style={styles.preguntaTexto}>{p.pregunta}</Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  </ScrollView>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={styles.preguntasWrap}>
+                {preguntasFiltradas.map((p) => (
+                  <TouchableOpacity
+                    key={p.id}
+                    style={styles.preguntaBtn}
+                    onPress={() => enviarPregunta(p)}
+                  >
+                    <Text style={styles.preguntaTexto}>{p.pregunta}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
 
-  {/* Mini buscador */}
-  <TextInput
-    style={styles.buscador}
-    placeholder="Buscar pregunta..."
-    placeholderTextColor="#aaa"
-    value={filtro}
-    onChangeText={setFiltro}
-  />
-</View>
+            {/* Mini buscador */}
+            <TextInput
+              style={styles.buscador}
+              placeholder="Buscar pregunta..."
+              placeholderTextColor="#aaa"
+              value={filtro}
+              onChangeText={setFiltro}
+            />
+          </View>
 
         </View>
       </SafeAreaView>
@@ -119,6 +153,39 @@ export default function ChatBotModal({ visible, onClose }) {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginTop: 5,
+    alignItems:'center'
+  },
+  titleText: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  whatsappButton: {
+    width:'50%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#25D366',
+    paddingVertical: 6,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    marginLeft: 10,
+    fontSize: 16,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -173,7 +240,7 @@ const styles = StyleSheet.create({
   },
   burbujaBot: {
     backgroundColor: '#e5e5ea',
-    alignSelf: 'flex-start',
+    alignSelf: 'flex-start'
   },
   texto: {
     fontSize: 15,
@@ -185,26 +252,10 @@ const styles = StyleSheet.create({
   textoBot: {
     color: '#000',
   },
-  preguntasContainer: {
-    borderTopWidth: 1,
-    borderColor: '#ccc',
+  preguntasContainer: { 
     paddingVertical: 10,
     backgroundColor: '#fff',
-  },
-  preguntasWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    maxWidth: 500,
-  },
-  preguntaBtn: {
-    backgroundColor: '#f0f0f0',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
-    marginRight: 10,
-    marginBottom: 8,
-  },
+  },  
   preguntaTexto: {
     color: '#f62',
     fontWeight: 'bold',
@@ -220,20 +271,19 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   preguntasWrap: {
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-  height: 90, // Limita a 2 filas (ajusta si las preguntas ocupan más)
-  alignContent: 'flex-start',
-  paddingHorizontal: 10,
-},
-preguntaBtn: {
-  width: 180, // Ajusta para que entren varias por fila
-  backgroundColor: '#f0f0f0',
-  paddingHorizontal: 10,
-  paddingVertical: 8,
-  borderRadius: 10,
-  marginRight: 10,
-  marginBottom: 0,
-},
-
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    height: 65, // Limita a 2 filas (ajusta si las preguntas ocupan más)
+    alignContent: 'flex-start',
+    paddingHorizontal: 10,
+  },
+  preguntaBtn: {
+    width: 180, // Ajusta para que entren varias por fila
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 10,
+    marginRight: 10,
+    marginBottom: 0,
+  }, 
 });

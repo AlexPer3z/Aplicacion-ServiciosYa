@@ -11,6 +11,8 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { withModalProvider } from "../components/sheet/withModalProvider";
 import { AuthContext } from '../lib/context/AppContext';
 
@@ -42,7 +44,7 @@ function Home({ navigation }: Props) {
   const [busqueda, setBusqueda] = useState("");
   const [showCountsOnly, setShowCountsOnly] = useState(false);
   const [chatVisible, setChatVisible] = useState(false);
-  const [videoVisible, setVideoVisible] = useState(false);
+  const [videoVisible, setVideoVisible] = useState(false); 
 
   // Custom Hooks
   const { startOnboarding } = useOnboarding();
@@ -61,6 +63,25 @@ function Home({ navigation }: Props) {
     unreadMessagesCount,
     startMessageCounter,
   } = useContext(AuthContext);
+
+  // Verificar si el usuario ha visto el video al cargar el componente
+  useEffect(() => {
+    const checkFirstTime = async () => {
+      try {
+        const value = await AsyncStorage.getItem('@hasSeenHelpVideo');
+        console.log('@hasSeenHelpVideo',value)
+        if (value === null) {
+          // Primera vez - mostrar el video
+          setVideoVisible(true);
+          await AsyncStorage.setItem('@hasSeenHelpVideo', 'true');
+        } 
+      } catch (e) {
+        console.error('Error al leer AsyncStorage:', e);
+      }
+    };
+
+    checkFirstTime();
+  }, []); 
 
   // Lanzar contadores y suscripciones en tiempo real
   useEffect(() => {
@@ -154,7 +175,7 @@ function Home({ navigation }: Props) {
           <HelpVideoModal
             visible={videoVisible}
             onClose={() => setVideoVisible(false)}
-            videoSource={require("../assets/video.mp4")}
+            videoSource={require("../assets/video_2.mp4")}
           />
 
           <ChatBotModal

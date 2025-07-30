@@ -7,11 +7,14 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  Linking,
 } from 'react-native'
 import { supabase } from '../lib/supabase'
 import { removeAuthSession } from '../lib/storage'
 import { useUserSettings } from '../lib/hooks/useUserSettings'
 import BotonVolver from '../components/BotonVolver';
+import { FontAwesome } from '@expo/vector-icons';
+
 export default function Configuracion({ navigation }) {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -97,6 +100,28 @@ export default function Configuracion({ navigation }) {
   const invitarAmigo = () => {
     Alert.alert('Invitar a un amigo', 'La función de invitar a un amigo está en desarrollo.')
   }
+
+  const sendWhatsapp = () => { 
+    const phoneNumber = '5493834035427';
+    const defaultMessage = 'Hola, necesito soporte'; // Mensaje opcional
+    
+    // Formatea la URL de WhatsApp
+    const url = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(defaultMessage)}`;
+    
+    Linking.canOpenURL(url)
+      .then((supported) => {
+        if (!supported) {
+          // Si WhatsApp no está instalado, abrir en navegador
+          const webUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(defaultMessage)}`;
+          return Linking.openURL(webUrl);
+        }
+        return Linking.openURL(url);
+      })
+      .catch((err) => {
+        console.error('Error al abrir WhatsApp:', err);
+        Alert.alert('Error', 'No se pudo abrir WhatsApp');
+      });
+  };
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut()
@@ -209,31 +234,42 @@ export default function Configuracion({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {/* INVITAR */}
-        <View style={styles.section}>
-          <Text style={styles.optionText}>Invitar a un Amigo</Text>
-          <TouchableOpacity style={styles.buttonTurquoise} onPress={invitarAmigo}>
-            <Text style={styles.buttonText}>Invitar</Text>
-          </TouchableOpacity>
-        </View>
+        <View style={{ borderTopWidth: 1, borderColor: '#ccc'}}>
+          {/* INVITAR */}
+          <View style={[styles.section,{marginTop: 10}]}>
+            <Text style={styles.optionText}>Invitar a un Amigo</Text>
+            <TouchableOpacity style={styles.buttonTurquoise} onPress={invitarAmigo}>
+              <Text style={styles.buttonText}>Invitar</Text>
+            </TouchableOpacity>
+          </View>
+ 
+          {/* Whatsapp */}
+          <View style={styles.section}>
+            <Text style={styles.optionText}>Para soporte escríbenos</Text>
+            <TouchableOpacity style={styles.buttonWhatsapp} onPress={sendWhatsapp}>
+              <FontAwesome name="whatsapp" size={20} color="white" style={styles.icon} />
+              <Text style={styles.buttonText}> Whatsapp</Text>
+            </TouchableOpacity>
+          </View>
 
-        {/* CERRAR SESIÓN */}
-        <View style={styles.section}>
-          <Text style={styles.optionText}>Cerrar Sesión</Text>
-          <TouchableOpacity style={styles.buttonOrange} onPress={handleLogout}>
-            <Text style={styles.buttonText}>Cerrar Sesión</Text>
-          </TouchableOpacity>
-        </View>
+          {/* CERRAR SESIÓN */}
+          <View style={styles.section}>
+            <Text style={styles.optionText}>Cerrar Sesión</Text>
+            <TouchableOpacity style={styles.buttonOrange} onPress={handleLogout}>
+              <Text style={styles.buttonText}>Cerrar Sesión</Text>
+            </TouchableOpacity>
+          </View>
 
-        {/* ELIMINAR CUENTA */}
-        <View style={styles.section}>
-          <Text style={styles.optionText}>Eliminar Cuenta</Text>
-          <TouchableOpacity
-            style={[styles.buttonOrange, { backgroundColor: '#D9534F' }]}
-            onPress={eliminarCuenta}
-          >
-            <Text style={styles.buttonText}>Eliminar Cuenta</Text>
-          </TouchableOpacity>
+          {/* ELIMINAR CUENTA */}
+          <View style={styles.section}>
+            <Text style={styles.optionText}>Eliminar Cuenta</Text>
+            <TouchableOpacity
+              style={[styles.buttonOrange, { backgroundColor: '#D9534F' }]}
+              onPress={eliminarCuenta}
+            >
+              <Text style={styles.buttonText}>Eliminar Cuenta</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </ScrollView>
@@ -295,6 +331,21 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     elevation: 3,
     shadowColor: '#19D4C6',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.13,
+    shadowRadius: 7,
+  },
+  buttonWhatsapp: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#25D366',
+    paddingVertical: 14,
+    borderRadius: 24,
+    alignItems: 'center',
+    marginBottom: 10,
+    elevation: 3,
+    shadowColor: '#25D366',
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.13,
     shadowRadius: 7,
