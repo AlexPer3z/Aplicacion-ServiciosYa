@@ -15,10 +15,14 @@ import { useMainNavigation } from "../../lib/hooks/useNavigation";
 import { useSuspenseProfile } from "../../lib/hooks/useUser";
 import type { MainStackParamList } from "../../types/navigation";
 import { useLinkProps, type LinkProps } from "@react-navigation/native";
+import { supabase } from "../../lib/supabase";
+import * as Updates from 'expo-updates';
+
 
 interface NavButtonProps {
   name: string;
 }
+type RolType = "user" | "admin" | "worker"; // puedes declararlo al inicio del archivo
 
 function NavButton({
   name,
@@ -79,7 +83,7 @@ interface BottomNavBarProps {
 }
 
 const BottomNavBar = ({ unreadMessagesCount = 0 }: BottomNavBarProps) => {
-  const { rol, isUserRestricted } = useSuspenseProfile();
+  const { rol, isUserRestricted, id } = useSuspenseProfile();
   const navigation = useMainNavigation();
   const insets = useSafeAreaInsets();
 
@@ -96,9 +100,83 @@ const BottomNavBar = ({ unreadMessagesCount = 0 }: BottomNavBarProps) => {
     navigation.navigate("OfrecerServicio");
   };
 
+  const logout = async () => {
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      Alert.alert('Error al cerrar sesión', error.message)
+    }
+    // Forzar reload de la app
+    await Updates.reloadAsync();
+  }
+
+  // Actualizar rol en la tabla de usuarios
+  const updateUserRole = async (newRole: RolType) => {
+    const { error } = await supabase
+      .from("usuarios")
+      .update({ rol: newRole })
+      .eq("id", id);
+
+    if (error) {
+      Alert.alert("Error", "No se pudo actualizar el rol: " + error.message);
+      return false;
+    }
+    return true;
+  };
+
   const hanndleCenterPress = () => {
     if (isUser(rol)) {
-      navigation.navigate("OnlineWorkers");
+      Alert.alert(
+        "¿Qué deseas hacer?",
+        "Actualmente estás en modo Usuario. Si decides cambiar al modo Trabajador se cerrará tu sesión. Si prefieres continuar, seguirás buscando trabajadores como hasta ahora.",
+        [
+          {
+            text: "Continuar como Usuario",
+            style: "default",
+            onPress: () => {
+              navigation.navigate("OnlineWorkers");
+            },
+          },
+          {
+            text: "Cambiar a Trabajador",
+            style: "destructive",
+            onPress: async () => {
+              // Cambiar rol a worker
+              const success = await updateUserRole("worker");
+              if (success) {
+                await logout(); 
+              }
+            },
+          },
+        ]
+      );
+      return;
+    }
+
+    if (isWorker(rol)) {
+      Alert.alert(
+        "¿Qué deseas hacer?",
+        "Actualmente estás en modo Trabajador. Si decides cambiar al modo Usuario se cerrará tu sesión. Si prefieres continuar, podrás ofrecer un servicio como hasta ahora.",
+        [
+          {
+            text: "Continuar como Trabajador",
+            style: "default",
+            onPress: () => {
+              handlePressOfferService();
+            },
+          },
+          {
+            text: "Cambiar a Usuario",
+            style: "destructive",
+            onPress: async () => {
+              // Cambiar rol a user
+              const success = await updateUserRole("user");
+              if (success) {
+                await logout(); 
+              }
+            },
+          },
+        ]
+      );
       return;
     }
 

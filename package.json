@@ -65,7 +65,8 @@
     "type-fest": "^4.41.0",
     "undefined": "expo-auth-session/providers/google",
     "uuid": "^11.1.0",
-    "expo-av": "~15.1.7"
+    "expo-av": "~15.1.7",
+    "expo-updates": "~0.28.17"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
