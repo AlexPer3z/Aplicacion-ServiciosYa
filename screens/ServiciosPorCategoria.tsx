@@ -39,6 +39,34 @@ type Props = NativeStackScreenProps<
 
 function ServiciosPorCategoria({ route, navigation }: Props) {
   const { categoria } = route.params;
+
+  // Lista de categorías sensibles
+  const categoriasSensibles = [
+  "Cuidado de niños",
+  "Cuidado de adultos mayores",
+  "Enfermero",
+  "Psicólogo",
+  "Kinesiólogo",
+  "Nutricionista",
+  "Masajista",
+  "Terapista ocupacional",
+  "Profesor de yoga",
+  "Animador infantil",
+  "Maquillador profesional",
+];
+
+  // Mostrar alerta si la categoría es sensible
+  useEffect(() => {
+    if (categoriasSensibles.includes(categoria)) {
+      Alert.alert(
+        "⚠️ Importante",
+        "Recuerda siempre solicitar un documento habilitante o antecedentes penales antes de contratar este servicio."
+      );
+    }
+  }, [categoria]);
+
+
+
   const { data: servicios, isPending } = useServicesByCategory(categoria);
   const { user } = useUser();
   const [modalVisible, setModalVisible] = useState(false);
@@ -151,56 +179,56 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
   };
 
   const contratarServicio = async () => {
-    cerrarModal();
+  cerrarModal();
 
-    if (!servicioSeleccionado) {
-      setMensajeModal("❌ No hay servicio seleccionado.");
-      setConfirmacionVisible(true);
-      return;
+  if (!servicioSeleccionado) {
+    setMensajeModal("❌ No hay servicio seleccionado.");
+    setConfirmacionVisible(true);
+    return;
+  }
+
+  // Validar contratación
+  const permitido = handleContratarServicio(servicioSeleccionado.id);
+  if (!permitido) return;
+
+  try {
+    if (!user) {
+      throw new Error("No se pudo obtener el usuario actual");
     }
 
-    // Primero validar que se pueda contratar (límite y no repetidos y rol)
-    const permitido = handleContratarServicio(servicioSeleccionado.id);
-    if (!permitido) return;
+    const compradorId = user.id;
+    const createdAt = new Date().toISOString();
+    const mensaje = `Un usuario ha solicitado tu servicio: ${servicioSeleccionado.titulo}`;
 
+    await supabase.from("servicios_contratados").insert([
+      {
+        servicio_id: servicioSeleccionado.id,
+        contratante_id: compradorId,
+        contratado_id: servicioSeleccionado.user_id,
+      },
+    ]);
+
+    await supabase.from("notificaciones").insert({
+      receptor_id: servicioSeleccionado.user_id,
+      emisor_id: compradorId,
+      mensaje,
+      created_at: createdAt,
+    });
+
+    // Descontar crédito
+    const { error: updateError } = await supabase
+      .from("usuarios")
+      .update({ creditos: (creditos ?? 1) - 1 })
+      .eq("id", user.id);
+
+    if (updateError) {
+      throw new Error("Error al descontar crédito.");
+    }
+
+    setCreditos((prev) => (prev ?? 1) - 1);
+
+    // Intentar enviar notificación push pero sin que afecte el flujo si falla
     try {
-      if (!user) {
-        throw new Error("No se pudo obtener el usuario actual");
-      }
-
-      const compradorId = user.id;
-      const createdAt = new Date().toISOString();
-      const mensaje = `Un usuario ha solicitado tu servicio: ${servicioSeleccionado.titulo}`;
-
-      await supabase.from("servicios_contratados").insert([
-        {
-          servicio_id: servicioSeleccionado.id,
-          contratante_id: compradorId,
-          contratado_id: servicioSeleccionado.user_id,
-        },
-      ]);
-
-      await supabase.from("notificaciones").insert({
-        receptor_id: servicioSeleccionado.user_id,
-        emisor_id: compradorId,
-        mensaje,
-        created_at: createdAt,
-      });
-
-      // Descontar 1 crédito al usuario
-const { error: updateError } = await supabase
-  .from("usuarios")
-  .update({ creditos: (creditos ?? 1) - 1 })
-  .eq("id", user.id);
-
-if (updateError) {
-  throw new Error("Error al descontar crédito.");
-}
-
-// Actualizamos el estado local
-setCreditos((prev) => (prev ?? 1) - 1);
-
-
       const { data: receptorUsuario } = await supabase
         .from("usuarios")
         .select("expo_token")
@@ -223,15 +251,20 @@ setCreditos((prev) => (prev ?? 1) - 1);
           }),
         });
       }
-console.log("Expo token del receptor:", receptorUsuario?.expo_token)
-      setMensajeModal("✅ Tu propuesta fue enviada.");
-      setConfirmacionVisible(true);
-    } catch (error: any) {
-      setMensajeModal("❌ Error al contratar el servicio.");
-      setConfirmacionVisible(true);
-      showToast.error("Contratar servicio", error.message || error.toString());
+    } catch (pushError) {
+      console.log("Error enviando notificación push:", pushError.message || pushError);
+      // No mostramos alerta ni modal aquí para no molestar al usuario
     }
-  };
+
+    setMensajeModal("✅ Tu propuesta fue enviada.");
+    setConfirmacionVisible(true);
+  } catch (error: any) {
+    setMensajeModal("❌ Error al contratar el servicio.");
+    setConfirmacionVisible(true);
+    showToast.error("Contratar servicio", error.message || error.toString());
+  }
+};
+
 
   // Cerramos el modal actual y abrimos el reporte
   const handleReport = (servicio: Servicio) => {

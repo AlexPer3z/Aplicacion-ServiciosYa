@@ -18,7 +18,7 @@
       "android",
       "web"
     ],
-    "version": "26.0.0",
+    "version": "35.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -57,7 +57,7 @@
       "appleTeamId": "HHY5MJ22J3"
     },
     "android": {
-      "versionCode": 26,
+      "versionCode": 35,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -120,6 +120,9 @@
     "extra": {
       "eas": {
         "projectId": "aea4aff9-1e66-4a9c-a2e7-17402b7bc1f1"
+      },
+      "router": {
+        "entry": "./expo-router-entry.js"
       }
     },
     "owner": "perezzz2003"

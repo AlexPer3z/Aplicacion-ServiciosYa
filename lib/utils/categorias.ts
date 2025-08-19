@@ -1,5 +1,6 @@
 export const categoriasDisponibles = [
   // Originales
+  "Mi Primer Trabajo",
   "general",
   "Servicio",
   "Electricista",
@@ -43,6 +44,9 @@ export const categoriasDisponibles = [
   "Profesor de música",
 
   // Nuevas
+  "Gomeria",
+  "Mecanico",
+  "Electromecanico",
   "Soldador",
   "Gasista",
   "Herrero",
@@ -115,6 +119,11 @@ export const categoriasDisponibles = [
 
 export const iconosCategoria = {
   // EXISTENTES
+  "Mi Primer Trabajo": require("../../assets/icons/miprimertrabajo.png"),
+  Mecanico: require("../../assets/icons/mecanico.png"),
+  Gomeria: require("../../assets/icons/gomero.png"),
+  Electromecanico: require("../../assets/icons/electromecanico.png"),
+  general: require("../../assets/icons/general.png"),
   Electricista: require("../../assets/icons/electricista.png"),
   Plomero: require("../../assets/icons/plomero.png"),
   Pintor: require("../../assets/icons/pintor.png"),
@@ -225,6 +234,7 @@ export const iconosCategoria = {
 };
 
 export const categoriasPorSeccion = {
+  "Generales":["Mi Primer Trabajo","general"],
   Hogar: [
     "Electricista",
     "Gasista",
@@ -246,10 +256,14 @@ export const categoriasPorSeccion = {
   Transporte: [
     "Fletes",
     "Mudanzas",
+    "Electromecanico",
+    "Gomeria",
+    "Mecanico",
     "Chofer privado",
     "Delivery",
     "Instructor de manejo",
     "Lavado de autos",
+    
   ],
   Tecnología: [
     "Programador",
@@ -276,6 +290,7 @@ export const categoriasPorSeccion = {
     "Diseñador gráfico",
     "Consultor de negocios",
     "Abogado",
+    "Técnico en refrigeración",
     "Consultor ambiental",
     "Marketing",
     "Gestor de redes",
@@ -341,3 +356,6 @@ export const categoriasPorSeccion = {
     "Limpieza comercial",
   ],
 };
+
+
+

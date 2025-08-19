@@ -25,6 +25,7 @@
     "expo": "53.0.10",
     "expo-apple-authentication": "~7.2.4",
     "expo-auth-session": "~6.2.0",
+    "expo-av": "~15.1.7",
     "expo-build-properties": "~0.14.6",
     "expo-constants": "~17.1.6",
     "expo-crypto": "~14.0.2",
@@ -43,6 +44,7 @@
     "expo-splash-screen": "~0.30.9",
     "expo-status-bar": "~2.2.3",
     "expo-system-ui": "~5.0.8",
+    "expo-updates": "~0.28.17",
     "lodash": "^4.17.21",
     "mercadopago": "^2.7.0",
     "react": "19.0.0",
@@ -65,8 +67,7 @@
     "type-fest": "^4.41.0",
     "undefined": "expo-auth-session/providers/google",
     "uuid": "^11.1.0",
-    "expo-av": "~15.1.7",
-    "expo-updates": "~0.28.17"
+    "expo-application": "~6.1.5"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

@@ -120,11 +120,12 @@ function OptionsSheetView() {
   }, [useGps, client]);
 
   const radiusOptions = [
-    { value: 1000, label: "1KM" },
-    { value: 3000, label: "3KM" },
-    { value: 5000, label: "5KM" },
-    { value: 10000, label: "10KM" },
-  ];
+  { value: 1000, label: "1KM" },
+  { value: 5000, label: "5KM" },
+  { value: 10000, label: "10KM" },
+  { value: 50000, label: "50KM" },
+];
+
 
   return (
     <BottomSheetView

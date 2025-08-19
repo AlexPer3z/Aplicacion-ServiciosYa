@@ -1,67 +1,56 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
-import { Linking } from 'react-native';
-import { supabase } from '../lib/supabase'; // Asegúrate que esta ruta esté correcta
-import { categoriasDisponibles } from '../lib/utils/categorias';
-
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Linking } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { supabase } from '../lib/supabase';
 
 import BotonSuscribirme from '../components/BotonSuscribirme';
-
 import BotonVolver from '../components/BotonVolver';
 
-const CATEGORIAS_VALIDAS = categoriasDisponibles;
-
 export default function PasarelaPago() {
-  const route = useRoute();
   const navigation = useNavigation();
-
-  const { categoria, mensaje } = route.params || {}; // ← mensaje opcional
 
   const [urlPago, setUrlPago] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  
+  const [suscriptor, setsuscriptor] = useState(false);
+  const [verificando, setVerificando] = useState(true);
 
   useEffect(() => {
     const handleDeepLink = async ({ url }) => {
-  const { data: authData, error: authError } = await supabase.auth.getUser();
-  if (authError || !authData?.user) {
-    Alert.alert("Error", "No se pudo identificar al usuario.");
-    return;
-  }
-
-  const userId = authData.user.id;
-
-  if (url.includes('pago-exitoso')) {
-    try {
-      // ✅ Sumamos 1 crédito al usuario
-      const { error: updateError } = await supabase
-        .from('usuarios')
-        .update({ creditos: supabase.rpc('incrementar_credito', { user_id_input: userId }) }) // alternativa directa usando una función RPC
-        .eq('id', userId);
-
-      if (updateError) {
-        console.error("Error al sumar crédito:", updateError);
-        Alert.alert("Error", "El pago fue exitoso pero no se pudo actualizar tu crédito.");
-      } else {
-        Alert.alert("✅ Crédito agregado", "Tu pago fue exitoso y ahora tienes un crédito disponible.");
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError || !authData?.user) {
+        Alert.alert("Error", "No se pudo identificar al usuario.");
+        return;
       }
 
-      navigation.navigate('ServiciosPorCategoria', { categoria });
-    } catch (err) {
-      console.error("Error inesperado al sumar crédito:", err);
-      Alert.alert("Error", "Algo salió mal al procesar tu pago.");
-    }
-  } else if (url.includes('pago-fallido')) {
-    Alert.alert('Pago fallido', 'No se pudo completar el pago.');
-    navigation.goBack();
-  } else if (url.includes('pago-pendiente')) {
-    Alert.alert('Pago pendiente', 'Tu pago está siendo procesado.');
-    navigation.goBack();
-  }
-};
+      const userId = authData.user.id;
 
+      if (url.includes('pago-exitoso')) {
+        try {
+          const { error: updateError } = await supabase
+            .from('usuarios')
+            .update({ creditos: supabase.rpc('incrementar_credito', { user_id_input: userId }) })
+            .eq('id', userId);
+
+          if (updateError) {
+            console.error("Error al sumar crédito:", updateError);
+            Alert.alert("Error", "El pago fue exitoso pero no se pudo actualizar tu crédito.");
+          } else {
+            Alert.alert("✅ Crédito agregado", "Tu pago fue exitoso y ahora tienes un crédito disponible.");
+          }
+
+          navigation.goBack();
+        } catch (err) {
+          console.error("Error inesperado al sumar crédito:", err);
+          Alert.alert("Error", "Algo salió mal al procesar tu pago.");
+        }
+      } else if (url.includes('pago-fallido')) {
+        Alert.alert('Pago fallido', 'No se pudo completar el pago.');
+        navigation.goBack();
+      } else if (url.includes('pago-pendiente')) {
+        Alert.alert('Pago pendiente', 'Tu pago está siendo procesado.');
+        navigation.goBack();
+      }
+    };
 
     const subscription = Linking.addEventListener('url', handleDeepLink);
     Linking.getInitialURL().then((url) => {
@@ -73,18 +62,19 @@ export default function PasarelaPago() {
     };
   }, []);
 
-  const iniciarPago = async () => {
-    if (!CATEGORIAS_VALIDAS.includes(categoria)) {
-      Alert.alert('Categoría inválida', 'La categoría seleccionada no es válida.');
-      return;
+  useEffect(() => {
+    if (urlPago) {
+      Linking.openURL(urlPago);
     }
+  }, [urlPago]);
 
+  const iniciarPago = async () => {
     setLoading(true);
     try {
       const res = await fetch('https://backend-pagos.onrender.com/crear-preferencia', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ categoria }),
+        body: JSON.stringify({ motivo: "cargar_credito" }), // ahora sin categoría
       });
 
       const data = await res.json();
@@ -101,104 +91,63 @@ export default function PasarelaPago() {
   };
 
   useEffect(() => {
-  if (urlPago) {
-    Linking.openURL(urlPago);
-  }
-}, [urlPago]);
+    const verificarSuscripcion = async () => {
+      try {
+        const { data: authData, error: authError } = await supabase.auth.getUser();
+        if (authError || !authData?.user) {
+          console.error('Error al obtener el usuario:', authError);
+          setVerificando(false);
+          return;
+        }
 
+        const userId = authData.user.id;
 
-  const accesoVip = () => {
-  navigation.navigate('ServiciosPorCategoria', { categoria });
-};
+        const { data, error } = await supabase
+          .from('usuarios')
+          .select('suscriptor')
+          .eq('id', userId)
+          .single();
 
-  const accesoLibre = () => {
-  if (rol !== 'guest') {
-    Alert.alert(
-      'Acción no permitida',
-      'Solo los usuarios invitados pueden acceder libremente sin pagar.'
-    );
-    return;
-  }
-
-  navigation.navigate('ServiciosPorCategoria', { categoria });
-};
-
-  const [suscriptor, setsuscriptor] = useState(false);
-const [verificando, setVerificando] = useState(true);
-
-const [rol, setRol] = useState(null);
-
-useEffect(() => {
-  const verificarSuscripcion = async () => {
-    try {
-      const { data: authData, error: authError } = await supabase.auth.getUser();
-      if (authError || !authData?.user) {
-        console.error('Error al obtener el usuario:', authError);
+        if (error) {
+          console.error('Error al obtener datos del usuario:', error);
+        } else {
+          setsuscriptor(data?.suscriptor === true);
+        }
+      } catch (err) {
+        console.error('Error inesperado:', err);
+      } finally {
         setVerificando(false);
-        return;
       }
+    };
 
-      const userId = authData.user.id;
-
-      const { data, error } = await supabase
-        .from('usuarios')
-        .select('suscriptor, rol')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error al obtener datos del usuario:', error);
-      } else {
-        setsuscriptor(data?.suscriptor === true);
-        setRol(data?.rol || null); // nuevo
-      }
-    } catch (err) {
-      console.error('Error inesperado:', err);
-    } finally {
-      setVerificando(false);
-    }
-  };
-
-  verificarSuscripcion();
-}, []);
-
+    verificarSuscripcion();
+  }, []);
 
   return (
     <View style={styles.container}>
-
       <BotonVolver />
-      {mensaje && <Text style={styles.mensajeExtra}>{mensaje}</Text>} {/* mensaje opcional */}
-
-      
       <Text style={styles.mensaje}>
-        Para contratar uno de nuestros profesionales en {categoria}, debe abonar un pago de $1.000 pesos argentinos.
+        Para cargar créditos a tu cuenta, realiza un pago único de $1.000 pesos argentinos.
       </Text>
 
       {loading || verificando ? (
-  <ActivityIndicator size="large" color="#27ae60" />
-) : suscriptor ? (
-  <TouchableOpacity
-  style={[styles.boton, { backgroundColor: '#4CAF50' }]}
-  onPress={accesoVip}
->
-  <Text style={styles.textoBoton}>✅ Suscripción activa: tienes acceso ilimitado</Text>
-</TouchableOpacity>
-) : (
-  <>
-    <TouchableOpacity style={styles.boton} onPress={iniciarPago}>
-      <Text style={styles.textoBoton}>Pagar $1.000</Text>
-    </TouchableOpacity>
+        <ActivityIndicator size="large" color="#27ae60" />
+      ) : suscriptor ? (
+        <TouchableOpacity
+          style={[styles.boton, { backgroundColor: '#4CAF50' }]}
+          onPress={() => Alert.alert("Suscriptor", "Tu suscripción está activa.")}
+        >
+          <Text style={styles.textoBoton}>✅ Ya sos suscriptor. No necesitás comprar créditos.</Text>
+        </TouchableOpacity>
+      ) : (
+        <>
+          <TouchableOpacity style={styles.boton} onPress={iniciarPago}>
+            <Text style={styles.textoBoton}>Cargar crédito ($1.000)</Text>
+          </TouchableOpacity>
 
-    <BotonSuscribirme />
-
-    {rol === 'guest' && (
-  <TouchableOpacity style={styles.botonPrueba} onPress={accesoLibre}>
-    <Text style={styles.textoBotonPrueba}>Modo invitado</Text>
-  </TouchableOpacity>
-)}
-  </>
-)}
-
+          <BotonSuscribirme />
+        </>
+      )}
     </View>
   );
 }
@@ -220,15 +169,6 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     letterSpacing: 0.2,
   },
-  mensajeExtra: {
-    fontSize: 18,
-    textAlign: 'center',
-    marginBottom: 16,
-    color: '#FF8C42',
-    fontWeight: '700',
-    lineHeight: 24,
-    paddingHorizontal: 12,
-  },
   boton: {
     backgroundColor: '#FFA13C',
     paddingVertical: 18,
@@ -248,22 +188,5 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: 1,
   },
-  botonPrueba: {
-    backgroundColor: '#19D4C6',
-    paddingVertical: 15,
-    paddingHorizontal: 44,
-    borderRadius: 22,
-    elevation: 2,
-    shadowColor: '#19D4C6',
-    shadowOpacity: 0.09,
-    shadowRadius: 7,
-    shadowOffset: { width: 0, height: 2 },
-    alignItems: 'center',
-  },
-  textoBotonPrueba: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
 });
+
