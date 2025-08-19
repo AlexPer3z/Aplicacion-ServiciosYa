@@ -1,4 +1,10 @@
-import React, { useState, useContext, useCallback, useEffect, Suspense } from "react";
+import React, {
+  useState,
+  useContext,
+  useCallback,
+  useEffect,
+  Suspense,
+} from "react";
 import {
   View,
   StyleSheet,
@@ -10,10 +16,10 @@ import {
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native"; 
 import { SafeAreaView } from "react-native-safe-area-context";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { withModalProvider } from "../components/sheet/withModalProvider";
-import { AuthContext } from '../lib/context/AppContext';
+import { AuthContext } from "../lib/context/AppContext";
 
 // Custom Hooks
 import { useUserSettings } from "../lib/hooks/useUserSettings";
@@ -35,6 +41,7 @@ import { withSuspense } from "../components/withSuspense";
 import { supabase } from "../lib/supabase";
 import FloatingActionButtonMenu from "../components/FloatingActionButtonMenu";
 import HelpVideoModal from "../components/HelpVideoModal";
+import { withDropDownProvider } from "../components/forms/withDropDownProvider";
 
 type Props = NativeStackScreenProps<MainStackParamList, "Home">;
 
@@ -42,7 +49,7 @@ function Home({ navigation }: Props) {
   const [busqueda, setBusqueda] = useState("");
   const [showCountsOnly, setShowCountsOnly] = useState(false);
   const [chatVisible, setChatVisible] = useState(false);
-  const [videoVisible, setVideoVisible] = useState(false); 
+  const [videoVisible, setVideoVisible] = useState(false);
 
   // Custom Hooks
   const { startOnboarding } = useOnboarding();
@@ -66,20 +73,20 @@ function Home({ navigation }: Props) {
   useEffect(() => {
     const checkFirstTime = async () => {
       try {
-        const value = await AsyncStorage.getItem('@hasSeenHelpVideo');
-        console.log('@hasSeenHelpVideo',value)
+        const value = await AsyncStorage.getItem("@hasSeenHelpVideo");
+        console.log("@hasSeenHelpVideo", value);
         if (value === null) {
           // Primera vez - mostrar el video
           setVideoVisible(true);
-          await AsyncStorage.setItem('@hasSeenHelpVideo', 'true');
-        } 
+          await AsyncStorage.setItem("@hasSeenHelpVideo", "true");
+        }
       } catch (e) {
-        console.error('Error al leer AsyncStorage:', e);
+        console.error("Error al leer AsyncStorage:", e);
       }
     };
 
     checkFirstTime();
-  }, []); 
+  }, []);
 
   // Lanzar contadores y suscripciones en tiempo real
   useEffect(() => {
@@ -87,20 +94,20 @@ function Home({ navigation }: Props) {
     startMessageCounter();
 
     const notifSub = supabase
-      .channel('public:notificaciones')
+      .channel("public:notificaciones")
       .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'notificaciones' },
-        () => startNotificationCounter()
+        "postgres_changes",
+        { event: "*", schema: "public", table: "notificaciones" },
+        () => startNotificationCounter(),
       )
       .subscribe();
 
     const msgSub = supabase
-      .channel('public:mensajes')
+      .channel("public:mensajes")
       .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'mensajes' },
-        () => startMessageCounter()
+        "postgres_changes",
+        { event: "*", schema: "public", table: "mensajes" },
+        () => startMessageCounter(),
       )
       .subscribe();
 
@@ -194,21 +201,19 @@ useEffect(() => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      
       <ImageBackground
         source={require("../assets/fondo_home.png")}
         style={styles.background}
         resizeMode="cover"
       >
         <View style={styles.container}>
-            <HomeHeader
-              onSearch={setBusqueda}
-              onShowCountsOnlyChange={(value) => setShowCountsOnly(value)}
-              notificationsCount={notificationsCount}
-              unreadMessagesCount={unreadMessagesCount}
-            />
+          <HomeHeader
+            onSearch={setBusqueda}
+            onShowCountsOnlyChange={(value) => setShowCountsOnly(value)}
+            notificationsCount={notificationsCount}
+            unreadMessagesCount={unreadMessagesCount}
+          />
 
-          
           {askProfileCompletion && (
             <ProfileIncompleteWarning
               onPress={() => navigation.navigate("CrearPerfil")}
@@ -216,21 +221,19 @@ useEffect(() => {
           )}
 
           {askDniVerification && <DniPendingWarning />}
-          
-       
+
           <CategoryList
             busqueda={busqueda}
             onCategoryPress={handleCategoryPress}
             isUserRestricted={isUserRestricted}
             refreshing={refreshing}
             onRefresh={onRefresh}
-          /> 
-          
+          />
+
           <FloatingActionButtonMenu
             onHelpPress={() => setVideoVisible(true)}
             onChatPress={() => setChatVisible(true)}
           />
-                  
 
           <HelpVideoModal
             visible={videoVisible}
@@ -245,15 +248,14 @@ useEffect(() => {
         </View>
       </ImageBackground>
 
-      <BottomNavBar
-        unreadMessagesCount={unreadMessagesCount}
-      />
-      
+      <BottomNavBar unreadMessagesCount={unreadMessagesCount} />
     </SafeAreaView>
   );
 }
 
-export default withModalProvider(withSuspense(Home, <LoadingView />));
+export default withDropDownProvider(
+  withModalProvider(withSuspense(Home, <LoadingView />)),
+);
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#00B8A9" },

@@ -23,6 +23,7 @@ export interface UserSettings {
   searchRadius: number;
   showAllCategories: boolean;
   OnlyOnlineWorkers: boolean;
+  customLocation: LocationData | null;
 }
 
 /**
@@ -49,6 +50,7 @@ const defaultSettings: UserSettings = {
   searchRadius: 10000,
   showAllCategories: true,
   OnlyOnlineWorkers: false,
+  customLocation: null,
 };
 
 /**

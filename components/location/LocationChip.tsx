@@ -1,17 +1,28 @@
 import type React from "react";
-import { Text, StyleSheet, View } from "react-native";
+import { Text, StyleSheet, View, Pressable } from "react-native";
 import { useEffect, useState } from "react";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import type { LocationData } from "../../types/location";
+import { useBottomSheetModal } from "../../lib/hooks/useBottomSheetModal";
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import SelectCitySheetView from "../home/SelectCitySheetView";
+import { useQueryClient } from "@tanstack/react-query";
+import { clearServicesCache } from "../../lib/hooks/useServices";
 
 interface LocationChipProps {
   location: LocationData | null;
 }
 
-
-
 const LocationChip: React.FC<LocationChipProps> = ({ location }) => {
-  const [locationText, setLocationText] = useState<string>("Cargando ubicación");
+  const client = useQueryClient();
+  const [locationText, setLocationText] =
+    useState<string>("Cargando ubicación");
+  const { present, modalProps } = useBottomSheetModal({
+    snapPoints: ["60%"],
+    onClose: () => {
+      clearServicesCache(client);
+    },
+  });
 
   useEffect(() => {
     if (location) {
@@ -22,9 +33,17 @@ const LocationChip: React.FC<LocationChipProps> = ({ location }) => {
     }
   }, [location]);
 
+  const handleOnPress = () => {
+    present();
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.chip}>
+      <Pressable
+        onPress={handleOnPress}
+        style={({ pressed }) => [styles.chip, pressed && styles.pressed]}
+        android_ripple={{ color: "rgba(255, 255, 255, 0.2)" }}
+      >
         <Ionicons
           name="location-outline"
           size={14}
@@ -34,7 +53,16 @@ const LocationChip: React.FC<LocationChipProps> = ({ location }) => {
         <Text style={styles.label} numberOfLines={1} ellipsizeMode="tail">
           {locationText}
         </Text>
-      </View>
+        <Ionicons
+          name="chevron-down"
+          size={14}
+          color="white"
+          style={styles.selectIcon}
+        />
+      </Pressable>
+      <BottomSheetModal {...modalProps}>
+        <SelectCitySheetView />
+      </BottomSheetModal>
     </View>
   );
 };
@@ -42,8 +70,6 @@ const LocationChip: React.FC<LocationChipProps> = ({ location }) => {
 const styles = StyleSheet.create({
   container: {
     borderRadius: 12,
-    // borderWidth: 1,
-    // borderColor: "white",
     overflow: "hidden",
   },
   chip: {
@@ -52,6 +78,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     flexDirection: "row",
     alignItems: "center",
+  },
+  pressed: {
+    opacity: 0.6,
   },
   icon: {
     marginRight: 4,
@@ -62,6 +91,9 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     maxWidth: 150,
     includeFontPadding: false,
+  },
+  selectIcon: {
+    marginLeft: 4,
   },
 });
 
