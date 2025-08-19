@@ -8,8 +8,7 @@ import {
   Animated,
   TouchableWithoutFeedback,
 } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native"; 
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -31,8 +30,7 @@ import ChatBotModal from "../components/ChatBotModal";
 import LoadingView from "../components/LoadingView";
 
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type { MainStackParamList } from "../types/navigation";
-import FloatingButtonMenu from "../components/FloatingButtonMenu";
+import type { MainStackParamList } from "../types/navigation"; 
 import { withSuspense } from "../components/withSuspense";
 import { supabase } from "../lib/supabase";
 import FloatingActionButtonMenu from "../components/FloatingActionButtonMenu";

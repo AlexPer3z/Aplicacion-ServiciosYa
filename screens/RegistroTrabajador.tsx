@@ -51,6 +51,7 @@ export default function RegistroTrabajador() {
   const [fechaNacimiento, setFechaNacimiento] = useState("");
   const [numeroDni, setNumeroDni] = useState("");
   const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
+  const [fotoDniPerfil, setFotoDniPerfil] = useState<string | null>(null);
 
   // Paso 3
   const [experiencia, setExperiencia] = useState("");
@@ -106,20 +107,20 @@ export default function RegistroTrabajador() {
     }
 
     if (step === 2) {
-  if (!numeroDni.trim() || !direccionDni.trim() || !fechaNacimiento.trim()) {
-    Alert.alert("Faltan datos", "Debes completar todos los campos del paso 2.");
-    return;
-  }
-  if (!/^\d{7,8}$/.test(numeroDni)) {
-    Alert.alert("DNI inválido", "Debe ser un número de DNI válido.");
-    return;
-  }
-  if (!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(fechaNacimiento)) {
-  Alert.alert("Fecha inválida", "Usá el formato DD/MM/AAAA.");
-  return;
-}
+      if (!numeroDni.trim() || !direccionDni.trim() || !fechaNacimiento.trim() || fotoDniPerfil == null) {
+        Alert.alert("Faltan datos", "Debes completar todos los campos del paso 2.");
+        return;
+      }
+      if (!/^\d{7,8}$/.test(numeroDni)) {
+        Alert.alert("DNI inválido", "Debe ser un número de DNI válido.");
+        return;
+      }
+      if (!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(fechaNacimiento)) {
+        Alert.alert("Fecha inválida", "Usá el formato DD/MM/AAAA.");
+        return;
+      }
 
-}
+    }
 
 
     if (step === 3) {
@@ -135,94 +136,99 @@ export default function RegistroTrabajador() {
     }
 
     if (step === 4) {
-  if (!aceptaTerminos) {
-    Alert.alert("Debes aceptar", "Es necesario aceptar los términos y condiciones.");
-    return;
-  }
+      if (!aceptaTerminos) {
+        Alert.alert("Debes aceptar", "Es necesario aceptar los términos y condiciones.");
+        return;
+      }
 
-  console.log("Subiendo imágenes y guardando en Supabase...");
+      console.log("Subiendo imágenes y guardando en Supabase...");
 
-  try {
-    const nombreFrontal = `${uuid.v4()}_dni_frontal.jpg`;
-    const nombreTrasero = `${uuid.v4()}_dni_trasero.jpg`;
+      try {
+        const nombreFrontal = `${uuid.v4()}_dni_frontal.jpg`;
+        const nombreTrasero = `${uuid.v4()}_dni_trasero.jpg`;
 
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    console.log("el usuario obtenido es:", supabase.auth.getUser())
-    if (authError || !user) {
-      console.error("Error obteniendo usuario:", authError);
-      Alert.alert("Error", "No se pudo obtener la información del usuario.");
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        console.log("el usuario obtenido es:", supabase.auth.getUser())
+        if (authError || !user) {
+          console.error("Error obteniendo usuario:", authError);
+          Alert.alert("Error", "No se pudo obtener la información del usuario.");
+          return;
+        }
+
+        console.log("Verificando si el usuario existe en la tabla 'usuarios'...");
+        const { data: usuarioExistente, error: selectError } = await supabase
+          .from("usuarios")
+          .select("*")
+          .eq("id", user.id);
+
+        if (selectError) {
+          console.error("Error al verificar existencia del usuario:", selectError.message);
+          Alert.alert("Error", "No se pudo verificar la existencia del usuario.");
+          return;
+        }
+
+        if (!usuarioExistente || usuarioExistente.length === 0) {
+          console.warn("El usuario no existe en la tabla 'usuarios'.");
+          Alert.alert("Error", "El usuario no está registrado en la tabla 'usuarios'.");
+          return;
+        }
+
+        console.log("Usuario encontrado. Procediendo a guardar datos...");
+
+        // Subir imágenes con la lógica ideal
+        const nombreFotoPerfil = `${uuid.v4()}_perfil.jpg`;
+        const urlFotoPerfil = fotoPerfil ? await subirImagen(fotoPerfil, nombreFotoPerfil) : null;
+
+        // Subir imágenes con la lógica ideal
+        const nombreFotoDniPerfil = `${uuid.v4()}_dni_perfil.jpg`;
+        const urlFotoDniPerfil = fotoDniPerfil ? await subirImagen(fotoDniPerfil, nombreFotoDniPerfil) : null;
+
+
+
+        const { data, error } = await supabase
+          .from("usuarios")
+          .update([
+            {
+              rol: "worker",
+              nombre,
+              apellido,
+              edad: parseInt(edad),
+              sexo,
+              celular: numeroCelular,
+              dni: numeroDni,
+              domicilio: direccionDni,
+              fecha_nacimiento: fechaNacimiento,
+              foto_perfil: urlFotoPerfil,
+              foto_dni_perfil: urlFotoDniPerfil,
+              experiencia,
+              referencias,
+              experiencia_academica: experienciaAcademica,
+              perfil_completo: true,
+              creditos: 20,
+              dni_verificado: true
+            },
+          ])
+          .eq("id", user.id)
+          .select(); // <-- esto agrega los datos actualizados al log
+
+        console.log("Resultado del update:", { data, error });
+
+        if (error) {
+          console.error("Error al guardar en Supabase:", error.message);
+          Alert.alert("Error", "No se pudo guardar la información. Intenta más tarde.");
+          return;
+        }
+
+        console.log("Registro completo. Navegando a pagoInicial...");
+        navigation.navigate("pagoInicial");
+      } catch (err) {
+        console.error("Error en el proceso final:", err);
+        Alert.alert("Error", "Ocurrió un error al registrar tus datos.");
+      }
+
       return;
     }
-
-    console.log("Verificando si el usuario existe en la tabla 'usuarios'...");
-    const { data: usuarioExistente, error: selectError } = await supabase
-      .from("usuarios")
-      .select("*")
-      .eq("id", user.id);
-
-    if (selectError) {
-      console.error("Error al verificar existencia del usuario:", selectError.message);
-      Alert.alert("Error", "No se pudo verificar la existencia del usuario.");
-      return;
-    }
-
-    if (!usuarioExistente || usuarioExistente.length === 0) {
-      console.warn("El usuario no existe en la tabla 'usuarios'.");
-      Alert.alert("Error", "El usuario no está registrado en la tabla 'usuarios'.");
-      return;
-    }
-
-    console.log("Usuario encontrado. Procediendo a guardar datos...");
-
-    // Subir imágenes con la lógica ideal
-    const nombreFotoPerfil = `${uuid.v4()}_perfil.jpg`;
-    const urlFotoPerfil = fotoPerfil ? await subirImagen(fotoPerfil, nombreFotoPerfil) : null;
-
-
-
-    const { data, error } = await supabase
-      .from("usuarios")
-      .update([
-        {
-          rol: "worker",
-          nombre,
-          apellido,
-          edad: parseInt(edad),
-          sexo,
-          celular: numeroCelular,
-          dni: numeroDni,
-          domicilio: direccionDni,
-          fecha_nacimiento: fechaNacimiento,
-          foto_perfil: urlFotoPerfil,
-          experiencia,
-          referencias,
-          experiencia_academica: experienciaAcademica,
-          perfil_completo: true,
-          creditos: 20,
-          dni_verificado: true
-        },
-      ])
-      .eq("id", user.id)
-      .select(); // <-- esto agrega los datos actualizados al log
-
-    console.log("Resultado del update:", { data, error });
-
-    if (error) {
-      console.error("Error al guardar en Supabase:", error.message);
-      Alert.alert("Error", "No se pudo guardar la información. Intenta más tarde.");
-      return;
-    }
-
-    console.log("Registro completo. Navegando a pagoInicial...");
-    navigation.navigate("pagoInicial");
-  } catch (err) {
-    console.error("Error en el proceso final:", err);
-    Alert.alert("Error", "Ocurrió un error al registrar tus datos.");
-  }
-
-  return;
-}
 
 
     setStep(step + 1);
@@ -359,47 +365,72 @@ export default function RegistroTrabajador() {
             )}
 
             {step === 2 && (
-  <>
-    <TextInput
-      placeholder="Número de DNI"
-      placeholderTextColor="#4e827d"
-      value={numeroDni}
-      onChangeText={setNumeroDni}
-      keyboardType="numeric"
-      style={styles.input}
-    />
-    <TextInput
-      placeholder="Dirección (como figura en el DNI)"
-      placeholderTextColor="#4e827d"
-      value={direccionDni}
-      onChangeText={setDireccionDni}
-      style={styles.input}
-    />
-    <TextInput
-      placeholder="Fecha de nacimiento (DD/MM/AAAA)"
-      placeholderTextColor="#4e827d"
-      value={fechaNacimiento}
-      onChangeText={setFechaNacimiento}
-      style={styles.input}
-    />
-    <View style={styles.fotoWrapper}>
-      <Text style={styles.label}>Foto de perfil</Text>
-      {fotoPerfil ? (
-        <Image source={{ uri: fotoPerfil }} style={styles.foto} />
-      ) : (
-        <View style={[styles.foto, styles.fotoPlaceholder]}>
-          <Text style={{ color: "#999" }}>No hay foto</Text>
-        </View>
-      )}
-      <TouchableOpacity
-        style={styles.botonFoto}
-        onPress={() => pedirFoto(setFotoPerfil)}
-      >
-        <Text style={styles.botonFotoTexto}>Tomar foto</Text>
-      </TouchableOpacity>
-    </View>
-  </>
-)}
+              <>
+                <TextInput
+                  placeholder="Número de DNI"
+                  placeholderTextColor="#4e827d"
+                  value={numeroDni}
+                  onChangeText={setNumeroDni}
+                  keyboardType="numeric"
+                  style={styles.input}
+                />
+                <TextInput
+                  placeholder="Dirección (como figura en el DNI)"
+                  placeholderTextColor="#4e827d"
+                  value={direccionDni}
+                  onChangeText={setDireccionDni}
+                  style={styles.input}
+                />
+                <TextInput
+                  placeholder="Fecha de nacimiento (DD/MM/AAAA)"
+                  placeholderTextColor="#4e827d"
+                  value={fechaNacimiento}
+                  onChangeText={setFechaNacimiento}
+                  style={styles.input}
+                />
+                <View style={styles.fotoWrapper}>
+                  <Text style={styles.label}>Foto de perfil con DNI</Text>
+                  {fotoDniPerfil ? (
+                    <Image source={{ uri: fotoDniPerfil }} style={styles.foto} />
+                  ) : (
+                    <View style={[styles.foto, styles.fotoPlaceholder2]}>
+                      {/* Imagen de fondo de ejemplo */}
+                      <Image 
+                        source={require('../assets/fotoperfildni.png')} 
+                        style={styles.fotoEjemplo}
+                      />
+                      {/* Texto superpuesto en la parte inferior */}
+                      <View style={styles.textoSuperpuesto}>
+                        <Text style={{ color: "#fff", backgroundColor: "rgba(0,0,0,0.5)", padding: 5 }}>No hay foto</Text>
+                      </View>
+                    </View>
+                  )}
+                  <TouchableOpacity
+                    style={styles.botonFoto}
+                    onPress={() => pedirFoto(setFotoDniPerfil)}
+                  >
+                    <Text style={styles.botonFotoTexto}>Tomar foto</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.fotoWrapper}>
+                  <Text style={styles.label}>Foto de perfil</Text>
+                  {fotoPerfil ? (
+                    <Image source={{ uri: fotoPerfil }} style={styles.foto} />
+                  ) : (
+                    <View style={[styles.foto, styles.fotoPlaceholder]}>
+                      <Text style={{ color: "#999" }}>No hay foto</Text>
+                    </View>
+                  )}
+                  <TouchableOpacity
+                    style={styles.botonFoto}
+                    onPress={() => pedirFoto(setFotoPerfil)}
+                  >
+                    <Text style={styles.botonFotoTexto}>Tomar foto</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
 
             {step === 3 && (
               <>
@@ -579,6 +610,7 @@ const styles = StyleSheet.create({
   },
   fotoWrapper: {
     alignItems: "center",
+    marginTop: 20,
     marginBottom: 20,
   },
   label: {
@@ -597,6 +629,24 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#eee",
+  },
+  fotoPlaceholder2: {
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  fotoEjemplo: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  textoSuperpuesto: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 10,
   },
   botonFoto: {
     marginTop: 10,
