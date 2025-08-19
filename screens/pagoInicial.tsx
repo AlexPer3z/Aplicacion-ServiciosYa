@@ -51,7 +51,7 @@ export default function PagoInicial() {
       },
       body: JSON.stringify({
         descripcion: 'Pago único de registro de cuenta',
-        monto: 1500,
+        monto: 1000,
         email: 'usuario@ejemplo.com',
       }),
     });
@@ -81,7 +81,7 @@ export default function PagoInicial() {
     <View style={styles.container}>
       <BotonVolver />
       <Text style={styles.mensajePrincipal}>
-        Para completar tu registro y por tu seguridad necesitamos realizar una verificación de pagos para validar tu identidad  <Text style={{ fontWeight: 'bold' }}>$1.500</Text>.
+        Para completar tu registro y por tu seguridad necesitamos realizar una verificación de pagos para validar tu identidad  <Text style={{ fontWeight: 'bold' }}>$1.000</Text>.
       </Text>
       <Text style={styles.mensajeAclaracion}>
         Este es un pago único y exclusivo por el alta de tu cuenta.{"\n"}
@@ -93,7 +93,7 @@ export default function PagoInicial() {
       ) : (
         <>
         <TouchableOpacity style={styles.botonPago} onPress={iniciarPago}>
-          <Text style={styles.textoBoton}>Pagar $1.500 y registrar cuenta</Text>
+          <Text style={styles.textoBoton}>Pagar $1.000 y registrar cuenta</Text>
         </TouchableOpacity>
         </>
       )}

@@ -22,6 +22,8 @@ export const fetchUserLocation = async (): Promise<LocationData> => {
     longitude,
   });
 
+  
+
   const city = addressResponse?.[0]?.city ?? null;
   const country = addressResponse?.[0]?.country ?? null;
 
@@ -52,7 +54,19 @@ const fetchUserLocationFromIP = async (): Promise<LocationData> => {
 
 export const userLocationQueryOptions = queryOptions({
   queryKey: ["user", "location"],
-  queryFn: fetchUserLocation,
+  queryFn: async () => {
+  try {
+    return await fetchUserLocation();
+  } catch (error) {
+    if (error instanceof Error && error.message === PERMISSION_DENIED_ERROR) {
+      return await fetchUserLocationFromIP();
+    }
+    throw error;
+  }
+},
+
+
+  
 
   // --- KEY CHANGE HERE ---
   // The data will never be considered stale. This prevents automatic refetches
@@ -86,6 +100,8 @@ export function useLocation() {
     // You can also get the status to differentiate initial loading from fetching
     isFetching,
   } = useQuery(userLocationQueryOptions);
+  
 
   return { location, isLoading, isError, error, refetch, isFetching };
 }
+

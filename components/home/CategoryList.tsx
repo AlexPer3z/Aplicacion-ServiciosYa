@@ -31,7 +31,7 @@ export const CategoryList = ({
   const error = serviciosCount?.error;
   const refetch = serviciosCount?.refetch;
 
-  console.log("Conteos:", conteos);
+  
 
   const { settings } = useUserSettings();
   const showAllCategories = settings?.showAllCategories ?? true;

@@ -28,7 +28,7 @@ export default function InicioRouter() {
       if (error || !data) {
         navigation.reset({
           index: 0,
-          routes: [{ name: 'SeleccionRol' }],
+          routes: [{ name: 'RegistroTrabajador' }],
         });
       } else if (data.perfil_completo === true) {
         navigation.reset({
@@ -38,7 +38,7 @@ export default function InicioRouter() {
       } else {
         navigation.reset({
           index: 0,
-          routes: [{ name: 'SeleccionRol' }],
+          routes: [{ name: 'RegistroTrabajador' }],
         });
       }
     };

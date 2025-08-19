@@ -1,6 +1,7 @@
 import "react-native-gesture-handler";
 
-import React, {  } from "react";
+import React, { useEffect } from "react";
+
 import {
   NavigationContainer,
 } from "@react-navigation/native";
@@ -17,11 +18,13 @@ import MainStackNavigator from "./navigation/MainAppStackNavigator";
 import AuthStackNavigator from "./navigation/AuthStackNavigator";
 import { navegationLinkin } from "./lib/utils/navegation";
 import { useNotificationHandler } from "./lib/hooks/useNotificationHandler";
+import { Platform } from 'react-native';
 
 SplashScreen2.setOptions({
   duration: 1000,
   fade: true,
 });
+
 
 export default function App() {
   const { isInitializing, isAuth } = useAuth(queryClient);

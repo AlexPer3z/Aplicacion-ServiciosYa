@@ -126,9 +126,71 @@ function Home({ navigation }: Props) {
     }, [settings]),
   );
 
-  const handleCategoryPress = (categoria: string) => {
-    navigation.navigate("ServiciosPorCategoria", { categoria });
+ const handleCategoryPress = async (categoria: string) => {
+  try {
+    const userId = await supabase.auth.getUser().then(({ data }) => data.user?.id);
+
+    if (!userId) {
+      console.warn("Usuario no autenticado");
+      return;
+    }
+
+    const response = await fetch("https://insightpulse.store/api/registrar_evento.php", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    tipo_evento: "categoria_visitada",
+    datos: {
+      usuario_id: userId,
+      categoria: categoria
+    }
+  })
+});
+
+const result = await response.json();
+console.log("Respuesta del backend:", result);
+
+
+    console.log("Categoría registrada:", categoria);
+  } catch (error) {
+    console.error("Error al registrar categoría:", error);
+  }
+
+  navigation.navigate("ServiciosPorCategoria", { categoria });
+};
+
+useEffect(() => {
+  const registrarActividad = async () => {
+    try {
+      const { data } = await supabase.auth.getUser();
+      const userId = data.user?.id;
+
+      if (!userId) {
+        console.warn("Usuario no autenticado");
+        return;
+      }
+
+      const response = await fetch("https://insightpulse.store/api/registrar_evento.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tipo_evento: "actividad",
+          datos: {
+            usuario_id: userId
+          }
+        })
+      });
+
+      const result = await response.json();
+      console.log("Actividad registrada:", result);
+    } catch (error) {
+      console.error("Error al registrar actividad:", error);
+    }
   };
+
+  registrarActividad();
+}, []);
+
 
   const isUserRestricted = askDniVerification || askProfileCompletion;
 

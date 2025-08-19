@@ -122,18 +122,6 @@ export default function RegistroTrabajador() {
 }
 
 
-    if (step === 3) {
-      console.log("Validando experiencia...");
-      if (experiencia.trim().length < 70) {
-        Alert.alert("Experiencia insuficiente", "Describe tu experiencia con al menos 70 caracteres.");
-        return;
-      }
-      if (!experienciaAcademica.trim()) {
-        Alert.alert("Falta información", "Debes completar la experiencia académica.");
-        return;
-      }
-    }
-
     if (step === 4) {
   if (!aceptaTerminos) {
     Alert.alert("Debes aceptar", "Es necesario aceptar los términos y condiciones.");
@@ -279,7 +267,7 @@ export default function RegistroTrabajador() {
     >
       <BotonVolver /> 
         <View style={styles.overlay}>
-          <Text style={styles.title}>Registro - Trabajador</Text>
+          <Text style={styles.title}>Registro</Text>
 
           <KeyboardAwareScrollView style={{width:'100%'}}>
             {step === 1 && (
@@ -384,11 +372,12 @@ export default function RegistroTrabajador() {
     />
     <View style={styles.fotoWrapper}>
       <Text style={styles.label}>Foto de perfil</Text>
+      <Text style={styles.label}>*Tiene que ser una foto selfie del usuario</Text>
       {fotoPerfil ? (
         <Image source={{ uri: fotoPerfil }} style={styles.foto} />
       ) : (
         <View style={[styles.foto, styles.fotoPlaceholder]}>
-          <Text style={{ color: "#999" }}>No hay foto</Text>
+          <Text style={{ color: "#999" }}>*Foto selfie del usuario</Text>
         </View>
       )}
       <TouchableOpacity
@@ -404,31 +393,13 @@ export default function RegistroTrabajador() {
             {step === 3 && (
               <>
                 <TextInput
-                  placeholder="Descripción de experiencia laboral (mínimo 70 caracteres)"
+                  placeholder="Descripción de experiencia laboral (mínimo 70 caracteres, solo obligatorio para los trabajadores)"
                   placeholderTextColor="#4e827d"
                   value={experiencia}
                   onChangeText={setExperiencia}
                   multiline
                   numberOfLines={4}
                   style={[styles.input, { height: 100, textAlignVertical: "top" }]}
-                />
-                <TextInput
-                  placeholder="Referencias laborales (opcional)"
-                  placeholderTextColor="#4e827d"
-                  value={referencias}
-                  onChangeText={setReferencias}
-                  multiline
-                  numberOfLines={3}
-                  style={[styles.input, { height: 80, textAlignVertical: "top" }]}
-                />
-                <TextInput
-                  placeholder="Experiencia académica"
-                  placeholderTextColor="#4e827d"
-                  value={experienciaAcademica}
-                  onChangeText={setExperienciaAcademica}
-                  multiline
-                  numberOfLines={3}
-                  style={[styles.input, { height: 80, textAlignVertical: "top" }]}
                 />
               </>
             )}

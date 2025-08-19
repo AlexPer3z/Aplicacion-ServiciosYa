@@ -14,6 +14,13 @@ import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
  import { AuthContext } from '../lib/context/AppContext';
 import BotonVolver from '../components/BotonVolver';
+
+
+
+
+
+
+
 export default function Notificaciones() {
   const [notificaciones, setNotificaciones] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -74,6 +81,7 @@ export default function Notificaciones() {
       };
     });
 
+
     setNotificaciones(notisConFoto);
     setLoading(false);
   };
@@ -127,21 +135,93 @@ export default function Notificaciones() {
     return;
   }
 
-  // Actualizar estado de notificación
-const { error: errorEstado } = await supabase
-  .from('notificaciones')
-  .update({ estado: "aceptado" })
-  .eq('id', notificacion.id);
+  // Obtener info usuario una sola vez
+  const { data: usuarioActual, error: errorUsuario } = await supabase
+    .from('usuarios')
+    .select('creditos, suscriptor')
+    .eq('id', userId)
+    .single();
 
-if (!errorEstado) {
-  console.log('Estado actualizado correctamente a "aceptado"');
+  if (errorUsuario || !usuarioActual) {
+    Alert.alert('Error', 'No se pudo obtener la información del usuario.');
+    return;
+  }
+
+  // Si NO es suscriptor, verificar y descontar créditos
+  if (!usuarioActual.suscriptor) {
+    if (usuarioActual.creditos <= 0) {
+      Alert.alert(
+        "Sin créditos",
+        "No tenés créditos disponibles. Vas a ser redirigido para comprar uno.",
+        [
+          {
+            text: "Comprar crédito",
+            onPress: () => navigation.navigate("PasarelaPago"),
+          },
+          { text: "Cancelar", style: "cancel" },
+        ]
+      );
+      return;
+    }
+
+    // Restar 1 crédito
+    const { error: errorActualizarCreditos } = await supabase
+      .from('usuarios')
+      .update({ creditos: usuarioActual.creditos - 1 })
+      .eq('id', userId);
+
+    if (errorActualizarCreditos) {
+      Alert.alert('Error', 'No se pudo actualizar los créditos.');
+      return;
+    }
+  }
+
+  // Continuar con el resto del flujo normalmente
+  const { error: errorEstado } = await supabase
+    .from('notificaciones')
+    .update({ estado: "aceptado" })
+    .eq('id', notificacion.id);
+
+  if (!errorEstado) {
+    console.log('Estado actualizado correctamente a "aceptado"');
+  }
+
+  // Llamar a la API PHP para registrar evento contratacion_aceptada
+try {
+  const eventoPayload = {
+  tipo_evento: "contratacion_aceptada",
+  datos: {
+    contratante_id: notificacion.emisor_id, // este es el ID de la contratación
+    contratado_id: userId,           // este es quien acepta
+  }
+};
+
+
+  const response = await fetch("https://insightpulse.store/api/registrar_evento.php", {
+  method: "POST",
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(eventoPayload),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok || result.error) {
+    Alert.alert('Error', 'No se pudo registrar la aceptación en el servidor.');
+    console.error('API error:', result);
+    return;
+  }
+
+  console.log('Evento registrado correctamente:', result);
+
+} catch (error) {
+  console.error('Error al llamar la API:', error);
+  Alert.alert('Error', 'Error al comunicarse con el servidor.');
 }
 
-Alert.alert('✅ Servicio confirmado', 'Has aceptado la solicitud.');
 
-await marcarComoLeida(notificacion.id);
-
-  // Verificar si ya existe un chat entre estos usuarios
+  Alert.alert('✅ Servicio confirmado', 'Has aceptado la solicitud.');
+  await marcarComoLeida(notificacion.id);
+  // Verificar si ya existe un chat
   const { data: chatExistente, error: errorCheck } = await supabase
     .from('chats')
     .select('*')
@@ -155,74 +235,7 @@ await marcarComoLeida(notificacion.id);
     return;
   }
 
-  if (chatExistente) {
-  Alert.alert('Ya existe un chat', 'Ya tienes un chat con esta persona.');
-
-  supabase
-  .from('mensajes')
-  .insert({
-    chat_id: chatExistente.id,
-    contenido: `📢 **IMPORTANTE** 📢
-
-Este chat ha sido creado exclusivamente para que puedas coordinar y acordar los detalles del servicio con el trabajador.
-
-⚠️ **Soluciones Ya no se hace responsable** por la calidad del servicio ofrecido ni por cualquier eventualidad durante su ejecución.
-
-⭐ **Al finalizar el servicio, desde este chat podrás dejar tu calificación y opinión sobre el trabajador para ayudar a otros usuarios.**
-
-────────────────────────────`,
-
-emisor_id: userId,
-    fecha_creacion: new Date().toISOString(),
-  })
-  .then(({ error }) => {
-    if (error) {
-      console.error('Error al enviar mensaje ticket:', error.message);
-    }
-
-    loadUnreadMessages();
-
-    navigation.navigate('ChatIndividual', {
-      chatId: chatExistente.id,
-      usuarioId1: userId,
-      usuarioId2: notificacion.emisor_id,
-    });
-  })
-  .catch((error) => {
-    console.error('Error en promesa mensajes:', error.message);
-    navigation.navigate('ChatIndividual', {
-      chatId: chatExistente.id,
-      usuarioId1: userId,
-      usuarioId2: notificacion.emisor_id,
-    });
-  });
-
-return;
-
-}
-
-
-
-  // Crear nuevo chat
-const { data: nuevoChat, error: errorNuevoChat } = await supabase
-  .from('chats')
-  .insert([{
-    usuario_1: userId,
-    usuario_2: notificacion.emisor_id,
-    contratante_id: notificacion.emisor_id,
-    contratado_id: userId,
-  }])
-  .select()
-  .single();
-
-if (errorNuevoChat || !nuevoChat) {
-  Alert.alert('Error al crear el chat', errorNuevoChat?.message || 'Error desconocido');
-  return;
-}
-
-
-// Mensaje automático importante
-const mensajeImportante = `📢 **IMPORTANTE** 📢
+  const mensajeImportante = `📢 **IMPORTANTE** 📢
 
 Este chat ha sido creado exclusivamente para que puedas coordinar y acordar los detalles del servicio con el trabajador.
 
@@ -232,41 +245,71 @@ Este chat ha sido creado exclusivamente para que puedas coordinar y acordar los 
 
 ────────────────────────────`;
 
-// Mensaje automático de comprobante
-const mensajeTicket = `🎫 Se ha concretado una propuesta de trabajo. Este chat funcionará como comprobante. Puedes coordinar los detalles del servicio aquí.`;
+  const mensajeTicket = `🎫 Se ha concretado una propuesta de trabajo. Este chat funcionará como comprobante. Puedes coordinar los detalles del servicio aquí.`;
 
-// Insertar ambos mensajes automáticos
-const { error: errorMensajes } = await supabase
-  .from('mensajes')
-  .insert([
-    {
-      chat_id: nuevoChat.id,
-      emisor_id: userId,
-      contenido: mensajeImportante,
-      fecha_creacion: new Date().toISOString(),
-    },
-    {
-      chat_id: nuevoChat.id,
-      emisor_id: userId,
-      contenido: mensajeTicket,
-      fecha_creacion: new Date().toISOString(),
-    }
-  ]);
+  if (chatExistente) {
+    await supabase
+      .from('mensajes')
+      .insert({
+        chat_id: chatExistente.id,
+        contenido: mensajeImportante,
+        emisor_id: userId,
+        fecha_creacion: new Date().toISOString(),
+      });
 
-if (errorMensajes) {
-  console.error('Error al enviar mensajes automáticos:', errorMensajes.message);
-}
+    loadUnreadMessages();
+    navigation.navigate('ChatIndividual', {
+      chatId: chatExistente.id,
+      usuarioId1: userId,
+      usuarioId2: notificacion.emisor_id,
+    });
+    return;
+  }
 
-loadUnreadMessages();
+  // Crear nuevo chat
+  const { data: nuevoChat, error: errorNuevoChat } = await supabase
+    .from('chats')
+    .insert([{
+      usuario_1: userId,
+      usuario_2: notificacion.emisor_id,
+      contratante_id: notificacion.emisor_id,
+      contratado_id: userId,
+    }])
+    .select()
+    .single();
 
-// Redirigir al chat recién creado
-navigation.navigate('ChatIndividual', {
-  chatId: nuevoChat.id,
-  usuarioId1: userId,
-  usuarioId2: notificacion.emisor_id,
-});
+  if (errorNuevoChat || !nuevoChat) {
+    Alert.alert('Error al crear el chat', errorNuevoChat?.message || 'Error desconocido');
+    return;
+  }
 
-  };
+  await supabase
+    .from('mensajes')
+    .insert([
+      {
+        chat_id: nuevoChat.id,
+        emisor_id: userId,
+        contenido: mensajeImportante,
+        fecha_creacion: new Date().toISOString(),
+      },
+      {
+        chat_id: nuevoChat.id,
+        emisor_id: userId,
+        contenido: mensajeTicket,
+        fecha_creacion: new Date().toISOString(),
+      }
+    ]);
+
+
+
+  loadUnreadMessages();
+  navigation.navigate('ChatIndividual', {
+    chatId: nuevoChat.id,
+    usuarioId1: userId,
+    usuarioId2: notificacion.emisor_id,
+  });
+};
+
   const rechazarNotificacion = async (id) => {
   const { error } = await supabase
     .from('notificaciones')
@@ -307,10 +350,11 @@ navigation.navigate('ChatIndividual', {
           <>
             <TouchableOpacity 
   style={[styles.boton, styles.botonAceptar]}
-  onPress={() => navigation.navigate('PasarelaPagoWorker', { notificacion: item })}
+  onPress={() => aceptarNotificacion(item)}
 >
   <Text style={styles.botonTexto}>Aceptar</Text>
 </TouchableOpacity>
+
             <TouchableOpacity
               style={[styles.boton, styles.botonRechazar]}
               onPress={() => rechazarNotificacion(item.id)}

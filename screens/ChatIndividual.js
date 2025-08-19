@@ -269,10 +269,11 @@ function ChatIndividual({ route, navigation }) {
     <>
     <BotonVolver />
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={styles.container}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0:90}
-    >
+  behavior={Platform.OS === "ios" ? "padding" : "height"}
+  style={styles.container}
+  keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 5}
+>
+
       
       <View style={styles.header}>
         <Text style={styles.titulo}>{nombre} - Contratante</Text>

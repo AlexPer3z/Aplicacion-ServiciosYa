@@ -158,6 +158,9 @@ export default function LoginSelect({ navigation }) {
   };
 
 
+  
+
+
   return (
     <ImageBackground source={fondo} style={styles.background} resizeMode="cover">
       <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
