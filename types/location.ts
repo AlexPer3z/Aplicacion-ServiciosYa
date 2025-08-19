@@ -20,3 +20,16 @@ export interface LocationParams {
   search_lon: number | null;
   search_radius_meters: number | null;
 }
+
+export interface LocationIpInfo {
+  ip: string;
+  hostname: string;
+  city: string;
+  region: string;
+  country: string;
+  loc: string; // "lat,lng"
+  org: string;
+  postal: string;
+  timezone: string;
+  readme: string;
+}

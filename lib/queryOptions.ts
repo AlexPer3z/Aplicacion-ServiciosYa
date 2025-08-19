@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "./supabase";
 import type { Session } from "@supabase/supabase-js";
+import type { LocationIpInfo } from "../types/location";
 
 export const sessionQueryKey = ["session"];
 
@@ -124,4 +125,15 @@ export const workerStatusQueryOptions = queryOptions({
     return data.status;
   },
   refetchInterval: 60 * 1000, // Refetch every minute
+});
+
+export const locationIpInfoQueryOptions = queryOptions({
+  queryKey: ['user', 'location', 'api'],
+  queryFn: async (): Promise<LocationIpInfo> => {
+    const response = await fetch('https://ipinfo.io/json');
+    if (!response.ok) {
+      throw new Error(`ipinfo.io returned ${response.status}`);
+    }
+    return response.json();
+  },
 });

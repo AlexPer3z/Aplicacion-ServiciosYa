@@ -1,13 +1,13 @@
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  type QueryClient,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { supabase } from "../supabase";
 import type { Servicio } from "../../types/servicios";
 import {
   query as settingsQuery,
-  queryKey,
-  queryKey as settingsQueryKey,
-  type UserSettings,
 } from "./useUserSettings";
-import { useCallback } from "react";
 import { getLocationParamsFromClient } from "../utils/location";
 import type { WorkerStatus } from "../../types/worker";
 
@@ -58,7 +58,7 @@ const fetchServiciosCatgoryByRadius = async (
 
 export const useServicesByCategory = (categoria: string) => {
   return useSuspenseQuery({
-    queryKey: ["servicios", categoria],
+    queryKey: ["user", "services", categoria],
     queryFn: async ({ client }) => {
       const locationParams = getLocationParamsFromClient(client);
 
@@ -90,7 +90,6 @@ export const useServicesByCategory = (categoria: string) => {
 
 export const servicesCountQuerKey = ["user", "services", "count"];
 
-import { useQuery } from "@tanstack/react-query";
 
 export function useServicesCount() {
   const client = useQueryClient();
@@ -116,4 +115,6 @@ export function useServicesCount() {
   return { servicios };
 }
 
-
+export function clearServicesCache(client: QueryClient) {
+  client.invalidateQueries({ queryKey: ["user", "services"] });
+}
