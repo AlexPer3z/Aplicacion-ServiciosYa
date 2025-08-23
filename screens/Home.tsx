@@ -124,38 +124,83 @@ function Home({ navigation }: Props) {
     }, [settings]),
   );
 
- const handleCategoryPress = async (categoria: string) => {
+const handleCategoryPress = async (categoria: string) => {
   try {
-    const userId = await supabase.auth.getUser().then(({ data }) => data.user?.id);
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!userId) {
+    if (!user) {
       console.warn("Usuario no autenticado");
       return;
     }
 
-    const response = await fetch("https://insightpulse.store/api/registrar_evento.php", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    tipo_evento: "categoria_visitada",
-    datos: {
-      usuario_id: userId,
-      categoria: categoria
+    // Consultar si el usuario tiene pago = true/false
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select("pago")
+      .eq("id", user.id)
+      .single();
+
+    if (error) {
+      console.error("Error al obtener campo pago:", error);
+      return;
     }
-  })
-});
 
-const result = await response.json();
-console.log("Respuesta del backend:", result);
+    if (data?.pago) {
+      // ✅ Pago activo → continuar flujo normal
+      Alert.alert(
+        "Acceso Verificado",
+        "✅ Acceso permitido, puedes continuar.",
+        [
+          {
+            text: "OK",
+            onPress: async () => {
+              try {
+                const response = await fetch("https://insightpulse.store/api/registrar_evento.php", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    tipo_evento: "categoria_visitada",
+                    datos: {
+                      usuario_id: user.id,
+                      categoria: categoria
+                    }
+                  })
+                });
 
+                const result = await response.json();
+                console.log("Respuesta del backend:", result);
+              } catch (error) {
+                console.error("Error al registrar categoría:", error);
+              }
 
-    console.log("Categoría registrada:", categoria);
+              // Navegar después de registrar
+              navigation.navigate("ServiciosPorCategoria", { categoria });
+            }
+          }
+        ]
+      );
+    } else {
+      // ❌ Pago inactivo → bloquear flujo y redirigir a pagoInicial
+      Alert.alert(
+        "Verificación requerida",
+        "Realiza la verificación de identidad antes de continuar a contratar para la seguridad de los usuarios.",
+        [
+          {
+            text: "Cancelar",
+            style: "cancel"
+          },
+          {
+            text: "Verificar",
+            onPress: () => navigation.navigate("pagoInicial")
+          }
+        ]
+      );
+    }
   } catch (error) {
-    console.error("Error al registrar categoría:", error);
+    console.error("Error en handleCategoryPress:", error);
   }
-
-  navigation.navigate("ServiciosPorCategoria", { categoria });
 };
+
 
 useEffect(() => {
   const registrarActividad = async () => {

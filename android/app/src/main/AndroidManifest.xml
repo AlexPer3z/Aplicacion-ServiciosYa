@@ -73,4 +73,7 @@
     <activity android:name="expo.modules.devmenu.DevMenuActivity" />
 
   </application>
+
+  <uses-permission android:name="android.permission.CAMERA" />
+
 </manifest>

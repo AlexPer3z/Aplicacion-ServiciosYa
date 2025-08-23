@@ -10,35 +10,64 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import BotonVolver from '../components/BotonVolver';
+import { supabase } from "../lib/supabase"; 
+
+
 export default function PagoInicial() {
   const navigation = useNavigation();
   const [urlPago, setUrlPago] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const handleDeepLink = ({ url }: { url: string }) => {
-      if (url.includes('pago-exitoso')) {
+  
+useEffect(() => {
+  const handleDeepLink = async ({ url }: { url: string }) => {
+    if (url.includes('pago-exitoso')) {
+      try {
+        // obtener usuario logueado
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          Alert.alert("Error", "No se encontró usuario autenticado.");
+          return;
+        }
+
+        // actualizar campo pago en la BD
+        const { error } = await supabase
+          .from("usuarios")
+         .update({ pago: true })
+          .eq("id", user.id);
+
+        if (error) {
+          console.error("Error al actualizar pago:", error);
+          Alert.alert("Error", "El pago fue exitoso pero no se pudo actualizar tu estado.");
+          return;
+        }
+
         Alert.alert(
-          'Registro exitoso',
-          'Tu cuenta ha sido registrada correctamente. ¡Bienvenido!'
+          "Registro exitoso",
+          "Tu cuenta ha sido registrada correctamente. ¡Bienvenido!"
         );
+
         navigation.navigate('Home');
-      } else if (url.includes('pago-fallido')) {
-        Alert.alert('Pago fallido', 'No se pudo completar el registro.');
-      } else if (url.includes('pago-pendiente')) {
-        Alert.alert('Pago pendiente', 'Tu pago está siendo procesado.');
+      } catch (err) {
+        console.error("Error en pago-exitoso:", err);
       }
-    };
 
-    const subscription = Linking.addEventListener('url', handleDeepLink);
-    Linking.getInitialURL().then((url) => {
-      if (url) handleDeepLink({ url });
-    });
+    } else if (url.includes('pago-fallido')) {
+      Alert.alert('Pago fallido', 'No se pudo completar el registro.');
+    } else if (url.includes('pago-pendiente')) {
+      Alert.alert('Pago pendiente', 'Tu pago está siendo procesado.');
+    }
+  };
 
-    return () => {
-      subscription.remove();
-    };
-  }, []);
+  const subscription = Linking.addEventListener('url', handleDeepLink);
+  Linking.getInitialURL().then((url) => {
+    if (url) handleDeepLink({ url });
+  });
+
+  return () => {
+    subscription.remove();
+  };
+}, []);
 
   const iniciarPago = async () => {
   setLoading(true);
@@ -51,7 +80,7 @@ export default function PagoInicial() {
       },
       body: JSON.stringify({
         descripcion: 'Pago único de registro de cuenta',
-        monto: 1000,
+        monto: 1,
         email: 'usuario@ejemplo.com',
       }),
     });

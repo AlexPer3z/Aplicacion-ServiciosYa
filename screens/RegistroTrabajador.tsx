@@ -209,7 +209,7 @@ export default function RegistroTrabajador() {
         }
 
         console.log("Registro completo. Navegando a pagoInicial...");
-        navigation.navigate("pagoInicial");
+        navigation.navigate("Home");
       } catch (err) {
         console.error("Error en el proceso final:", err);
         Alert.alert("Error", "Ocurrió un error al registrar tus datos.");

@@ -15,6 +15,7 @@ import { useMainNavigation } from "../../lib/hooks/useNavigation";
 import { useSuspenseProfile } from "../../lib/hooks/useUser";
 import type { MainStackParamList } from "../../types/navigation";
 import { useLinkProps, type LinkProps } from "@react-navigation/native";
+import { supabase } from "../../lib/supabase";
 
 interface NavButtonProps {
   name: string;
@@ -85,16 +86,52 @@ const BottomNavBar = ({ unreadMessagesCount = 0 }: BottomNavBarProps) => {
 
   const isDisabled = rol === "guest" || isUserRestricted;
 
-  const handlePressOfferService = () => {
-    if (isDisabled) {
-      Alert.alert(
-        "Acción no permitida",
-        "Debes registrarte y verificar tu perfil para ofrecer un servicio.",
-      );
+
+
+  const handlePressOfferService = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      Alert.alert("Error", "Debes iniciar sesión para continuar.");
       return;
     }
-    navigation.navigate("OfrecerServicio");
-  };
+
+    // consultar pago en la tabla usuarios (cambia el nombre si es distinto)
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select("pago")
+      .eq("id", user.id)
+      .single();
+
+    if (error) {
+      console.error("Error al obtener pago:", error);
+      Alert.alert("Error", "No se pudo verificar tu estado de pago.");
+      return;
+    }
+
+    if (data?.pago) {
+      // ✅ pago = true → seguir flujo normal
+      if (isUser(rol)) {
+        navigation.navigate("OnlineWorkers");
+      } else {
+        navigation.navigate("OfrecerServicio");
+      }
+    } else {
+      // ❌ pago = false → bloquear y mostrar alerta con opción de verificar
+      Alert.alert(
+        "Verificación requerida",
+        "Realiza la verificación de identidad antes de continuar a contratar para la seguridad de los usuarios.",
+        [
+          { text: "Cancelar", style: "cancel" },
+          { text: "Verificar", onPress: () => navigation.navigate("pagoInicial") },
+        ]
+      );
+    }
+  } catch (err) {
+    console.error("Error en hanndleCenterPress:", err);
+    Alert.alert("Error", "Ocurrió un problema al verificar tu estado.");
+  }
+};
 
   const hanndleCenterPress = () => {
     if (isUser(rol)) {
