@@ -64,9 +64,7 @@ function Home({ navigation }: Props) {
   // Notifications & Messages
   const {
     notificationsCount,
-    startNotificationCounter,
-    unreadMessagesCount,
-    startMessageCounter,
+    unreadMessagesCount
   } = useContext(AuthContext);
 
   // Verificar si el usuario ha visto el video al cargar el componente
@@ -89,7 +87,7 @@ function Home({ navigation }: Props) {
   }, []);
 
   // Lanzar contadores y suscripciones en tiempo real
-  useEffect(() => {
+  /*useEffect(() => {
     startNotificationCounter();
     startMessageCounter();
 
@@ -115,7 +113,7 @@ function Home({ navigation }: Props) {
       supabase.removeChannel(notifSub);
       supabase.removeChannel(msgSub);
     };
-  }, []);
+  }, []);*/
 
   // Onboarding
   useFocusEffect(

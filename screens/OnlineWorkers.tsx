@@ -129,6 +129,7 @@ function SelectedServicioSheet({ servicio }: { servicio: Servicio | null }) {
           receptor_id: servicio?.user_id,
           emisor_id: user.id,
           mensaje: `Un usuario ha solicitado tu servicio: ${servicio.titulo}`,
+          servicio_id: `${servicio?.id}`
         })
         .throwOnError();
     },

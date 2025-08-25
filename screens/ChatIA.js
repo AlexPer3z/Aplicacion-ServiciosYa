@@ -1,38 +1,21 @@
-import React, { useEffect, useContext, useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { AuthContext } from '../lib/context/AppContext';
+import { useNavigation } from '@react-navigation/native'; 
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
-
 import BotonVolver from '../components/BotonVolver';
-
 
 export default function Chat() {
   const navigation = useNavigation();
+  const chatChannelRef = useRef(null);
+  const mensajeChannelRef = useRef(null);
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState(null);
 
-    const { 
-      loadUnreadMessages
-    } = useContext(AuthContext);
-
-  useFocusEffect(
-    React.useCallback(() => {
-      obtenerChats();
-      loadUnreadMessages();
-    }, [])
-  );
-
-  const obtenerChats = async () => {
+  // Función para cargar los chats iniciales
+  const obtenerChatsInicial = async (userId) => {
     setLoading(true);
-
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      console.error('No se pudo obtener el usuario:', userError);
-      setLoading(false);
-      return;
-    }
 
     const { data: chatsData, error } = await supabase
       .from('chats')
@@ -42,54 +25,46 @@ export default function Chat() {
         usuario_2,
         servicio_id,
         mensajes (
+          id,
+          leido_por_receptor,
+          remitente_id,
           contenido,
           creado_en
         )
       `)
-      .or(`usuario_1.eq.${user.id},usuario_2.eq.${user.id}`)
+      .or(`usuario_1.eq.${userId},usuario_2.eq.${userId}`)
       .order('id', { ascending: false });
 
-    if (error) {
-      console.error('Error al cargar chats:', error.message);
+    if (error || !chatsData) {
+      console.error('Error al cargar chats:', error?.message);
       setLoading(false);
       return;
     }
 
     const chatsFormateados = await Promise.all(
       chatsData.map(async (chat) => {
-        const otroUsuarioId = chat.usuario_1 === user.id ? chat.usuario_2 : chat.usuario_1;
+        const otroUsuarioId = chat.usuario_1 === userId ? chat.usuario_2 : chat.usuario_1;
+        const mensajesNoLeidos = chat.mensajes.filter(
+          msg => !msg.leido_por_receptor && msg.remitente_id !== userId
+        ).length;
 
-        const { data: usuario, error: errorUsuario } = await supabase
+        const ultimoMensaje = chat.mensajes?.[chat.mensajes.length - 1]?.contenido || 'Entra para comenzar a chatear';
+
+        const { data: usuario } = await supabase
           .from('usuarios')
           .select('nombre, foto_perfil')
           .eq('id', otroUsuarioId)
           .single();
 
-        if (errorUsuario) {
-          console.error('Error al obtener datos del usuario:', errorUsuario.message);
-        }
-
-        // Obtener cantidad de mensajes no leídos en este chat
-        const { data: mensajesNoLeidosData, error: errorMensajes } = await supabase
-          .from('mensajes')
-          .select('id')
-          .eq('chat_id', chat.id)
-          .eq('leido_por_receptor', false)
-          .neq('remitente_id', user.id); // que los haya enviado la otra persona
-
-        const cantidadNoLeidos = errorMensajes ? 0 : mensajesNoLeidosData.length;
-
-        const ultimoMensaje = chat.mensajes?.[chat.mensajes.length - 1]?.contenido || 'Entra para comenzar a chatear';
-        
         return {
           id: chat.id,
           nombre: usuario?.nombre || 'Usuario desconocido',
-          avatar: usuario?.foto_perfil || 'https://via.placeholder.com/100',
+          avatar: usuario?.foto_perfil || 'https://picsum.photos/id/9/200/300',
           mensaje: ultimoMensaje,
-          servicioId: chat.servicio_id, // <--- agrego servicioId aquí
-          noLeidos: cantidadNoLeidos,
+          servicioId: chat.servicio_id,
+          noLeidos: mensajesNoLeidos,
           usuario_1: chat.usuario_1,
-          usuario_2: chat.usuario_2
+          usuario_2: chat.usuario_2,
         };
       })
     );
@@ -98,15 +73,125 @@ export default function Chat() {
     setLoading(false);
   };
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const setupRealtime = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setUserId(user.id);
+
+      await obtenerChatsInicial(user.id);
+
+      // Limpiar canales previos
+      if (chatChannelRef.current) supabase.removeChannel(chatChannelRef.current);
+      if (mensajeChannelRef.current) supabase.removeChannel(mensajeChannelRef.current);
+
+      // CANAL CHATS: detectar chats nuevos o cambios
+      const channelChats = supabase
+        .channel('realtime-chats')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'chats' },
+          async (payload) => {
+            const chat = payload.new;
+            if (!chat) return;
+            if (chat.usuario_1 !== user.id && chat.usuario_2 !== user.id) return;
+
+            setChats(prevChats => {
+              const chatExistente = prevChats.find(c => c.id === chat.id);
+
+              if (payload.eventType === 'INSERT' && !chatExistente) {
+                // Chat nuevo → agregar
+                return [
+                  {
+                    id: chat.id,
+                    nombre: '', // se puede cargar nombre/imagen si quieres
+                    avatar: '',
+                    mensaje: 'Entra para comenzar a chatear',
+                    servicioId: chat.servicio_id,
+                    noLeidos: 0,
+                    usuario_1: chat.usuario_1,
+                    usuario_2: chat.usuario_2,
+                  },
+                  ...prevChats
+                ];
+              } else if (payload.eventType === 'UPDATE' && chatExistente) {
+                // Chat existente → actualizar solo lo necesario
+                return prevChats.map(c => 
+                  c.id === chat.id 
+                    ? { ...c, servicioId: chat.servicio_id } 
+                    : c
+                );
+              }
+
+              return prevChats; // no cambia nada
+            });
+          }
+        )
+        .subscribe();
+
+      chatChannelRef.current = channelChats;
+
+      // CANAL MENSAJES: detectar mensajes nuevos en chats existentes
+      const channelMensajes = supabase
+        .channel('realtime-mensajes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'mensajes' },
+          async (payload) => {
+            if (isMounted) { 
+              const msg = payload.new;
+              if (!msg) return; 
+
+              // Filtrar rápido: si el usuario no está involucrado, ignorar
+              if (msg.remitente_id === userId || msg.receptor_id === userId) { 
+                  const { data: mensajesNoLeidosData, error: errorMensajes } = await supabase
+                    .from('mensajes')
+                    .select('id')
+                    .eq('chat_id', msg.chat_id)
+                    .eq('leido_por_receptor', false)
+                    .neq('remitente_id', user.id);
+
+                  const cantidadNoLeidos = errorMensajes ? 0 : mensajesNoLeidosData.length;
+
+                  setChats(prevChats => prevChats.map(chat => {
+                    if (chat.id === msg.chat_id) {
+                      return {
+                        ...chat,
+                        mensaje: msg.contenido,
+                        noLeidos: cantidadNoLeidos,
+                      };
+                    }
+                    return chat;
+                  }));
+              }
+            }
+          }
+        )
+        .subscribe();
+
+      mensajeChannelRef.current = channelMensajes;
+    };
+
+    setupRealtime();
+
+    return () => {
+      isMounted = false;
+      if (chatChannelRef.current) supabase.removeChannel(chatChannelRef.current);
+      if (mensajeChannelRef.current) supabase.removeChannel(mensajeChannelRef.current);
+    };
+  }, []);
+
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.chatItem}
       onPress={() => navigation.navigate('ChatIndividual', {
         chatId: item.id,
         nombre: item.nombre,
-        usuarioId1:item.usuario_1,
-        usuarioId2:item.usuario_2,
-        servicioId: item.servicioId, // <--- paso servicioId
+        usuarioId1: item.usuario_1,
+        usuarioId2: item.usuario_2,
+        servicioId: item.servicioId,
       })}
     >
       <Image source={{ uri: item.avatar }} style={styles.avatar} />
@@ -115,19 +200,18 @@ export default function Chat() {
         <Text style={styles.mensaje} numberOfLines={1}>{item.mensaje}</Text>
       </View>
       <View style={{ position: 'relative' }}>
-      <Ionicons name="chevron-forward" size={22} color="#30D5C8" style={styles.chevronIcon} />
-      {item.noLeidos > 0 && (
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{item.noLeidos}</Text>
-        </View>
-      )}
-    </View>
+        <Ionicons name="chevron-forward" size={22} color="#30D5C8" style={styles.chevronIcon} />
+        {item.noLeidos > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{item.noLeidos}</Text>
+          </View>
+        )}
+      </View>
     </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-      
       <Text style={styles.titulo}>📨 Tus chats</Text>
       <BotonVolver />
       {loading ? (
@@ -145,109 +229,74 @@ export default function Chat() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#E8FAF7', // Turquesa clarito
-    paddingTop: 46,
-    paddingHorizontal: 12,
+  container: { flex: 1,
+     backgroundColor: '#E8FAF7',
+     paddingTop: 46,
+     paddingHorizontal: 12 
   },
-  titulo: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#202B3A',
-    marginBottom: 20,
-    paddingTop:30,
-    textAlign: 'center',
-    letterSpacing: 1,
-    textShadowColor: '#b6e1ea88',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
+  titulo: { fontSize: 32,
+     fontWeight: '800',
+     color: '#202B3A',
+     marginBottom: 20,
+     paddingTop: 30,
+     textAlign: 'center',
+     letterSpacing: 1,
+     textShadowColor: '#b6e1ea88',
+     textShadowOffset: { width: 0, height: 2 },
+     textShadowRadius: 6 
   },
-  chatItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    marginBottom: 18,
-    padding: 14,
-    shadowColor: '#1FCFC020',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.10,
-    shadowRadius: 16,
-    elevation: 2,
+  chatItem: { 
+     flexDirection: 'row',
+     alignItems: 'center',
+     backgroundColor: '#fff',
+     borderRadius: 24,
+     marginBottom: 18,
+     padding: 14,
+     shadowColor: '#1FCFC020',
+     shadowOffset: { width: 0, height: 6 },
+     shadowOpacity: 0.10,
+     shadowRadius: 16,
+     elevation: 2 
   },
-  iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-    borderWidth: 2,
-    borderColor: '#fff',
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
+  avatar: { 
+     width: 46,
+     height: 46,
+     borderRadius: 23,
+     marginRight: 10,
+     borderWidth: 2,
+     borderColor: '#19D4C6',
+     backgroundColor: '#F3FFFE' 
   },
-  serviceIcon: {
-    fontSize: 22,
-  },
-  avatar: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    marginRight: 10,
-    borderWidth: 2,
-    borderColor: '#19D4C6',
-    backgroundColor: '#F3FFFE',
-  },
-  textos: {
-    flex: 1,
+  textos: { 
+    flex: 1 
   },
   nombre: {
     fontSize: 17,
     fontWeight: '700',
     color: '#202B3A',
-    marginBottom: 1,
+    marginBottom: 1 
   },
-  mensaje: {
-    fontSize: 14,
-    color: '#6A6A6A',
-    marginTop: 2,
+  mensaje: { 
+    fontSize: 14, 
+    color: '#6A6A6A', 
+    marginTop: 2 
   },
-  chevronIcon: {
-    marginLeft: 10,
-    color: '#FFA13C',
+  chevronIcon: { 
+    marginLeft: 10, 
+    color: '#FFA13C' 
   },
-  botonNuevoChat: {
-    position: 'absolute',
-    bottom: 34,
-    right: 18,
-    backgroundColor: '#FFA13C',
-    width: 66,
-    height: 66,
-    borderRadius: 33,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 6,
-    shadowColor: '#FFA13C88',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 14,
-    borderWidth: 3,
-    borderColor: '#fff',
-  },
-  badge: {
+  badge: { 
     position: 'absolute',
     top: 2,
     right: 25,
     backgroundColor: '#FF5A5F',
+    color:"#fff",
     borderRadius: 10,
     paddingHorizontal: 6,
     paddingVertical: 2,
     minWidth: 18,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'center' 
   },
   badgeText: {
     color: 'white',
