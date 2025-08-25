@@ -33,7 +33,7 @@ function OfrecerServicio({ navigation }: Props) {
   const [horario, setHorario] = useState("");
   const [precio, setPrecio] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [userId, setUserId] = useState(null);
+  const [userId, setUserId] = useState("");
   const [ubicacion, setUbicacion] = useState<LocationItem>();
 
   useEffect(() => {
@@ -88,7 +88,7 @@ function OfrecerServicio({ navigation }: Props) {
 
       Alert.alert("Éxito", "Servicio creado correctamente.");
       navigation.navigate("Home");
-    } catch (err) {
+    } catch (err:any) {
       console.error("Error al insertar el servicio:", err.message);
       Alert.alert("Error", `No se pudo crear el servicio: ${err.message}`);
     }

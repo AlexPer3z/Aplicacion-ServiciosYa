@@ -274,6 +274,7 @@ Este chat ha sido creado exclusivamente para que puedas coordinar y acordar los 
       usuario_2: notificacion.emisor_id,
       contratante_id: notificacion.emisor_id,
       contratado_id: userId,
+      servicio_id:notificacion.servicio_id
     }])
     .select()
     .single();
