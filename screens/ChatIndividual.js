@@ -10,6 +10,8 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
+  SafeAreaView,
+  ScrollView
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../lib/supabase";
@@ -18,12 +20,13 @@ import BotonVolver from "../components/BotonVolver";
 import { withModalProvider } from "../components/sheet/withModalProvider";
 
 function ChatIndividual({ route }) {
-  const { chatId, nombre, usuarioId1, usuarioId2, servicioId } = route.params;
+  const { chatId, nombre, servicio, usuarioId1, usuarioId2, servicioId } = route.params;
 
   const [mensajes, setMensajes] = useState([]);
   const [usuarioId, setUsuarioId] = useState(null);
   const [loadingMsg, setLoadingMsg] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
+  const [modalInfoVisible, setModalInfoVisible] = useState(false);
   const [estrellas, setEstrellas] = useState(0);
   const flatListRef = useRef(null);
   const messageChannelRef = useRef(null);
@@ -170,6 +173,7 @@ function ChatIndividual({ route }) {
             params: { 
               "chatId": chatId,
               "nombre": nombre,
+              "servicio": servicio,
               "usuarioId1": usuarioId1,
               "usuarioId2": usuarioId2,
               "servicioId": servicioId,
@@ -222,8 +226,9 @@ function ChatIndividual({ route }) {
       >
         <View style={styles.header}>
           <Text style={styles.titulo}>{nombre}</Text>
-          <TouchableOpacity style={styles.botonCalificar} onPress={() => setModalVisible(true)}>
-            <Text style={styles.textoBotonCalificar}>Calificar servicio</Text>
+          <TouchableOpacity style={styles.botonInfo} onPress={() => setModalInfoVisible(true)}>
+            <Ionicons name="information-circle-outline" size={20} color="#fff" style={{marginRight: 5}} />
+            <Text style={styles.textoBotonInfo}>Info</Text>
           </TouchableOpacity>
         </View>
 
@@ -263,6 +268,51 @@ function ChatIndividual({ route }) {
             </View>
           </View>
         </Modal>
+
+        <Modal animationType="fade" transparent visible={modalInfoVisible} onRequestClose={() => setModalInfoVisible(false)}>
+            <SafeAreaView style={styles.modalOverlay}>
+              <View style={styles.modalContainerM}>
+                <View style={styles.headerM}>
+                  <Text style={styles.title}>Información del Servicio</Text>
+                  <TouchableOpacity onPress={() => setModalInfoVisible(false)} style={styles.cerrarBtn}>
+                    <Text style={styles.cerrarTexto}>Cerrar</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <ScrollView contentContainerStyle={styles.contentContainer}>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.label}>Título:</Text>
+                    <Text style={styles.value}>{servicio?.titulo || 'No disponible'}</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.label}>Categoría:</Text>
+                    <Text style={styles.value}>{servicio?.categoria || 'No disponible'}</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.label}>Horario:</Text>
+                    <Text style={styles.value}>{servicio?.horario || 'No disponible'}</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.label}>Descripción:</Text>
+                    <Text style={[styles.value, styles.descriptionText]}>{servicio?.descripcion || 'No disponible'}</Text>
+                  </View>
+                </ScrollView>
+
+                 {/* Botón Calificar servicio */}
+                <TouchableOpacity
+                  style={styles.botonCalificar}
+                  onPress={() => {
+                    setModalInfoVisible(false);
+                    setModalVisible(true);
+                  }}
+                >
+                  <Ionicons name="star-outline" size={20} color="#fff" style={{ marginRight: 6 }} />
+                  <Text style={styles.textoBotonCalificar}>Calificar servicio</Text>
+                </TouchableOpacity>
+              </View>
+            </SafeAreaView>
+          </Modal>
+
       </KeyboardAvoidingView>
     </>
   );
@@ -307,12 +357,19 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "left",
   },
-  botonCalificar: {
+  botonInfo: {
+    flexDirection: 'row', 
+    alignItems: 'center', 
     backgroundColor: "#FFA13C",
-    padding: 9,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     borderRadius: 22,
     marginLeft: 10,
     elevation: 2,
+  },
+  textoBotonInfo:{
+    color:"#fff",
+    fontWeight:'bold'
   },
   // Burbujas de chat
   mensajeContainer: {
@@ -396,5 +453,89 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 14,
     padding: 3,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainerM: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    width: '90%',
+    maxWidth: 600,
+    paddingBottom: 20,
+  },
+  headerM: {
+    flexDirection: 'row',
+    padding: 15,
+    backgroundColor: '#00B8A9',
+    alignItems: 'center',
+    borderRadius: 12,
+    justifyContent: 'space-between',
+  },
+  title: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  cerrarBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  cerrarTexto: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+ 
+  contentContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 10, 
+  },
+  infoRow: {
+    marginBottom: 10,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 4,
+  },
+  value: {
+    fontSize: 16,
+    color: '#333',
+  },
+  descriptionText: {
+    lineHeight: 22,
+  },
+  calificarBtn: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  calificarTexto: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  botonCalificar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFA13C',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    alignSelf: 'center', 
+  },
+
+  textoBotonCalificar: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

@@ -54,14 +54,23 @@ export default function Chat() {
           .from('usuarios')
           .select('nombre, foto_perfil')
           .eq('id', otroUsuarioId)
-          .single();
+          .single(); 
+        
+        const { data: servicio } = await supabase
+          .from('servicios')
+          .select('id, titulo, descripcion, categoria, horario')
+          .eq('id', chat.servicio_id)
+          .single(); 
 
         return {
           id: chat.id,
-          nombre: usuario?.nombre || 'Usuario desconocido',
+          nombre: servicio 
+            ? `${usuario?.nombre || 'Desconocido'} - ${servicio.titulo}`
+            : usuario?.nombre || 'Desconocido',
           avatar: usuario?.foto_perfil || 'https://picsum.photos/id/9/200/300',
           mensaje: ultimoMensaje,
           servicioId: chat.servicio_id,
+          servicio: servicio,
           noLeidos: mensajesNoLeidos,
           usuario_1: chat.usuario_1,
           usuario_2: chat.usuario_2,
@@ -98,18 +107,35 @@ export default function Chat() {
             if (!chat) return;
             if (chat.usuario_1 !== user.id && chat.usuario_2 !== user.id) return;
 
-            setChats(prevChats => {
+            setChats(async prevChats => {
               const chatExistente = prevChats.find(c => c.id === chat.id);
 
               if (payload.eventType === 'INSERT' && !chatExistente) {
                 // Chat nuevo → agregar
+
+                const otroUsuarioId = chat.usuario_1 === userId ? chat.usuario_2 : chat.usuario_1;
+                const { data: usuario } = await supabase
+                  .from('usuarios')
+                  .select('nombre, foto_perfil')
+                  .eq('id', otroUsuarioId)
+                  .single(); 
+
+                const { data: servicio } = await supabase
+                  .from('servicios')
+                  .select('id, titulo, descripcion, categoria, horario')
+                  .eq('id', chat.servicio_id)
+                  .single(); 
+
                 return [
                   {
                     id: chat.id,
-                    nombre: '', // se puede cargar nombre/imagen si quieres
-                    avatar: '',
+                    nombre: servicio 
+                      ? `${usuario?.nombre || 'Desconocido'} - ${servicio.titulo}`
+                      : usuario?.nombre || 'Desconocido',
+                    avatar: usuario?.foto_perfil || 'https://picsum.photos/id/9/200/300',
                     mensaje: 'Entra para comenzar a chatear',
                     servicioId: chat.servicio_id,
+                    servicio: servicio,
                     noLeidos: 0,
                     usuario_1: chat.usuario_1,
                     usuario_2: chat.usuario_2,
@@ -145,7 +171,7 @@ export default function Chat() {
               if (!msg) return; 
 
               // Filtrar rápido: si el usuario no está involucrado, ignorar
-              if (msg.remitente_id === userId || msg.receptor_id === userId) { 
+              //if (msg.remitente_id === userId || msg.receptor_id === userId) { 
                   const { data: mensajesNoLeidosData, error: errorMensajes } = await supabase
                     .from('mensajes')
                     .select('id')
@@ -165,7 +191,7 @@ export default function Chat() {
                     }
                     return chat;
                   }));
-              }
+              //}
             }
           }
         )
@@ -189,6 +215,7 @@ export default function Chat() {
       onPress={() => navigation.navigate('ChatIndividual', {
         chatId: item.id,
         nombre: item.nombre,
+        servicio: item.servicio,
         usuarioId1: item.usuario_1,
         usuarioId2: item.usuario_2,
         servicioId: item.servicioId,
