@@ -123,6 +123,10 @@ export default function Perfil() {
       </View>
 
       <View style={styles.infoContainer}>
+
+        <Text style={styles.label}>Correo</Text>
+        <Text style={styles.info}>{userData.email}</Text>
+
         <Text style={styles.label}>Nombre</Text>
         <Text style={styles.info}>{userData.nombre}</Text>
 

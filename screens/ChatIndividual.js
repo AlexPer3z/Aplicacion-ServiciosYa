@@ -62,6 +62,22 @@ function ChatIndividual({ route }) {
   // --- Cargar mensajes de la BD
   const cargarMensajes = async (userId) => {
     try {
+      // Primero obtenemos la fecha de borrado del chat para este usuario
+      const { data: chatData, error: chatError } = await supabase
+        .from('chats')
+        .select('borrado_por_usuario_1, borrado_por_usuario_2')
+        .eq('id', chatId)
+        .single();
+
+      if (chatError || !chatData) {
+        console.error("No se pudo obtener info del chat:", chatError?.message);
+        return;
+      }
+
+      const fechaBorrado = userId === usuarioId1 
+        ? chatData.borrado_por_usuario_1 
+        : chatData.borrado_por_usuario_2;
+
       const { data, error } = await supabase
         .from("mensajes")
         .select("*")
@@ -73,12 +89,18 @@ function ChatIndividual({ route }) {
         return;
       }
 
-      setMensajes(data);
+      // Filtrar mensajes anteriores a la fecha de borrado
+      const mensajesFiltrados = fechaBorrado 
+        ? data.filter(m => new Date(m.creado_en) > new Date(fechaBorrado))
+        : data;
+
+      setMensajes(mensajesFiltrados);
       setLoadingMsg(false);
-      marcarComoLeidos(data, userId);
+      marcarComoLeidos(mensajesFiltrados, userId);
 
       // scroll al final
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+
     } catch (e) {
       console.error("Error en cargarMensajes:", e);
     }
@@ -186,7 +208,55 @@ function ChatIndividual({ route }) {
     }
   };
 
+  // ---  Función para formatear la fecha con "Hoy", "Ayer" o DD/MM/YYYY 
+  const formatearFecha = (fechaISO) => {
+    const fecha = new Date(fechaISO); // UTC → local automáticamente
+    const hoy = new Date();
+    const ayer = new Date();
+    ayer.setDate(hoy.getDate() - 1);
+
+    const mismaFecha = (a, b) =>
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate();
+
+    if (mismaFecha(fecha, hoy)) return "Hoy";
+    if (mismaFecha(fecha, ayer)) return "Ayer";
+
+    // Formato DD/MM/YYYY
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const anio = fecha.getFullYear();
+    return `${dia}/${mes}/${anio}`;
+  };
+
+  // ---  Genera la lista con "chips" de fecha
+  const mensajesConFechas = () => {
+    let resultado = [];
+    let ultimaFecha = null;
+
+    mensajes.forEach((msg) => {
+      const fechaMsg = formatearFecha(msg.creado_en);
+      if (fechaMsg !== ultimaFecha) {
+        // Insertar chip de fecha
+        resultado.push({ tipo: 'fecha', fecha: fechaMsg, id: `fecha-${fechaMsg}` });
+        ultimaFecha = fechaMsg;
+      }
+      resultado.push({ ...msg, tipo: 'mensaje' });
+    });
+
+    return resultado;
+  };
+
   const renderItem = ({ item }) => {
+    if (item.tipo === 'fecha') {
+      return (
+        <View style={styles.fechaChipContainer}>
+          <Text style={styles.fechaChipText}>{item.fecha}</Text>
+        </View>
+      );
+    }
+
     const esMio = item.remitente_id === usuarioId;
     return (
       <View
@@ -240,7 +310,7 @@ function ChatIndividual({ route }) {
         ) : (
           <FlatList
             ref={flatListRef}
-            data={mensajes}
+            data={mensajesConFechas()}
             keyExtractor={(item) => item.id.toString()}
             renderItem={renderItem}
             contentContainerStyle={{ paddingVertical: 10, paddingHorizontal: 10 }}
@@ -537,5 +607,26 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  fechaChipContainer: {
+    alignSelf: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginVertical: 8,
+    backgroundColor: '#E0F7FA', // color base del chip
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3, // para Android
+    borderWidth: 1,
+    borderColor: '#B2EBF2', // borde sutil
+  },
+  fechaChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#00796B',
+    textAlign: 'center',
   },
 });

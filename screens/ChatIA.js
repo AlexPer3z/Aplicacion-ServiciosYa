@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import React, { useState, useRef, useEffect, cache } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native'; 
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
@@ -24,6 +24,8 @@ export default function Chat() {
         usuario_1,
         usuario_2,
         servicio_id,
+        borrado_por_usuario_1,
+        borrado_por_usuario_2,
         mensajes (
           id,
           leido_por_receptor,
@@ -44,27 +46,34 @@ export default function Chat() {
     const chatsFormateados = await Promise.all(
       chatsData.map(async (chat) => {
         const otroUsuarioId = chat.usuario_1 === userId ? chat.usuario_2 : chat.usuario_1;
-        const mensajesNoLeidos = chat.mensajes.filter(
+        const fechaBorrado = chat.usuario_1 === userId ? chat.borrado_por_usuario_1 : chat.borrado_por_usuario_2;
+
+        // Filtrar mensajes anteriores a la fecha de borrado (si existe)
+        const mensajesFiltrados = fechaBorrado
+          ? chat.mensajes.filter(m => new Date(m.creado_en) > new Date(fechaBorrado))
+          : chat.mensajes;
+
+        const mensajesNoLeidos = mensajesFiltrados.filter(
           msg => !msg.leido_por_receptor && msg.remitente_id !== userId
         ).length;
 
-        const ultimoMensaje = chat.mensajes?.[chat.mensajes.length - 1]?.contenido || 'Entra para comenzar a chatear';
+        const ultimoMensaje = mensajesFiltrados?.[mensajesFiltrados.length - 1]?.contenido || 'Entra para comenzar a chatear';
 
         const { data: usuario } = await supabase
           .from('usuarios')
           .select('nombre, foto_perfil')
           .eq('id', otroUsuarioId)
-          .single(); 
-        
+          .single();
+
         const { data: servicio } = await supabase
           .from('servicios')
           .select('id, titulo, descripcion, categoria, horario')
           .eq('id', chat.servicio_id)
-          .single(); 
+          .single();
 
         return {
           id: chat.id,
-          nombre: servicio 
+          nombre: servicio
             ? `${usuario?.nombre || 'Desconocido'} - ${servicio.titulo}`
             : usuario?.nombre || 'Desconocido',
           avatar: usuario?.foto_perfil || 'https://picsum.photos/id/9/200/300',
@@ -74,12 +83,31 @@ export default function Chat() {
           noLeidos: mensajesNoLeidos,
           usuario_1: chat.usuario_1,
           usuario_2: chat.usuario_2,
+          borrado_por_usuario_1: chat.borrado_por_usuario_1,
+          borrado_por_usuario_2: chat.borrado_por_usuario_2,
         };
       })
     );
 
     setChats(chatsFormateados);
     setLoading(false);
+  };
+
+  const eliminarChat = async (item) => { 
+    if (!userId) return; 
+    try { 
+      const columna = userId === item.usuario_1 
+        ? 'borrado_por_usuario_1' 
+        : 'borrado_por_usuario_2';
+    
+      await supabase
+        .from('chats')
+        .update({ [columna]: new Date().toISOString() })
+        .eq('id', item.id); 
+    }catch(error){
+      console.log(error)
+    }
+    obtenerChatsInicial(userId);
   };
 
   useEffect(() => {
@@ -103,16 +131,13 @@ export default function Chat() {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'chats' },
           async (payload) => {
-            const chat = payload.new;
-            if (!chat) return;
-            if (chat.usuario_1 !== user.id && chat.usuario_2 !== user.id) return;
+            if (isMounted) {
+              const chat = payload.new;
+              if (!chat) return;
+              if (chat.usuario_1 !== user.id && chat.usuario_2 !== user.id) return;
 
-            setChats(async prevChats => {
-              const chatExistente = prevChats.find(c => c.id === chat.id);
-
-              if (payload.eventType === 'INSERT' && !chatExistente) {
-                // Chat nuevo → agregar
-
+              if (payload.eventType === 'INSERT') {
+                // Traer datos del usuario y servicio primero
                 const otroUsuarioId = chat.usuario_1 === userId ? chat.usuario_2 : chat.usuario_1;
                 const { data: usuario } = await supabase
                   .from('usuarios')
@@ -122,37 +147,27 @@ export default function Chat() {
 
                 const { data: servicio } = await supabase
                   .from('servicios')
-                  .select('id, titulo, descripcion, categoria, horario')
+                  .select('id, titulo')
                   .eq('id', chat.servicio_id)
                   .single(); 
 
-                return [
+                // Luego actualizar estado de manera síncrona
+                setChats(prevChats => [
                   {
                     id: chat.id,
-                    nombre: servicio 
-                      ? `${usuario?.nombre || 'Desconocido'} - ${servicio.titulo}`
-                      : usuario?.nombre || 'Desconocido',
-                    avatar: usuario?.foto_perfil || 'https://picsum.photos/id/9/200/300',
+                    nombre: servicio ? `${usuario?.nombre} - ${servicio.titulo}` : usuario?.nombre,
+                    avatar: usuario?.foto_perfil,
                     mensaje: 'Entra para comenzar a chatear',
                     servicioId: chat.servicio_id,
-                    servicio: servicio,
+                    servicio,
                     noLeidos: 0,
                     usuario_1: chat.usuario_1,
                     usuario_2: chat.usuario_2,
                   },
-                  ...prevChats
-                ];
-              } else if (payload.eventType === 'UPDATE' && chatExistente) {
-                // Chat existente → actualizar solo lo necesario
-                return prevChats.map(c => 
-                  c.id === chat.id 
-                    ? { ...c, servicioId: chat.servicio_id } 
-                    : c
-                );
+                  ...(prevChats || []), // prevChats podría ser undefined al inicio
+                ]);
               }
-
-              return prevChats; // no cambia nada
-            });
+            }
           }
         )
         .subscribe();
@@ -209,33 +224,52 @@ export default function Chat() {
     };
   }, []);
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.chatItem}
-      onPress={() => navigation.navigate('ChatIndividual', {
-        chatId: item.id,
-        nombre: item.nombre,
-        servicio: item.servicio,
-        usuarioId1: item.usuario_1,
-        usuarioId2: item.usuario_2,
-        servicioId: item.servicioId,
-      })}
-    >
-      <Image source={{ uri: item.avatar }} style={styles.avatar} />
-      <View style={styles.textos}>
-        <Text style={styles.nombre}>{item.nombre}</Text>
-        <Text style={styles.mensaje} numberOfLines={1}>{item.mensaje}</Text>
-      </View>
-      <View style={{ position: 'relative' }}>
-        <Ionicons name="chevron-forward" size={22} color="#30D5C8" style={styles.chevronIcon} />
-        {item.noLeidos > 0 && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{item.noLeidos}</Text>
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
+  const renderItem = ({ item }) => {
+    
+    const handleEliminar = () => {
+      Alert.alert(
+        "Eliminar chat",
+        "¿Seguro que deseas eliminar este chat? No podrás ver los mensajes antiguos.",
+        [
+          { text: "Cancelar", style: "cancel" },
+          { 
+            text: "Eliminar", 
+            style: "destructive",
+            onPress: () => eliminarChat(item) 
+          }
+        ]
+      );
+    };
+
+    return (
+      <TouchableOpacity
+        style={styles.chatItem}
+        onPress={() => navigation.navigate('ChatIndividual', {
+          chatId: item.id,
+          nombre: item.nombre,
+          servicio: item.servicio,
+          usuarioId1: item.usuario_1,
+          usuarioId2: item.usuario_2,
+          servicioId: item.servicioId,
+        })}
+        onLongPress={handleEliminar}
+      >
+        <Image source={{ uri: item.avatar }} style={styles.avatar} />
+        <View style={styles.textos}>
+          <Text style={styles.nombre}>{item.nombre}</Text>
+          <Text style={styles.mensaje} numberOfLines={1}>{item.mensaje}</Text>
+        </View>
+        <View style={{ position: 'relative' }}>
+          <Ionicons name="chevron-forward" size={22} color="#30D5C8" style={styles.chevronIcon} />
+          {item.noLeidos > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{item.noLeidos}</Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    )
+  };
 
   return (
     <View style={styles.container}>
