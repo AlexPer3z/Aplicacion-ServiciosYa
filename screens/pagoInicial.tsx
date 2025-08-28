@@ -22,37 +22,64 @@ export default function PagoInicial() {
 useEffect(() => {
   const handleDeepLink = async ({ url }: { url: string }) => {
     if (url.includes('pago-exitoso')) {
-      try {
-        // obtener usuario logueado
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          Alert.alert("Error", "No se encontró usuario autenticado.");
-          return;
-        }
+  try {
+    // obtener usuario logueado
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      Alert.alert("Error", "No se encontró usuario autenticado.");
+      return;
+    }
 
-        // actualizar campo pago en la BD
-        const { error } = await supabase
-          .from("usuarios")
-         .update({ pago: true })
-          .eq("id", user.id);
+    // actualizar campo pago en la BD
+    const { error } = await supabase
+      .from("usuarios")
+      .update({ pago: true })
+      .eq("id", user.id);
 
-        if (error) {
-          console.error("Error al actualizar pago:", error);
-          Alert.alert("Error", "El pago fue exitoso pero no se pudo actualizar tu estado.");
-          return;
-        }
+    if (error) {
+      console.error("Error al actualizar pago:", error);
+      Alert.alert("Error", "El pago fue exitoso pero no se pudo actualizar tu estado.");
+      return;
+    }
 
-        Alert.alert(
-          "Registro exitoso",
-          "Tu cuenta ha sido registrada correctamente. ¡Bienvenido!"
-        );
+    // 👉 obtener datos del usuario (para mandar nombre + id a la API)
+    const { data: usuario, error: errorUsuario } = await supabase
+      .from("usuarios")
+      .select("id, nombre")
+      .eq("id", user.id)
+      .single();
 
-        navigation.navigate('Home');
-      } catch (err) {
-        console.error("Error en pago-exitoso:", err);
-      }
+    if (errorUsuario || !usuario) {
+      console.error("Error al obtener datos del usuario:", errorUsuario);
+      return;
+    }
 
-    } else if (url.includes('pago-fallido')) {
+    // 👉 enviar evento a tu API
+    await fetch("https://TU-API.com/eventos.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        tipo_evento: "registro_pagado",
+        datos: {
+          usuario_id: usuario.id,
+          nombre: usuario.nombre,
+          etiqueta: "pago por registro",
+        },
+      }),
+    });
+
+    Alert.alert(
+      "Registro exitoso",
+      "Tu cuenta ha sido registrada correctamente. ¡Bienvenido!"
+    );
+
+    navigation.navigate('Home');
+  } catch (err) {
+    console.error("Error en pago-exitoso:", err);
+  }
+} else if (url.includes('pago-fallido')) {
       Alert.alert('Pago fallido', 'No se pudo completar el registro.');
     } else if (url.includes('pago-pendiente')) {
       Alert.alert('Pago pendiente', 'Tu pago está siendo procesado.');
@@ -80,7 +107,7 @@ useEffect(() => {
       },
       body: JSON.stringify({
         descripcion: 'Pago único de registro de cuenta',
-        monto: 1,
+        monto: 1000,
         email: 'usuario@ejemplo.com',
       }),
     });
@@ -107,27 +134,37 @@ useEffect(() => {
   }, [urlPago]);
 
   return (
-    <View style={styles.container}>
-      <BotonVolver />
-      <Text style={styles.mensajePrincipal}>
-        Para completar tu registro y por tu seguridad necesitamos realizar una verificación de pagos para validar tu identidad  <Text style={{ fontWeight: 'bold' }}>$1.000</Text>.
-      </Text>
-      <Text style={styles.mensajeAclaracion}>
-        Este es un pago único y exclusivo por el alta de tu cuenta.{"\n"}
-        <Text style={{ fontWeight: 'bold' }}>No volverás a pagar esto nunca más.</Text>
-      </Text>
+  <View style={styles.container}>
+    <BotonVolver />
+    <Text style={styles.mensajePrincipal}>
+      Para completar tu registro y por tu seguridad necesitamos realizar una verificación de pagos para validar tu identidad{" "}
+      <Text style={{ fontWeight: 'bold' }}>$1.500</Text>.
+    </Text>
+    <Text style={styles.mensajeAclaracion}>
+      Este es un pago único y exclusivo por el alta de tu cuenta.{"\n"}
+      <Text style={{ fontWeight: 'bold' }}>No volverás a pagar esto nunca más.</Text>
+    </Text>
 
-      {loading ? (
-        <ActivityIndicator size="large" color="#FFA13C" />
-      ) : (
-        <>
+    {loading ? (
+      <ActivityIndicator size="large" color="#FFA13C" />
+    ) : (
+      <>
         <TouchableOpacity style={styles.botonPago} onPress={iniciarPago}>
-          <Text style={styles.textoBoton}>Pagar $1.000 y registrar cuenta</Text>
+          <Text style={styles.textoBoton}>Pagar $1.500 y registrar cuenta</Text>
         </TouchableOpacity>
-        </>
-      )}
-    </View>
-  );
+
+        {/* 👇 Nuevo botón "Pagar más tarde" */}
+        <TouchableOpacity
+          style={[styles.botonPago, { backgroundColor: '#999', marginTop: 15 }]}
+          onPress={() => navigation.navigate("Home")}
+        >
+          <Text style={styles.textoBoton}>Pagar más tarde</Text>
+        </TouchableOpacity>
+      </>
+    )}
+  </View>
+);
+
 }
 
 const styles = StyleSheet.create({

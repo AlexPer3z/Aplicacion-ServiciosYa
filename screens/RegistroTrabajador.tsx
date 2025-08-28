@@ -23,6 +23,11 @@ import uuid from "react-native-uuid";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import SelectDropdown from 'react-native-select-dropdown' 
 
+
+import * as Location from "expo-location";
+import { useEffect } from "react";
+
+
 type NavigationProp = NativeStackNavigationProp<MainStackParamList>;
 async function mostrarUsuario() {
   const { data, error } = await supabase.auth.getUser();
@@ -45,6 +50,10 @@ export default function RegistroTrabajador() {
   const [sexo, setSexo] = useState("");
   const [numeroCelular, setNumeroCelular] = useState("");
   const [aceptaResponsabilidad, setAceptaResponsabilidad] = useState(false);
+
+   // Estado para saber si está en Bolivia
+  const [isBolivia, setIsBolivia] = useState(false);
+
 
   // Paso 2
   const [direccionDni, setDireccionDni] = useState("");
@@ -107,10 +116,16 @@ export default function RegistroTrabajador() {
     }
 
     if (step === 2) {
-      if (!numeroDni.trim() || !direccionDni.trim() || !fechaNacimiento.trim() || fotoDniPerfil == null) {
-        Alert.alert("Faltan datos", "Debes completar todos los campos del paso 2.");
-        return;
-      }
+      if (!numeroDni.trim() || !direccionDni.trim() || !fechaNacimiento.trim()) {
+  Alert.alert("Faltan datos", "Debes completar todos los campos del paso 2.");
+  return;
+}
+
+if (isBolivia && !fotoDniPerfil) {
+  Alert.alert("Falta foto", "Debes subir la selfie con DNI porque estás en Bolivia.");
+  return;
+}
+
       if (!/^\d{7,8}$/.test(numeroDni)) {
         Alert.alert("DNI inválido", "Debe ser un número de DNI válido.");
         return;
@@ -170,7 +185,10 @@ export default function RegistroTrabajador() {
 
         // Subir imágenes con la lógica ideal
         const nombreFotoDniPerfil = `${uuid.v4()}_dni_perfil.jpg`;
-        const urlFotoDniPerfil = fotoDniPerfil ? await subirImagen(fotoDniPerfil, nombreFotoDniPerfil) : null;
+        const urlFotoDniPerfil =
+  isBolivia && fotoDniPerfil
+    ? await subirImagen(fotoDniPerfil, `${uuid.v4()}_dni_perfil.jpg`)
+    : null;
 
 
 
@@ -193,7 +211,7 @@ export default function RegistroTrabajador() {
               referencias,
               experiencia_academica: experienciaAcademica,
               perfil_completo: true,
-              creditos: 20,
+              creditos: 0,
               dni_verificado: true
             },
           ])
@@ -209,7 +227,7 @@ export default function RegistroTrabajador() {
         }
 
         console.log("Registro completo. Navegando a pagoInicial...");
-        navigation.navigate("Home");
+        navigation.navigate("pagoInicial");
       } catch (err) {
         console.error("Error en el proceso final:", err);
         Alert.alert("Error", "Ocurrió un error al registrar tus datos.");
@@ -262,8 +280,29 @@ export default function RegistroTrabajador() {
   };
 
 
+  useEffect(() => {
+    const verificarPais = async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        console.log("Permiso de ubicación denegado");
+        return;
+      }
 
-  // --- Aquí sigue todo igual (UI, estilos, etc.) ---
+      const location = await Location.getCurrentPositionAsync({});
+      const [address] = await Location.reverseGeocodeAsync(location.coords);
+
+      if (address?.isoCountryCode === "BO") {
+        setIsBolivia(true);
+        console.log("Estás en Bolivia 🇧🇴");
+      } else {
+        setIsBolivia(false);
+        console.log("Estás fuera de Bolivia");
+      }
+    };
+
+    verificarPais();
+  }, []);
+
 
   return (
     <ImageBackground
@@ -353,74 +392,80 @@ export default function RegistroTrabajador() {
             )}
 
             {step === 2 && (
-              <>
-                <TextInput
-                  placeholder="Número de DNI"
-                  placeholderTextColor="#4e827d"
-                  value={numeroDni}
-                  onChangeText={setNumeroDni}
-                  keyboardType="numeric"
-                  style={styles.input}
-                />
-                <TextInput
-                  placeholder="Dirección (como figura en el DNI)"
-                  placeholderTextColor="#4e827d"
-                  value={direccionDni}
-                  onChangeText={setDireccionDni}
-                  style={styles.input}
-                />
-                <TextInput
-                  placeholder="Fecha de nacimiento (DD/MM/AAAA)"
-                  placeholderTextColor="#4e827d"
-                  value={fechaNacimiento}
-                  onChangeText={setFechaNacimiento}
-                  style={styles.input}
-                />
-                <View style={styles.fotoWrapper}>
-                  <Text style={styles.label}>Foto de perfil con DNI</Text>
-                   <Text style={styles.label}>*Tiene que ser una foto selfie del usuario aguantando el DNI de frente</Text>
-                  {fotoDniPerfil ? (
-                    <Image source={{ uri: fotoDniPerfil }} style={styles.foto} />
-                  ) : (
-                    <View style={[styles.foto, styles.fotoPlaceholder2]}>
-                      {/* Imagen de fondo de ejemplo */}
-                      <Image 
-                        source={require('../assets/fotoperfildni.png')} 
-                        style={styles.fotoEjemplo}
-                      />
-                      {/* Texto superpuesto en la parte inferior */}
-                      <View style={styles.textoSuperpuesto}>
-                        <Text style={{ color: "#fff", backgroundColor: "rgba(0,0,0,0.5)", padding: 5 }}>*Foto selfie del usuario con DNI</Text>
-                      </View>
-                    </View>
-                  )}
-                  <TouchableOpacity
-                    style={styles.botonFoto}
-                    onPress={() => pedirFoto(setFotoDniPerfil)}
-                  >
-                    <Text style={styles.botonFotoTexto}>Tomar foto</Text>
-                  </TouchableOpacity>
-                </View>
+  <>
+    <TextInput
+      placeholder="Número de DNI"
+      placeholderTextColor="#4e827d"
+      value={numeroDni}
+      onChangeText={setNumeroDni}
+      keyboardType="numeric"
+      style={styles.input}
+    />
+    <TextInput
+      placeholder="Dirección (como figura en el DNI)"
+      placeholderTextColor="#4e827d"
+      value={direccionDni}
+      onChangeText={setDireccionDni}
+      style={styles.input}
+    />
+    <TextInput
+      placeholder="Fecha de nacimiento (DD/MM/AAAA)"
+      placeholderTextColor="#4e827d"
+      value={fechaNacimiento}
+      onChangeText={setFechaNacimiento}
+      style={styles.input}
+    />
 
-                <View style={styles.fotoWrapper}>
-                  <Text style={styles.label}>Foto de perfil</Text>
-                  <Text style={styles.label}>*Tiene que ser una foto selfie del usuario</Text>
-                  {fotoPerfil ? (
-                    <Image source={{ uri: fotoPerfil }} style={styles.foto} />
-                  ) : (
-                    <View style={[styles.foto, styles.fotoPlaceholder]}>
-                      <Text style={{ color: "#999" }}>*Foto selfie del usuario</Text>
-                    </View>
-                  )}
-                  <TouchableOpacity
-                    style={styles.botonFoto}
-                    onPress={() => pedirFoto(setFotoPerfil)}
-                  >
-                    <Text style={styles.botonFotoTexto}>Tomar foto</Text>
-                  </TouchableOpacity>
-                </View> 
-              </>
-            )}
+    {/* Campo foto DNI SOLO si estás en Bolivia */}
+    {isBolivia && (
+      <View style={styles.fotoWrapper}>
+        <Text style={styles.label}>Foto de perfil con DNI</Text>
+        <Text style={styles.label}>*Selfie del usuario sosteniendo el DNI</Text>
+        {fotoDniPerfil ? (
+          <Image source={{ uri: fotoDniPerfil }} style={styles.foto} />
+        ) : (
+          <View style={[styles.foto, styles.fotoPlaceholder2]}>
+            <Image 
+              source={require('../assets/fotoperfildni.png')} 
+              style={styles.fotoEjemplo}
+            />
+            <View style={styles.textoSuperpuesto}>
+              <Text style={{ color: "#fff", backgroundColor: "rgba(0,0,0,0.5)", padding: 5 }}>
+                *Foto selfie del usuario con DNI
+              </Text>
+            </View>
+          </View>
+        )}
+        <TouchableOpacity
+          style={styles.botonFoto}
+          onPress={() => pedirFoto(setFotoDniPerfil)}
+        >
+          <Text style={styles.botonFotoTexto}>Tomar foto</Text>
+        </TouchableOpacity>
+      </View>
+    )}
+
+    {/* Foto de perfil (siempre obligatoria) */}
+    <View style={styles.fotoWrapper}>
+      <Text style={styles.label}>Foto de perfil</Text>
+      <Text style={styles.label}>*Selfie del usuario</Text>
+      {fotoPerfil ? (
+        <Image source={{ uri: fotoPerfil }} style={styles.foto} />
+      ) : (
+        <View style={[styles.foto, styles.fotoPlaceholder]}>
+          <Text style={{ color: "#999" }}>*Foto selfie del usuario</Text>
+        </View>
+      )}
+      <TouchableOpacity
+        style={styles.botonFoto}
+        onPress={() => pedirFoto(setFotoPerfil)}
+      >
+        <Text style={styles.botonFotoTexto}>Tomar foto</Text>
+      </TouchableOpacity>
+    </View>
+  </>
+)}
+
 
             {step === 3 && (
               <>

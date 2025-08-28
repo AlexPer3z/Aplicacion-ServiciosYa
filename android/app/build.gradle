@@ -92,12 +92,8 @@ android {
         applicationId 'com.alex_6775.appTrabajo'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 37
-        versionName "37.0.0"
-        manifestPlaceholders = [
-        afDevKey: "QSDPBjFMyWCak95yESqXBc",
-        afAppId: "1234567890" // tu App Store ID si es multiplataforma
-        ]
+        versionCode 41
+        versionName "41.0.0"
     }
     signingConfigs {
         debug {

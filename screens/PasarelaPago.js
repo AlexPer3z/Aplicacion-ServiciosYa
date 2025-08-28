@@ -26,16 +26,33 @@ export default function PasarelaPago() {
 
       if (url.includes('pago-exitoso')) {
         try {
+          // 1. Traer créditos actuales
+          const { data: userData, error: getError } = await supabase
+            .from('usuarios')
+            .select('creditos')
+            .eq('id', userId)
+            .single();
+
+          if (getError) {
+            console.error("Error al obtener créditos:", getError);
+            Alert.alert("Error", "No se pudo verificar tu saldo actual.");
+            return;
+          }
+
+          const creditosActuales = userData?.creditos || 0;
+          const nuevosCreditos = creditosActuales + 1;
+
+          // 2. Guardar sumando +1
           const { error: updateError } = await supabase
             .from('usuarios')
-            .update({ creditos: supabase.rpc('incrementar_credito', { user_id_input: userId }) })
+            .update({ creditos: nuevosCreditos })
             .eq('id', userId);
 
           if (updateError) {
-            console.error("Error al sumar crédito:", updateError);
+            console.error("Error al actualizar créditos:", updateError);
             Alert.alert("Error", "El pago fue exitoso pero no se pudo actualizar tu crédito.");
           } else {
-            Alert.alert("✅ Crédito agregado", "Tu pago fue exitoso y ahora tienes un crédito disponible.");
+            Alert.alert("✅ Crédito agregado", "Tu pago fue exitoso y ahora tienes un crédito más en tu cuenta.");
           }
 
           navigation.goBack();
@@ -189,4 +206,3 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
 });
-
