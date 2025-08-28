@@ -88,7 +88,9 @@ function HomeHeader({
 
         <View style={[styles.filtroContainer, { marginVertical: 6 }]}>
           {useGPS && settings && (
-            <LocationChip location={settings?.lastGPSLocation} />
+            <LocationChip
+              location={settings.customLocation ?? settings?.lastGPSLocation}
+            />
           )}
         </View>
 
