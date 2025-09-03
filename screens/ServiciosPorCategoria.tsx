@@ -213,6 +213,7 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
       emisor_id: compradorId,
       mensaje,
       created_at: createdAt,
+      servicio_id: `${servicioSeleccionado?.id}`
     });
 
     // Descontar crédito

@@ -248,6 +248,12 @@ Este chat ha sido creado exclusivamente para que puedas coordinar y acordar los 
   const mensajeTicket = `🎫 Se ha concretado una propuesta de trabajo. Este chat funcionará como comprobante. Puedes coordinar los detalles del servicio aquí.`;
 
   if (chatExistente) {
+
+    await supabase
+      .from('chats')
+      .update({ servicio_id: notificacion.servicio_id })
+      .eq('id', chatExistente.id);
+
     await supabase
       .from('mensajes')
       .insert({
@@ -257,11 +263,29 @@ Este chat ha sido creado exclusivamente para que puedas coordinar y acordar los 
         fecha_creacion: new Date().toISOString(),
       });
 
+      const otroUsuarioId = nuevoChat.usuario_1 === userId ? nuevoChat.usuario_2 : nuevoChat.usuario_1;
+      const { data: usuario } = await supabase
+        .from('usuarios')
+        .select('nombre, foto_perfil')
+        .eq('id', otroUsuarioId)
+        .single(); 
+
+      const { data: servicio } = await supabase
+        .from('servicios')
+        .select('id, titulo, descripcion, categoria, horario')
+        .eq('id', notificacion.servicio_id)
+        .single();
+
     loadUnreadMessages();
     navigation.navigate('ChatIndividual', {
       chatId: chatExistente.id,
-      usuarioId1: userId,
+      nombre: servicio 
+        ? `${usuario?.nombre || 'Desconocido'} - ${servicio.titulo}`
+        : usuario?.nombre || 'Desconocido',
+      servicio: servicio,
+      usuarioId1:userId,
       usuarioId2: notificacion.emisor_id,
+      servicioId: notificacion.servicio_id,
     });
     return;
   }
@@ -274,6 +298,7 @@ Este chat ha sido creado exclusivamente para que puedas coordinar y acordar los 
       usuario_2: notificacion.emisor_id,
       contratante_id: notificacion.emisor_id,
       contratado_id: userId,
+      servicio_id:notificacion.servicio_id
     }])
     .select()
     .single();
@@ -300,13 +325,29 @@ Este chat ha sido creado exclusivamente para que puedas coordinar y acordar los 
       }
     ]);
 
+  const otroUsuarioId = nuevoChat.usuario_1 === userId ? nuevoChat.usuario_2 : nuevoChat.usuario_1;
+  const { data: usuario } = await supabase
+    .from('usuarios')
+    .select('nombre, foto_perfil')
+    .eq('id', otroUsuarioId)
+    .single(); 
 
+  const { data: servicio } = await supabase
+    .from('servicios')
+    .select('id, titulo, descripcion, categoria, horario')
+    .eq('id', notificacion.servicio_id)
+    .single();
 
   loadUnreadMessages();
   navigation.navigate('ChatIndividual', {
     chatId: nuevoChat.id,
-    usuarioId1: userId,
+    nombre: servicio 
+      ? `${usuario?.nombre || 'Desconocido'} - ${servicio.titulo}`
+      : usuario?.nombre || 'Desconocido',
+    servicio: servicio,
+    usuarioId1:userId,
     usuarioId2: notificacion.emisor_id,
+    servicioId: notificacion.servicio_id,
   });
 };
 

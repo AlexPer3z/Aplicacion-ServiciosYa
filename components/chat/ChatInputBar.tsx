@@ -42,9 +42,9 @@ function ChatInputBar({ onSend }: ChatInputBarProps) {
           placeholder="Escribe un mensaje..."
           appendComponent={
             <Pressable onPress={MoreButtonPress}>
-              <MaterialIcons
-                name="video-chat"
-                size={26}
+              <Ionicons
+                name="logo-whatsapp"
+                size={24}
                 color={theme.palettes.primary[60]}
               />
               

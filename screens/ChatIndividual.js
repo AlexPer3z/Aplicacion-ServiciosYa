@@ -10,73 +10,74 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
-
+  SafeAreaView,
+  ScrollView
 } from "react-native";
-import { withModalProvider } from "../components/sheet/withModalProvider";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../lib/supabase";
 import ChatInputBar from "../components/chat/ChatInputBar";
-import BotonVolver from '../components/BotonVolver';
+import BotonVolver from "../components/BotonVolver";
+import { withModalProvider } from "../components/sheet/withModalProvider";
 
-function ChatIndividual({ route, navigation }) {
-  
-  const { chatId, nombre, usuarioId1, usuarioId2, servicioId } = route.params; 
+function ChatIndividual({ route }) {
+  const { chatId, nombre, servicio, usuarioId1, usuarioId2, servicioId } = route.params;
 
   const [mensajes, setMensajes] = useState([]);
-  const [nuevoMensaje, setNuevoMensaje] = useState("");
   const [usuarioId, setUsuarioId] = useState(null);
-  const flatListRef = useRef(null);
-  const intervalRef = useRef(null);
-
-  // Estado para el modal y calificación
-  const [modalVisible, setModalVisible] = useState(false);
-  const [estrellas, setEstrellas] = useState(0);
-
   const [loadingMsg, setLoadingMsg] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalInfoVisible, setModalInfoVisible] = useState(false);
+  const [estrellas, setEstrellas] = useState(0);
+  const flatListRef = useRef(null);
+  const messageChannelRef = useRef(null);
 
+  // --- Cargar usuario y mensajes iniciales
   useEffect(() => {
-    obtenerUsuarioYMensajes();
+    let isMounted = true;
 
-    // Función de limpieza que se ejecutará al desmontar el componente
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [chatId]);
-
-  const obtenerUsuarioYMensajes = async () => {
-    try {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
+    const init = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
       if (error || !user) {
         console.error("No se pudo obtener el usuario:", error);
         return;
       }
+      if (!isMounted) return;
+
       setUsuarioId(user.id);
-      iniciarCargarMensajes(user.id);
-    } catch (error) {
-      console.error("Error en obtenerUsuarioYMensajes:", error);
-    }
-  };
+      await cargarMensajes(user.id);
+      suscribirRealtime(user.id);
+    };
 
-  const iniciarCargarMensajes = async (userId) => {
-    // Limpiar intervalo existente si hay uno
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
+    init();
 
-    // Configurar intervalo para cargar mensajes periódicamente
-    intervalRef.current = setInterval(() => {
-      cargarMensajes(userId);
-    }, 3000);
-  };
+    return () => {
+      isMounted = false;
+      if (messageChannelRef.current) {
+        supabase.removeChannel(messageChannelRef.current);
+        messageChannelRef.current = null;
+      }
+    };
+  }, [chatId]);
 
+  // --- Cargar mensajes de la BD
   const cargarMensajes = async (userId) => {
     try {
+      // Primero obtenemos la fecha de borrado del chat para este usuario
+      const { data: chatData, error: chatError } = await supabase
+        .from('chats')
+        .select('borrado_por_usuario_1, borrado_por_usuario_2')
+        .eq('id', chatId)
+        .single();
+
+      if (chatError || !chatData) {
+        console.error("No se pudo obtener info del chat:", chatError?.message);
+        return;
+      }
+
+      const fechaBorrado = userId === usuarioId1 
+        ? chatData.borrado_por_usuario_1 
+        : chatData.borrado_por_usuario_2;
+
       const { data, error } = await supabase
         .from("mensajes")
         .select("*")
@@ -86,151 +87,176 @@ function ChatIndividual({ route, navigation }) {
       if (error) {
         console.error("Error al cargar mensajes:", error.message);
         return;
-      } 
-
-      setLoadingMsg(false);
-      setMensajes(data);
-
-      // Marcar como leídos los mensajes que no son míos (yo soy el receptor)
-      const mensajesNoLeidos = data.filter(
-        (msg) =>
-          msg.remitente_id?.toString().trim() !== userId?.toString().trim() &&
-          !msg.leido_por_receptor,
-      );
-      if (mensajesNoLeidos.length > 0) {
-        const ids = mensajesNoLeidos.map((msg) => msg.id);
-        await supabase
-          .from("mensajes")
-          .update({ leido_por_receptor: true })
-          .in("id", ids);
       }
 
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    } catch (error) {
-      console.error("Error en cargarMensajes:", error);
+      // Filtrar mensajes anteriores a la fecha de borrado
+      const mensajesFiltrados = fechaBorrado 
+        ? data.filter(m => new Date(m.creado_en) > new Date(fechaBorrado))
+        : data;
+
+      setMensajes(mensajesFiltrados);
+      setLoadingMsg(false);
+      marcarComoLeidos(mensajesFiltrados, userId);
+
+      // scroll al final
+      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+
+    } catch (e) {
+      console.error("Error en cargarMensajes:", e);
     }
   };
 
-  const enviarMensaje = async (mensaje) => {
-    if (!mensaje.trim()) return;
+  // --- Marcar mensajes no leídos como leídos
+  const marcarComoLeidos = async (mensajesData, userId) => {
+    const mensajesNoLeidos = mensajesData.filter(
+      (msg) =>
+        msg.remitente_id?.toString().trim() !== userId?.toString().trim() &&
+        !msg.leido_por_receptor
+    );
+    if (mensajesNoLeidos.length > 0) {
+      const ids = mensajesNoLeidos.map((msg) => msg.id);
+      await supabase.from("mensajes").update({ leido_por_receptor: true }).in("id", ids);
+    }
+  };
 
+  // --- Suscripción realtime solo para este chat
+  const suscribirRealtime = (userId) => {
+    const channel = supabase
+      .channel(`mensajes:chat_${chatId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "mensajes",
+          filter: `chat_id=eq.${chatId}`,
+        },
+        (payload) => {
+          const nuevo = payload.new;
+          setMensajes((prev) => [...prev, nuevo]);
+          // Si el mensaje no es mío, marcarlo como leído
+          if (nuevo.remitente_id !== userId) {
+            marcarComoLeidos([nuevo], userId);
+          }
+          setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+        }
+      )
+      .subscribe();
+
+    messageChannelRef.current = channel;
+  };
+
+  // --- Enviar mensaje y notificar
+  const enviarMensaje = async (mensaje) => {
+    if (!mensaje.trim() || !usuarioId) return;
     try {
+      const receptorId = usuarioId === usuarioId1 ? usuarioId2 : usuarioId1;
       const { error } = await supabase.from("mensajes").insert({
         chat_id: chatId,
         remitente_id: usuarioId,
+        receptor_id: receptorId,
         contenido: mensaje.trim(),
-        leido_por_emisor: true, // Emisor ya lo leyó
+        leido_por_emisor: true,
         leido_por_receptor: false,
       });
-
-      if (error) {
-        console.error("Error al enviar mensaje:", error.message);
-      } else {
-        setNuevoMensaje("");
-
-        console.log(`usuarioId ${usuarioId}`);
-        console.log(`usuarioId1 ${usuarioId1}`);
-        console.log(`usuarioId2 ${usuarioId2}`);
-
-        // Llamar la función que envía la notificación
-        await enviarNotificacionPush({
-          mensaje: mensaje.trim(),
-          usuarioId,
-          usuarioId1,
-          usuarioId2,
-          supabase
-        });
+      if (error) console.error("Error al enviar mensaje:", error.message);
+      else {
+        await enviarNotificacionPush(mensaje.trim(), receptorId);
       }
-    } catch (error) {
-      console.error("Error en enviarMensaje:", error);
+    } catch (e) {
+      console.error("Error en enviarMensaje:", e);
     }
   };
 
-  const enviarNotificacionPush = async ({
-    mensaje,
-    usuarioId,
-    usuarioId1,
-    usuarioId2,
-    supabase
-  }) => {
+  const enviarNotificacionPush = async (mensaje, receptorId) => {
     try {
-      const receptorId = usuarioId === usuarioId1 ? usuarioId2 : usuarioId1;
-
-      
-
-      const { data: receptorData, error: receptorError } = await supabase
+      const { data: receptorData, error } = await supabase
         .from("usuarios")
         .select("expo_token")
         .eq("id", receptorId)
         .single();
 
-      if (receptorError || !receptorData?.expo_token) {
-        console.warn("No se encontró el token del receptor o hubo un error:", receptorError);
-        return;
-      }
+      if (error || !receptorData?.expo_token) return;
 
-      const expoToken = receptorData.expo_token;
-
-      const res = await fetch("https://exp.host/--/api/v2/push/send", {
+      await fetch("https://exp.host/--/api/v2/push/send", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer HqAsPKHR0s-jilCTTYKwQhUhY5g57rnOlUYb_H6c`,
+          Authorization: `Bearer HqAsPKHR0s-jilCTTYKwQhUhY5g57rnOlUYb_H6c`,
         },
         body: JSON.stringify({
-          to: expoToken,
+          to: receptorData.expo_token,
           priority: "high",
           sound: "default",
           title: "Nuevo mensaje",
           body: mensaje,
-          data: JSON.stringify({ screen: "ChatIndividual", params: {
-            chatId: chatId,
-            nombre: '',
-            usuarioId1: usuarioId1,
-            usuarioId2: usuarioId2,
-            servicioId: servicioId
-          } }),
+          data: JSON.stringify({
+            screen: "ChatIndividual",
+            params: { 
+              "chatId": chatId,
+              "nombre": nombre,
+              "servicio": servicio,
+              "usuarioId1": usuarioId1,
+              "usuarioId2": usuarioId2,
+              "servicioId": servicioId,
+            }
+          }),
         }),
       });
-
-      const responseData = await res.json();
-      console.log("Notificación enviada:", responseData);
-
-    } catch (error) {
-      console.error("Error al enviar notificación push:", error);
+    } catch (e) {
+      console.error("Error al enviar notificación push:", e);
     }
   };
 
-  const manejarCalificarServicio = () => {
-    setModalVisible(true);
+  // ---  Función para formatear la fecha con "Hoy", "Ayer" o DD/MM/YYYY 
+  const formatearFecha = (fechaISO) => {
+    const fecha = new Date(fechaISO); // UTC → local automáticamente
+    const hoy = new Date();
+    const ayer = new Date();
+    ayer.setDate(hoy.getDate() - 1);
+
+    const mismaFecha = (a, b) =>
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate();
+
+    if (mismaFecha(fecha, hoy)) return "Hoy";
+    if (mismaFecha(fecha, ayer)) return "Ayer";
+
+    // Formato DD/MM/YYYY
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const anio = fecha.getFullYear();
+    return `${dia}/${mes}/${anio}`;
   };
 
-  const manejarDenunciar = () => {
-    Alert.alert(
-      "Denunciar servicio",
-      "¿Estás seguro que quieres denunciar este servicio?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Denunciar",
-          style: "destructive",
-          onPress: () => {
-            setModalVisible(false);
-            Alert.alert("Servicio denunciado", "Gracias por tu reporte.");
-            // TODO: lógica para marcar el servicio denunciado
-          },
-        },
-      ],
-    );
-  };
+  // ---  Genera la lista con "chips" de fecha
+  const mensajesConFechas = () => {
+    let resultado = [];
+    let ultimaFecha = null;
 
-  const actualizarCalificacionYEliminarChat = async () => {
-    Alert.alert("Calificacion enviada");
+    mensajes.forEach((msg) => {
+      const fechaMsg = formatearFecha(msg.creado_en);
+      if (fechaMsg !== ultimaFecha) {
+        // Insertar chip de fecha
+        resultado.push({ tipo: 'fecha', fecha: fechaMsg, id: `fecha-${fechaMsg}` });
+        ultimaFecha = fechaMsg;
+      }
+      resultado.push({ ...msg, tipo: 'mensaje' });
+    });
+
+    return resultado;
   };
 
   const renderItem = ({ item }) => {
+    if (item.tipo === 'fecha') {
+      return (
+        <View style={styles.fechaChipContainer}>
+          <Text style={styles.fechaChipText}>{item.fecha}</Text>
+        </View>
+      );
+    }
+
     const esMio = item.remitente_id === usuarioId;
     return (
       <View
@@ -245,106 +271,119 @@ function ChatIndividual({ route, navigation }) {
   };
 
   const renderEstrellas = () => {
-    let estrellasArray = [];
-    for (let i = 1; i <= 5; i++) {
-      estrellasArray.push(
-        <TouchableOpacity
-          key={i}
-          onPress={() => setEstrellas(i)}
-          activeOpacity={0.7}
-        >
-          <Ionicons
-            name={i <= estrellas ? "star" : "star-outline"}
-            size={32}
-            color="#f5c518"
-            style={{ marginHorizontal: 5 }}
-          />
-        </TouchableOpacity>,
-      );
-    }
-    return <View style={styles.estrellasContainer}>{estrellasArray}</View>;
+    return (
+      <View style={styles.estrellasContainer}>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <TouchableOpacity key={i} onPress={() => setEstrellas(i)}>
+            <Ionicons
+              name={i <= estrellas ? "star" : "star-outline"}
+              size={32}
+              color="#f5c518"
+              style={{ marginHorizontal: 5 }}
+            />
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
   };
 
   return (
     <>
-    <BotonVolver />
-    <KeyboardAvoidingView
-  behavior={Platform.OS === "ios" ? "padding" : "height"}
-  style={styles.container}
-  keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 5}
->
-
-      
-      <View style={styles.header}>
-        <Text style={styles.titulo}>{nombre} - Contratante</Text>
-        <TouchableOpacity
-          style={styles.botonCalificar}
-          onPress={manejarCalificarServicio}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.textoBotonCalificar}>Calificar servicio</Text>
-        </TouchableOpacity>
-      </View>
-
-      {loadingMsg && (
-        <View style={styles.spinnerContainer}>
-          <ActivityIndicator size="large" color="#FFA13C" />
-          <Text style={styles.spinnerText}>Cargando mensajes...</Text>
-        </View>
-      )}
-
-      <FlatList
-        ref={flatListRef}
-        data={mensajes}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderItem}
-        contentContainerStyle={{ paddingVertical: 10, paddingHorizontal: 10 }}
-        onContentSizeChange={() =>
-          flatListRef.current?.scrollToEnd({ animated: true })
-        }
-        onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
-      />
-
-      <ChatInputBar serviceId={servicioId} onSend={(mensaje) => enviarMensaje(mensaje)} />
-
-      {/* Modal de calificación */}
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setModalVisible(false)}
+      <BotonVolver />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.container}
       >
-        <View style={styles.modalFondo}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitulo}>Califica el servicio</Text>
-
-            {renderEstrellas()}
-
-            <TouchableOpacity
-              style={[styles.botonModal, styles.botonDenunciar]}
-              onPress={manejarDenunciar}
-            >
-              <Text style={styles.textoBotonModal}>Denunciar servicio</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.botonModal, styles.botonEnviarCalificacion]}
-              onPress={actualizarCalificacionYEliminarChat}
-            >
-              <Text style={styles.textoBotonModal}>Enviar calificación</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.botonCerrarModal}
-              onPress={() => setModalVisible(false)}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="close" size={28} color="#333" />
-            </TouchableOpacity>
-          </View>
+        <View style={styles.header}>
+          <Text style={styles.titulo}>{nombre}</Text>
+          <TouchableOpacity style={styles.botonInfo} onPress={() => setModalInfoVisible(true)}>
+            <Ionicons name="information-circle-outline" size={20} color="#fff" style={{marginRight: 5}} />
+            <Text style={styles.textoBotonInfo}>Info</Text>
+          </TouchableOpacity>
         </View>
-      </Modal>
-    </KeyboardAvoidingView>
+
+        {loadingMsg ? (
+          <View style={styles.spinnerContainer}>
+            <ActivityIndicator size="large" color="#FFA13C" />
+            <Text style={styles.spinnerText}>Cargando mensajes...</Text>
+          </View>
+        ) : (
+          <FlatList
+            ref={flatListRef}
+            data={mensajesConFechas()}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={renderItem}
+            contentContainerStyle={{ paddingVertical: 10, paddingHorizontal: 10 }}
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          />
+        )}
+
+        {!loadingMsg && <ChatInputBar serviceId={servicioId} onSend={enviarMensaje} />}
+
+        <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={() => setModalVisible(false)}>
+          <View style={styles.modalFondo}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitulo}>Califica el servicio</Text>
+              {renderEstrellas()}
+              <TouchableOpacity style={[styles.botonModal, styles.botonDenunciar]} onPress={() => Alert.alert("Denunciado")}>
+                <Text style={styles.textoBotonModal}>Denunciar servicio</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.botonModal, styles.botonEnviarCalificacion]} onPress={() => Alert.alert("Calificación enviada")}>
+                <Text style={styles.textoBotonModal}>Enviar calificación</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.botonCerrarModal} onPress={() => setModalVisible(false)}>
+                <Ionicons name="close" size={28} color="#333" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        <Modal animationType="fade" transparent visible={modalInfoVisible} onRequestClose={() => setModalInfoVisible(false)}>
+            <SafeAreaView style={styles.modalOverlay}>
+              <View style={styles.modalContainerM}>
+                <View style={styles.headerM}>
+                  <Text style={styles.title}>Información del Servicio</Text>
+                  <TouchableOpacity onPress={() => setModalInfoVisible(false)} style={styles.cerrarBtn}>
+                    <Text style={styles.cerrarTexto}>Cerrar</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <ScrollView contentContainerStyle={styles.contentContainer}>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.label}>Título:</Text>
+                    <Text style={styles.value}>{servicio?.titulo || 'No disponible'}</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.label}>Categoría:</Text>
+                    <Text style={styles.value}>{servicio?.categoria || 'No disponible'}</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.label}>Horario:</Text>
+                    <Text style={styles.value}>{servicio?.horario || 'No disponible'}</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.label}>Descripción:</Text>
+                    <Text style={[styles.value, styles.descriptionText]}>{servicio?.descripcion || 'No disponible'}</Text>
+                  </View>
+                </ScrollView>
+
+                 {/* Botón Calificar servicio */}
+                <TouchableOpacity
+                  style={styles.botonCalificar}
+                  onPress={() => {
+                    setModalInfoVisible(false);
+                    setModalVisible(true);
+                  }}
+                >
+                  <Ionicons name="star-outline" size={20} color="#fff" style={{ marginRight: 6 }} />
+                  <Text style={styles.textoBotonCalificar}>Calificar servicio</Text>
+                </TouchableOpacity>
+              </View>
+            </SafeAreaView>
+          </Modal>
+
+      </KeyboardAvoidingView>
     </>
   );
 }
@@ -388,12 +427,19 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "left",
   },
-  botonCalificar: {
+  botonInfo: {
+    flexDirection: 'row', 
+    alignItems: 'center', 
     backgroundColor: "#FFA13C",
-    padding: 9,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     borderRadius: 22,
     marginLeft: 10,
     elevation: 2,
+  },
+  textoBotonInfo:{
+    color:"#fff",
+    fontWeight:'bold'
   },
   // Burbujas de chat
   mensajeContainer: {
@@ -419,39 +465,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "500",
     letterSpacing: 0.1,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    padding: 12,
-    borderTopColor: "#d0ece9",
-    borderTopWidth: 1,
-    backgroundColor: "#E8FAF7",
-    alignItems: "flex-end",
-  },
-  input: {
-    flex: 1,
-    minHeight: 40,
-    maxHeight: 120,
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    paddingHorizontal: 18,
-    fontSize: 16,
-    color: "#222",
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: "#B6E1EA",
-  },
-  botonEnviar: {
-    backgroundColor: "#FFA13C",
-    borderRadius: 18,
-    padding: 13,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#FFA13C77",
-    shadowOpacity: 0.14,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 5,
-  },
+  }, 
   // MODAL
   modalFondo: {
     flex: 1,
@@ -509,5 +523,110 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 14,
     padding: 3,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainerM: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    width: '90%',
+    maxWidth: 600,
+    paddingBottom: 20,
+  },
+  headerM: {
+    flexDirection: 'row',
+    padding: 15,
+    backgroundColor: '#00B8A9',
+    alignItems: 'center',
+    borderRadius: 12,
+    justifyContent: 'space-between',
+  },
+  title: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  cerrarBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  cerrarTexto: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+ 
+  contentContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 10, 
+  },
+  infoRow: {
+    marginBottom: 10,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 4,
+  },
+  value: {
+    fontSize: 16,
+    color: '#333',
+  },
+  descriptionText: {
+    lineHeight: 22,
+  },
+  calificarBtn: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  calificarTexto: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  botonCalificar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFA13C',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    alignSelf: 'center', 
+  },
+
+  textoBotonCalificar: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  fechaChipContainer: {
+    alignSelf: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginVertical: 8,
+    backgroundColor: '#E0F7FA', // color base del chip
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3, // para Android
+    borderWidth: 1,
+    borderColor: '#B2EBF2', // borde sutil
+  },
+  fechaChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#00796B',
+    textAlign: 'center',
   },
 });
