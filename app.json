@@ -115,7 +115,9 @@
           "cameraPermission": "Permitir acceso a tu cámara para tomar fotos dentro de la aplicación."
         }
       ],
-      "expo-av"
+      "expo-av",
+      "expo-web-browser",
+      "expo-asset"
     ],
     "extra": {
       "eas": {
