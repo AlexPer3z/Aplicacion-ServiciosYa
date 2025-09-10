@@ -99,6 +99,15 @@ useEffect(() => {
   const iniciarPago = async () => {
   setLoading(true);
   try {
+    // 👉 obtener usuario logueado
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      Alert.alert("Error", "Debes iniciar sesión para realizar el pago.");
+      setLoading(false);
+      return;
+    }
+
+    // 👉 crear la preferencia en tu backend con userId
     const res = await fetch('https://backend-pagos.onrender.com/crear-pago-registro', {
       method: 'POST',
       headers: {
@@ -107,8 +116,8 @@ useEffect(() => {
       },
       body: JSON.stringify({
         descripcion: 'Pago único de registro de cuenta',
-        monto: 1000,
-        email: 'usuario@ejemplo.com',
+        monto: 1500,
+        userId: user.id,   // 🔹 clave para el webhook
       }),
     });
 
@@ -120,10 +129,12 @@ useEffect(() => {
       Alert.alert('Error', data.error || 'No se pudo generar el link de pago.');
     }
   } catch (error) {
+    console.error("❌ Error en iniciarPago:", error);
     Alert.alert('Error de conexión', 'No se pudo conectar con el servidor.');
   }
   setLoading(false);
 };
+
 
 
 

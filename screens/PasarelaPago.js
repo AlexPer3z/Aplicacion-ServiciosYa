@@ -86,26 +86,40 @@ export default function PasarelaPago() {
   }, [urlPago]);
 
   const iniciarPago = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('https://backend-pagos.onrender.com/crear-preferencia', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ motivo: "cargar_credito" }), // ahora sin categoría
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.init_point) {
-        setUrlPago(data.init_point);
-      } else {
-        Alert.alert('Error', data.error || 'No se pudo generar el link de pago.');
-      }
-    } catch (error) {
-      Alert.alert('Error de conexión', 'No se pudo conectar con el servidor.');
+  setLoading(true);
+  try {
+    // 👉 Obtener el usuario autenticado
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData?.user) {
+      Alert.alert("Error", "No se pudo identificar al usuario.");
+      setLoading(false);
+      return;
     }
-    setLoading(false);
-  };
+
+    const userId = authData.user.id;
+
+    // 👉 Enviar userId al backend
+    const res = await fetch('https://backend-pagos.onrender.com/crear-preferencia', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        motivo: "cargar_credito",
+        userId: userId,   // 🔹 lo enviamos en el body
+      }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.init_point) {
+      setUrlPago(data.init_point);
+    } else {
+      Alert.alert('Error', data.error || 'No se pudo generar el link de pago.');
+    }
+  } catch (error) {
+    Alert.alert('Error de conexión', 'No se pudo conectar con el servidor.');
+  }
+  setLoading(false);
+};
 
   useEffect(() => {
     const verificarSuscripcion = async () => {

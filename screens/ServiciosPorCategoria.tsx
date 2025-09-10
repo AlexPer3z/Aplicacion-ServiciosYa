@@ -147,20 +147,21 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
     return false;
   }
 
-  if ((creditos ?? 0) <= 0) {
-    Alert.alert(
-      "Sin créditos",
-      "No tenés créditos disponibles. Vas a ser redirigido para comprar uno.",
-      [
-        {
-          text: "Comprar crédito",
-          onPress: () => navigation.navigate("PasarelaPago"),
-        },
-        { text: "Cancelar", style: "cancel" },
-      ]
-    );
-    return false;
-  }
+  if (!suscriptor && (creditos ?? 0) <= 0) {
+  Alert.alert(
+    "Sin créditos",
+    "No tenés créditos disponibles. Vas a ser redirigido para comprar uno.",
+    [
+      {
+        text: "Comprar crédito",
+        onPress: () => navigation.navigate("PasarelaPago"),
+      },
+      { text: "Cancelar", style: "cancel" },
+    ]
+  );
+  return false;
+}
+
 
   const nuevosContratados = [...serviciosContratados, servicioId];
   setServiciosContratados(nuevosContratados);
@@ -216,17 +217,20 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
       servicio_id: `${servicioSeleccionado?.id}`
     });
 
-    // Descontar crédito
-    const { error: updateError } = await supabase
-      .from("usuarios")
-      .update({ creditos: (creditos ?? 1) - 1 })
-      .eq("id", user.id);
+    // Descontar crédito SOLO si no es suscriptor
+if (!suscriptor) {
+  const { error: updateError } = await supabase
+    .from("usuarios")
+    .update({ creditos: (creditos ?? 1) - 1 })
+    .eq("id", user.id);
 
-    if (updateError) {
-      throw new Error("Error al descontar crédito.");
-    }
+  if (updateError) {
+    throw new Error("Error al descontar crédito.");
+  }
 
-    setCreditos((prev) => (prev ?? 1) - 1);
+  setCreditos((prev) => (prev ?? 1) - 1);
+}
+
 
     // Intentar enviar notificación push pero sin que afecte el flujo si falla
     try {
@@ -360,8 +364,9 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
 </TouchableOpacity>
 {creditos !== null && (
   <Text style={styles.modalTextoCreditos}>
-    Créditos disponibles: {creditos}
-  </Text>
+  {suscriptor ? "Suscripción activada" : `Créditos disponibles: ${creditos ?? 0}`}
+</Text>
+
 )}
                     
                     <TouchableOpacity

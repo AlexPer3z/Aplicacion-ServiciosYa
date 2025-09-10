@@ -60,7 +60,7 @@
       <true/>
     </dict>
     <key>NSCameraUsageDescription</key>
-    <string>Permitir acceso a tu cámara para tomar fotos dentro de la aplicación.</string>
+<string>Esta app necesita acceder a tu cámara exclusivamente para tomar una foto de tu cara y usarla como foto de perfil dentro de la aplicación.</string>
     <key>NSFaceIDUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to use Face ID</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>

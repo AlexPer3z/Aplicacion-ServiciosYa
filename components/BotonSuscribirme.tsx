@@ -6,6 +6,7 @@ const BACKEND_URL = 'https://backend-pagos.onrender.com'; // Cambiá por tu back
 
 export default function BotonSuscribirme() {
   const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -15,28 +16,30 @@ export default function BotonSuscribirme() {
         error,
       } = await supabase.auth.getUser();
 
-      if (error) {
-        console.error('Error obteniendo usuario:', error.message);
+      if (error || !user) {
+        console.error('Error obteniendo usuario:', error?.message);
         Alert.alert('Error', 'No se pudo obtener la información del usuario.');
         return;
       }
-      if (user?.email) setEmail(user.email);
-      else Alert.alert('Error', 'No se encontró el email del usuario.');
+
+      setUserId(user.id);
+      setEmail(user.email ?? null);
     }
     fetchUser();
   }, []);
 
   const manejarSuscripcion = async () => {
-    if (!email) {
-      Alert.alert('Error', 'No se encontró tu email. Por favor inicia sesión nuevamente.');
+    if (!userId) {
+      Alert.alert('Error', 'No se encontró tu sesión. Por favor inicia sesión nuevamente.');
       return;
     }
+
     setLoading(true);
     try {
       const res = await fetch(`${BACKEND_URL}/crear-suscripcion`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ userId, email }), // 🔹 mandamos ambos
       });
 
       const data = await res.json();
