@@ -18,7 +18,7 @@
       "android",
       "web"
     ],
-    "version": "41.0.0",
+    "version": "43.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -57,7 +57,7 @@
       "appleTeamId": "HHY5MJ22J3"
     },
     "android": {
-      "versionCode": 41,
+      "versionCode": 43,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -112,7 +112,7 @@
         "expo-image-picker",
         {
           "photosPermission": "Permitir acceso a tu galería para subir imágenes en la aplicación.",
-          "cameraPermission": "Permitir acceso a tu cámara para tomar fotos dentro de la aplicación."
+          "cameraPermission": "Esta app necesita acceder a tu cámara exclusivamente para tomar una foto de tu cara y usarla como foto de perfil dentro de la aplicación."
         }
       ],
       "expo-av",
