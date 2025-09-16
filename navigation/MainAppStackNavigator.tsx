@@ -32,6 +32,7 @@ import RegistroTrabajador from "../screens/RegistroTrabajador";
 import PasarelaPagoWorker from '../screens/PasarelaPagoWorker';
 
 import InicioRouter from '../screens/InicioRouter'; 
+import WorkerProfile from "../components/workers/WorkerProfile";
 
 const withSafeArea = <P extends object>(Component: FC<P>) => {
   const WrappedComponent: FC<P> = (props: PropsWithChildren<P>) => (
@@ -113,6 +114,10 @@ export default function MainStackNavigator() {
       <Stack.Group screenOptions={{ presentation: "modal" }}>
         <Stack.Screen name="OnlineWorkers" component={OnlineWorkers} />
       </Stack.Group>
+      <Stack.Screen
+        name="WorkerProfile"
+        component={WorkerProfile}
+      />
     </Stack.Navigator>
   );
 }

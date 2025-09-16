@@ -23,15 +23,18 @@ export function useUser() {
 }
 
 export function useSuspenseProfile() {
-  const { data: profile } = useSuspenseQuery(perfilQueryOptions);
+  const { data: profile, refetch } = useSuspenseQuery(perfilQueryOptions);
   const askDniVerification = profile.perfil_completo && !profile.dni_verificado;
   const askProfileCompletion = !profile.perfil_completo;
   const isUserRestricted = askDniVerification || askProfileCompletion;
+  const isSuscriptor = profile.suscriptor ?? false;
 
   return {
     ...profile,
+    refetch,
     askDniVerification,
     askProfileCompletion,
     isUserRestricted,
+    isSuscriptor,
   };
 }

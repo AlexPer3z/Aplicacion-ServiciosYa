@@ -19,9 +19,8 @@ export default function SheetContainer({
   return (
     <BottomSheetView
       style={[
-        styles.sheetContainer,
         { paddingBottom: bottomNavBarHeight + 20 },
-        style,
+        {...styles.sheetContainer, ...style}
       ]}
     >
       {children}
