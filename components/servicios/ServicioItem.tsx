@@ -63,7 +63,14 @@ export default function ServicioItem({
             <Text style={[styles.categoryText, isOnline && onlineTextStyle]}>
               {servicio.categoria}
             </Text>
-            {/* The WorkerStatusBadge is a separate component and will retain its own styling */}
+
+            <Text
+              style={[styles.workerName, isOnline && onlineTextStyle]}
+              numberOfLines={1}
+            >
+              {servicio.nombre}
+            </Text>
+
             {workerStatus !== "OFFLINE" && (
               <WorkerStatusBadge status={workerStatus} />
             )}
@@ -103,29 +110,6 @@ export default function ServicioItem({
             </Text>
           </View>
         </View>
-        {/* 
-        <View style={styles.actionButtons}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.secondaryButton,
-              pressed && styles.secondaryButtonPressed,
-            ]}
-            onPress={() => alert(`Ver perfil de ${servicio.titulo}`)}
-          >
-            <Feather name="user" size={14} color={colors.primary} />
-          </Pressable>
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.primaryButton,
-              pressed && styles.primaryButtonPressed,
-            ]}
-            onPress={() => alert(`Contratar a ${servicio.titulo}`)}
-          >
-            <Feather name="message-circle" size={14} color="#fff" />
-            <Text style={styles.primaryButtonText}>Contactar</Text>
-          </Pressable>
-        </View> */}
       </View>
     </Pressable>
   );
@@ -160,8 +144,8 @@ const styles = StyleSheet.create({
   },
   metaRow: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   categoryText: {
     fontSize: 12,
@@ -263,5 +247,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: "#fff",
+  },
+  workerName: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '500',
+    flexShrink: 1,          // lets it truncate if needed
+    marginHorizontal: 6,
   },
 });

@@ -38,7 +38,7 @@ export const perfilQueryOptions = queryOptions({
     }
     const { data, error } = await supabase
       .from("usuarios")
-      .select("perfil_completo, dni_verificado, foto_perfil, rol, nombre, id")
+      .select("perfil_completo, dni_verificado, foto_perfil, rol, nombre, id, suscriptor, creditos")
       .eq("id", userId)
       .single();
 
@@ -137,3 +137,49 @@ export const locationIpInfoQueryOptions = queryOptions({
     return response.json();
   },
 });
+
+export const userServiceCountQueryOptions = (id: string) => queryOptions({
+  queryKey: ['user', 'services', 'count', id],
+  queryFn: async () => {
+    const { count, error } = await supabase
+      .from('servicios')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', id);
+
+    if (error) {
+      throw error;
+    }
+    return count ?? 0;
+  },
+});
+
+export const userServiceListQueryOptions = (id: string) => queryOptions({
+  queryKey: ['user', 'services', 'list', id],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('servicios')
+      .select('*')
+      .eq('user_id', id);
+
+    if (error) {
+      throw error;
+    }
+    return data ?? [];
+  },
+});
+
+export const userCreditQueryOptions = (id: string) => queryOptions({
+  queryKey: ['user', 'credit', id],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('usuarios')
+      .select('creditos')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+    return data?.creditos ?? 0;
+  },
+}); 

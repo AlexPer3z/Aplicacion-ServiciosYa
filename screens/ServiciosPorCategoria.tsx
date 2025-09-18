@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  Pressable,
   View,
   Text,
   StyleSheet,
@@ -11,8 +10,6 @@ import {
   FlatList,
 } from "react-native";
 import { supabase } from "../lib/supabase";
-import NavInferior from "../components/NavInferior";
-import { Ionicons } from "@expo/vector-icons";
 import ReportServiceModal from "../components/servicios/ReporteModal";
 import {
   SafeAreaView,
@@ -30,6 +27,10 @@ import ServicioItem from "../components/servicios/ServicioItem";
 import EmptyListComponent from "../components/EmptyListComponent";
 import BottomNavBar from "../components/home/BottomNavBar";
 import BotonVolver from '../components/BotonVolver';
+import { useBottomSheetModal } from "../lib/hooks/useBottomSheetModal";
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import ServicioSheetView from "../components/servicios/ServicioSheetView";
+import { withModalProvider } from "../components/sheet/withModalProvider";
 const screenHeight = Dimensions.get("window").height;
 
 type Props = NativeStackScreenProps<
@@ -42,18 +43,18 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
 
   // Lista de categorías sensibles
   const categoriasSensibles = [
-  "Cuidado de niños",
-  "Cuidado de adultos mayores",
-  "Enfermero",
-  "Psicólogo",
-  "Kinesiólogo",
-  "Nutricionista",
-  "Masajista",
-  "Terapista ocupacional",
-  "Profesor de yoga",
-  "Animador infantil",
-  "Maquillador profesional",
-];
+    "Cuidado de niños",
+    "Cuidado de adultos mayores",
+    "Enfermero",
+    "Psicólogo",
+    "Kinesiólogo",
+    "Nutricionista",
+    "Masajista",
+    "Terapista ocupacional",
+    "Profesor de yoga",
+    "Animador infantil",
+    "Maquillador profesional",
+  ];
 
   // Mostrar alerta si la categoría es sensible
   useEffect(() => {
@@ -77,57 +78,60 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
   const [userRole, setUserRole] = useState<string | null>(null); // <-- Estado para el rol del usuario
   const insets = useSafeAreaInsets();
   const [creditos, setCreditos] = useState<number | null>(null);
+  const { present, dismiss, modalProps } = useBottomSheetModal({
+    snapPoints: ["90%"],
+  });
 
   useEffect(() => {
-  const verificarSuscripcion = async () => {
-    if (!user) return;
-    const { data, error } = await supabase
-      .from("usuarios")
-      .select("suscriptor")
-      .eq("id", user.id)
-      .single();
+    const verificarSuscripcion = async () => {
+      if (!user) return;
+      const { data, error } = await supabase
+        .from("usuarios")
+        .select("suscriptor")
+        .eq("id", user.id)
+        .single();
 
-    if (!error && data?.suscriptor === true) {
-      setSuscriptor(true);
-    } else {
-      setSuscriptor(false);
-    }
-  };
+      if (!error && data?.suscriptor === true) {
+        setSuscriptor(true);
+      } else {
+        setSuscriptor(false);
+      }
+    };
 
-  const fetchUserRole = async () => {
-    if (!user) return;
-    const { data, error } = await supabase
-      .from("usuarios")
-      .select("rol")
-      .eq("id", user.id)
-      .single();
+    const fetchUserRole = async () => {
+      if (!user) return;
+      const { data, error } = await supabase
+        .from("usuarios")
+        .select("rol")
+        .eq("id", user.id)
+        .single();
 
-    if (error) {
-      console.error("Error obteniendo rol:", error);
-      setUserRole(null);
-    } else {
-      setUserRole(data?.rol ?? null);
-    }
-  };
+      if (error) {
+        console.error("Error obteniendo rol:", error);
+        setUserRole(null);
+      } else {
+        setUserRole(data?.rol ?? null);
+      }
+    };
 
-  // Defino fetchCreditos aquí, fuera de fetchUserRole
-  const fetchCreditos = async () => {
-    if (!user) return;
-    const { data, error } = await supabase
-      .from("usuarios")
-      .select("creditos")
-      .eq("id", user.id)
-      .single();
+    // Defino fetchCreditos aquí, fuera de fetchUserRole
+    const fetchCreditos = async () => {
+      if (!user) return;
+      const { data, error } = await supabase
+        .from("usuarios")
+        .select("creditos")
+        .eq("id", user.id)
+        .single();
 
-    if (!error && data?.creditos !== undefined) {
-      setCreditos(data.creditos);
-    }
-  };
+      if (!error && data?.creditos !== undefined) {
+        setCreditos(data.creditos);
+      }
+    };
 
-  verificarSuscripcion();
-  fetchUserRole();
-  fetchCreditos();
-}, [user]);
+    verificarSuscripcion();
+    fetchUserRole();
+    fetchCreditos();
+  }, [user]);
 
 
   // Estado para servicios contratados (array de IDs)
@@ -137,15 +141,15 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
 
   // Función para controlar la contratación con límite y sin repetidos
   const handleContratarServicio = (servicioId: string) => {
-  if (serviciosContratados.includes(servicioId)) {
-    Alert.alert("Ya contratado", "Este servicio ya fue contratado.");
-    return false;
-  }
+    if (serviciosContratados.includes(servicioId)) {
+      Alert.alert("Ya contratado", "Este servicio ya fue contratado.");
+      return false;
+    }
 
-  if (userRole === "guest") {
-    Alert.alert("Acceso denegado", "Los usuarios invitados no pueden contratar servicios.");
-    return false;
-  }
+    if (userRole === "guest") {
+      Alert.alert("Acceso denegado", "Los usuarios invitados no pueden contratar servicios.");
+      return false;
+    }
 
   if (!suscriptor && (creditos ?? 0) <= 0) {
   Alert.alert(
@@ -163,15 +167,16 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
 }
 
 
-  const nuevosContratados = [...serviciosContratados, servicioId];
-  setServiciosContratados(nuevosContratados);
-  return true;
-};
+    const nuevosContratados = [...serviciosContratados, servicioId];
+    setServiciosContratados(nuevosContratados);
+    return true;
+  };
 
 
   const abrirModal = (servicio: Servicio) => {
     setServicioSeleccionado(servicio);
-    setModalVisible(true);
+    present();
+    // setModalVisible(true);
   };
 
   const cerrarModal = () => {
@@ -180,42 +185,42 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
   };
 
   const contratarServicio = async () => {
-  cerrarModal();
+    cerrarModal();
 
-  if (!servicioSeleccionado) {
-    setMensajeModal("❌ No hay servicio seleccionado.");
-    setConfirmacionVisible(true);
-    return;
-  }
-
-  // Validar contratación
-  const permitido = handleContratarServicio(servicioSeleccionado.id);
-  if (!permitido) return;
-
-  try {
-    if (!user) {
-      throw new Error("No se pudo obtener el usuario actual");
+    if (!servicioSeleccionado) {
+      setMensajeModal("❌ No hay servicio seleccionado.");
+      setConfirmacionVisible(true);
+      return;
     }
 
-    const compradorId = user.id;
-    const createdAt = new Date().toISOString();
-    const mensaje = `Un usuario ha solicitado tu servicio: ${servicioSeleccionado.titulo}`;
+    // Validar contratación
+    const permitido = handleContratarServicio(servicioSeleccionado.id);
+    if (!permitido) return;
 
-    await supabase.from("servicios_contratados").insert([
-      {
-        servicio_id: servicioSeleccionado.id,
-        contratante_id: compradorId,
-        contratado_id: servicioSeleccionado.user_id,
-      },
-    ]);
+    try {
+      if (!user) {
+        throw new Error("No se pudo obtener el usuario actual");
+      }
 
-    await supabase.from("notificaciones").insert({
-      receptor_id: servicioSeleccionado.user_id,
-      emisor_id: compradorId,
-      mensaje,
-      created_at: createdAt,
-      servicio_id: `${servicioSeleccionado?.id}`
-    });
+      const compradorId = user.id;
+      const createdAt = new Date().toISOString();
+      const mensaje = `Un usuario ha solicitado tu servicio: ${servicioSeleccionado.titulo}`;
+
+      await supabase.from("servicios_contratados").insert([
+        {
+          servicio_id: servicioSeleccionado.id,
+          contratante_id: compradorId,
+          contratado_id: servicioSeleccionado.user_id,
+        },
+      ]);
+
+      await supabase.from("notificaciones").insert({
+        receptor_id: servicioSeleccionado.user_id,
+        emisor_id: compradorId,
+        mensaje,
+        created_at: createdAt,
+        servicio_id: `${servicioSeleccionado?.id}`
+      });
 
     // Descontar crédito SOLO si no es suscriptor
 if (!suscriptor) {
@@ -232,43 +237,43 @@ if (!suscriptor) {
 }
 
 
-    // Intentar enviar notificación push pero sin que afecte el flujo si falla
-    try {
-      const { data: receptorUsuario } = await supabase
-        .from("usuarios")
-        .select("expo_token")
-        .eq("id", servicioSeleccionado.user_id)
-        .single();
+      // Intentar enviar notificación push pero sin que afecte el flujo si falla
+      try {
+        const { data: receptorUsuario } = await supabase
+          .from("usuarios")
+          .select("expo_token")
+          .eq("id", servicioSeleccionado.user_id)
+          .single();
 
-      if (receptorUsuario?.expo_token) {
-        await fetch("https://exp.host/--/api/v2/push/send", {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Accept-encoding": "gzip, deflate",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            to: receptorUsuario.expo_token,
-            sound: "default",
-            title: "¡Nueva solicitud!",
-            body: mensaje,
-          }),
-        });
+        if (receptorUsuario?.expo_token) {
+          await fetch("https://exp.host/--/api/v2/push/send", {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Accept-encoding": "gzip, deflate",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              to: receptorUsuario.expo_token,
+              sound: "default",
+              title: "¡Nueva solicitud!",
+              body: mensaje,
+            }),
+          });
+        }
+      } catch (pushError) {
+        console.log("Error enviando notificación push:", pushError.message || pushError);
+        // No mostramos alerta ni modal aquí para no molestar al usuario
       }
-    } catch (pushError) {
-      console.log("Error enviando notificación push:", pushError.message || pushError);
-      // No mostramos alerta ni modal aquí para no molestar al usuario
-    }
 
-    setMensajeModal("✅ Tu propuesta fue enviada.");
-    setConfirmacionVisible(true);
-  } catch (error: any) {
-    setMensajeModal("❌ Error al contratar el servicio.");
-    setConfirmacionVisible(true);
-    showToast.error("Contratar servicio", error.message || error.toString());
-  }
-};
+      setMensajeModal("✅ Tu propuesta fue enviada.");
+      setConfirmacionVisible(true);
+    } catch (error: any) {
+      setMensajeModal("❌ Error al contratar el servicio.");
+      setConfirmacionVisible(true);
+      showToast.error("Contratar servicio", error.message || error.toString());
+    }
+  };
 
 
   // Cerramos el modal actual y abrimos el reporte
@@ -277,6 +282,20 @@ if (!suscriptor) {
     setServicioSeleccionado(servicio);
     setReportVisible(true);
   };
+
+  const handleContratar = () => {
+    dismiss();
+    contratarServicio();
+  }
+
+  const handleReportar = () => {
+    dismiss();
+    servicioSeleccionado && handleReport(servicioSeleccionado);
+  }
+
+  if (!user) {
+    return <LoadingView />;
+  }
 
   if (isPending) {
     return <LoadingView />;
@@ -326,35 +345,35 @@ if (!suscriptor) {
           }}
         />
 
-          {/* MODAL DETALLE DEL SERVICIO */}
-          <Modal
-            visible={modalVisible}
-            animationType="slide"
-            transparent={true}
-            onRequestClose={cerrarModal}
-          >
-            <View style={styles.modalFondo}>
-              <View style={styles.modalContenido}>
-                {servicioSeleccionado && (
-                  <>
-                    <View style={styles.modalTituloContainer}>
-                      <Text style={styles.modalTitulo}>
-                        {servicioSeleccionado.titulo}
-                      </Text>
-                      
+        {/* MODAL DETALLE DEL SERVICIO */}
+        <Modal
+          visible={modalVisible}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={cerrarModal}
+        >
+          <View style={styles.modalFondo}>
+            <View style={styles.modalContenido}>
+              {servicioSeleccionado && (
+                <>
+                  <View style={styles.modalTituloContainer}>
+                    <Text style={styles.modalTitulo}>
+                      {servicioSeleccionado.titulo}
+                    </Text>
 
-                    </View>
-                    <Text style={styles.modalTexto}>
-                      Precio: {servicioSeleccionado.precio}
-                    </Text>
-                    
 
-                    <Text style={styles.modalTexto}>
-                      Horario: {servicioSeleccionado.horario}
-                    </Text>
-                    <Text style={styles.modalTexto}>
-                      Descripción: {servicioSeleccionado.descripcion}
-                    </Text>
+                  </View>
+                  <Text style={styles.modalTexto}>
+                    Precio: {servicioSeleccionado.precio}
+                  </Text>
+
+
+                  <Text style={styles.modalTexto}>
+                    Horario: {servicioSeleccionado.horario}
+                  </Text>
+                  <Text style={styles.modalTexto}>
+                    Descripción: {servicioSeleccionado.descripcion}
+                  </Text>
 
                     <TouchableOpacity
   style={styles.botonContratar}
@@ -386,55 +405,55 @@ if (!suscriptor) {
         </Modal>
 
 
-          {/* MODAL DE CONFIRMACIÓN */}
-          <Modal
-  visible={confirmacionVisible}
-  animationType="fade"
-  transparent={true}
-  onRequestClose={() => setConfirmacionVisible(false)}
->
-  <View style={styles.modalFondo}>
-    <View style={styles.modalConfirmacion}>
-      <Text style={styles.mensajeConfirmacion}>{mensajeModal}</Text>
-
-      {mensajeModal === "✅ Tu propuesta fue enviada." && (
-        <>
-          <Text style={[styles.mensajeConfirmacion, { marginTop: 10 }]}>
-  Aún puedes contratar {(suscriptor ? 6 : 5) - serviciosContratados.length} servicios.
-</Text>
-
-          <View style={{ flexDirection: "column", marginTop: 20, justifyContent: "space-around" }}>
-            <TouchableOpacity
-              style={[styles.botonVolver, { backgroundColor: "#4caf50" }]}
-              onPress={() => setConfirmacionVisible(false)}
-            >
-              <Text style={styles.botonTexto}>Contratar otro</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.botonVolver}
-              onPress={() => {
-                setConfirmacionVisible(false);
-                navigation.navigate("Home");
-              }}
-            >
-              <Text style={styles.botonTexto}>Volver al inicio</Text>
-            </TouchableOpacity>
-          </View>
-        </>
-      )}
-
-      {mensajeModal !== "✅ Tu propuesta fue enviada." && (
-        <TouchableOpacity
-          style={styles.botonVolver}
-          onPress={() => setConfirmacionVisible(false)}
+        {/* MODAL DE CONFIRMACIÓN */}
+        <Modal
+          visible={confirmacionVisible}
+          animationType="fade"
+          transparent={true}
+          onRequestClose={() => setConfirmacionVisible(false)}
         >
-          <Text style={styles.botonTexto}>Cerrar</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  </View>
-</Modal>
+          <View style={styles.modalFondo}>
+            <View style={styles.modalConfirmacion}>
+              <Text style={styles.mensajeConfirmacion}>{mensajeModal}</Text>
+
+              {mensajeModal === "✅ Tu propuesta fue enviada." && (
+                <>
+                  <Text style={[styles.mensajeConfirmacion, { marginTop: 10 }]}>
+                    Aún puedes contratar {(suscriptor ? 6 : 5) - serviciosContratados.length} servicios.
+                  </Text>
+
+                  <View style={{ flexDirection: "column", marginTop: 20, justifyContent: "space-around" }}>
+                    <TouchableOpacity
+                      style={[styles.botonVolver, { backgroundColor: "#4caf50" }]}
+                      onPress={() => setConfirmacionVisible(false)}
+                    >
+                      <Text style={styles.botonTexto}>Contratar otro</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.botonVolver}
+                      onPress={() => {
+                        setConfirmacionVisible(false);
+                        navigation.navigate("Home");
+                      }}
+                    >
+                      <Text style={styles.botonTexto}>Volver al inicio</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+
+              {mensajeModal !== "✅ Tu propuesta fue enviada." && (
+                <TouchableOpacity
+                  style={styles.botonVolver}
+                  onPress={() => setConfirmacionVisible(false)}
+                >
+                  <Text style={styles.botonTexto}>Cerrar</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </Modal>
 
 
 
@@ -449,16 +468,19 @@ if (!suscriptor) {
         )}
       </View>
       <BottomNavBar />
+      <BottomSheetModal {...modalProps}>
+        {servicioSeleccionado && <ServicioSheetView servicio={servicioSeleccionado} onHire={() => handleContratar()} onCancel={() => dismiss()} onReport={() => handleReportar()} showProfile/>}
+      </BottomSheetModal>
     </SafeAreaView>
   );
 }
 
-export default withSuspense(ServiciosPorCategoria, <LoadingView />);
+export default withModalProvider(withSuspense(ServiciosPorCategoria, <LoadingView />));
 
 const styles = StyleSheet.create({
   container: {
     padding: 18,
-    
+
   },
   title: {
     fontSize: 27,
@@ -467,7 +489,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: "#19D4C6",
     letterSpacing: 0.5,
-    paddingTop:30,
+    paddingTop: 30,
   },
   noServicios: {
     fontSize: 17,
@@ -553,7 +575,7 @@ const styles = StyleSheet.create({
     color: "#090",
     margin: 6,
     lineHeight: 21,
-    textAlign:'center',
+    textAlign: 'center',
   },
   botonContratar: {
     marginTop: 22,
@@ -571,7 +593,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "bold",
     letterSpacing: 0.3,
-    width:100,
+    width: 100,
   },
   cancelar: {
     marginTop: 15,
@@ -622,21 +644,21 @@ const styles = StyleSheet.create({
   },
 
   botonReportar: {
-  backgroundColor: '#FF4C4C',
-  paddingVertical: 10,
-  paddingHorizontal: 50,
-  borderRadius: 20,
-  alignSelf: 'center',
-  marginHorizontal: 30,
-  marginTop:10,
-},
+    backgroundColor: '#FF4C4C',
+    paddingVertical: 10,
+    paddingHorizontal: 50,
+    borderRadius: 20,
+    alignSelf: 'center',
+    marginHorizontal: 30,
+    marginTop: 10,
+  },
 
-textoReportar: {
-  color: '#fff',
-  fontWeight: 'bold',
-  fontSize: 14,
-},
-separator: {
+  textoReportar: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  separator: {
     height: 8,
   },
   modalTituloContainer: {

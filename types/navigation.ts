@@ -1,5 +1,6 @@
 // types/navigation.ts (or add to your existing file)
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { UserProfile } from "../components/workers/WorkerProfile";
 
 export type MainStackParamList = {
   Home: undefined;
@@ -24,6 +25,7 @@ export type MainStackParamList = {
   PerfilPendienteDetalle: undefined;
   Maps: undefined;
   OnlineWorkers: undefined;
+  WorkerProfile: UserProfile;
 };
 
 export type AuthStackParamList = {

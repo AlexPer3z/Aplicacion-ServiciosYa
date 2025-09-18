@@ -63,7 +63,7 @@ export const useServicesByCategory = (categoria: string) => {
       const locationParams = getLocationParamsFromClient(client);
 
       const { data, error } = await supabase.rpc(
-        "get_servicios_with_worker_status",
+        "test_get_servicios_with_worker_status",
         { ...locationParams, p_categoria: categoria },
       );
       if (error) {
