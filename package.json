@@ -70,7 +70,9 @@
     "expo-application": "~6.1.5",
     "expo-web-browser": "~14.2.0",
     "@expo/vector-icons": "^14.1.0",
-    "expo-asset": "~11.1.7"
+    "expo-asset": "~11.1.7",
+    "undefined": "expo-auth-session/providers/google"
+    
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

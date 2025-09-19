@@ -6,7 +6,7 @@ interface CategoryIconProps {
   categoria: string;
 }
 
-const CategoryIcon = ({ categoria }: CategoryIconProps) => {
+export const CategoryIcon = ({ categoria }: CategoryIconProps) => {
   const icono = iconosCategoria[categoria];
   return icono ? <Image source={icono} style={styles.iconImage} /> : null;
 };

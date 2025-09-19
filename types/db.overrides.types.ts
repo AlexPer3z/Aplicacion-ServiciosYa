@@ -15,6 +15,9 @@ export type Database = MergeDeep<
         get_servicios_with_worker_status: {
           Args: LocationParams & CategoriaQueryParams;
         };
+        test_get_servicios_with_worker_status: {
+          Args: LocationParams & CategoriaQueryParams;
+        };
         count_services_by_status_in_radius: {
           Args: LocationParams & CategoriaQueryParams & WorkerStatusQueryParams;
         };

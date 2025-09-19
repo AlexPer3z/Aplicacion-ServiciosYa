@@ -22,3 +22,6 @@ export function isUser(role: Roles): boolean {
 export function isAdmin(role: Roles): boolean {
   return role === "admin";
 }
+export function isGuest(role: Roles): boolean {
+  return role === "guest";
+}

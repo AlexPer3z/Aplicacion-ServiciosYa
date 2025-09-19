@@ -7,6 +7,7 @@ import {
   type StyleProp,
   type ViewStyle,
   type TextStyle,
+  type GestureResponderEvent,
 } from "react-native";
 
 export interface GenericButtonProps
@@ -24,13 +25,22 @@ export const GenericButton: React.FC<GenericButtonProps> = ({
   disabled = false,
   style,
   textStyle,
+  onPress,
   ...rest
 }) => {
   const isDisabled = disabled || loading;
 
+  const handlePress = (event: GestureResponderEvent) => {
+    if (loading) {
+      return;
+    }
+    onPress?.(event);
+  };
+
   return (
     <Pressable
       {...rest}
+      onPress={handlePress}
       disabled={isDisabled}
       style={({ pressed }) => [
         styles.button,
