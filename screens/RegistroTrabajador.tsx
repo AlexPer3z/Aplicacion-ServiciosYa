@@ -53,6 +53,7 @@ export default function RegistroTrabajador() {
 
    // Estado para saber si está en Bolivia
   const [isBolivia, setIsBolivia] = useState(false);
+  const [loadingPais, setLoadingPais] = useState(true);
 
 
   // Paso 2
@@ -61,6 +62,8 @@ export default function RegistroTrabajador() {
   const [numeroDni, setNumeroDni] = useState("");
   const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
   const [fotoDniPerfil, setFotoDniPerfil] = useState<string | null>(null);
+const [numeroCi, setNumeroCi] = useState("");     // CI para Bolivia
+
 
   // Paso 3
   const [experiencia, setExperiencia] = useState("");
@@ -116,26 +119,29 @@ export default function RegistroTrabajador() {
     }
 
     if (step === 2) {
-      if (!numeroDni.trim() || !direccionDni.trim() || !fechaNacimiento.trim()) {
-  Alert.alert("Faltan datos", "Debes completar todos los campos del paso 2.");
-  return;
+  const documento = isBolivia ? numeroCi : numeroDni;
+
+  if (!documento.trim() || !direccionDni.trim() || !fechaNacimiento.trim()) {
+    Alert.alert("Faltan datos", "Debes completar todos los campos del paso 2.");
+    return;
+  }
+
+  if (!/^\d{7,8}$/.test(documento)) {
+    Alert.alert("Documento inválido", "Debe ser un número válido.");
+    return;
+  }
+
+  if (!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(fechaNacimiento)) {
+    Alert.alert("Fecha inválida", "Usá el formato DD/MM/AAAA.");
+    return;
+  }
+
+  if (isBolivia && !fotoDniPerfil) {
+    Alert.alert("Falta foto", "Debes subir la selfie con CI porque estás en Bolivia.");
+    return;
+  }
 }
 
-if (isBolivia && !fotoDniPerfil) {
-  Alert.alert("Falta foto", "Debes subir la selfie con DNI porque estás en Bolivia.");
-  return;
-}
-
-      if (!/^\d{7,8}$/.test(numeroDni)) {
-        Alert.alert("DNI inválido", "Debe ser un número de DNI válido.");
-        return;
-      }
-      if (!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(fechaNacimiento)) {
-        Alert.alert("Fecha inválida", "Usá el formato DD/MM/AAAA.");
-        return;
-      }
-
-    }
 
 
     if (step === 4) {
@@ -202,7 +208,8 @@ if (isBolivia && !fotoDniPerfil) {
               edad: parseInt(edad),
               sexo,
               celular: numeroCelular,
-              dni: numeroDni,
+              dni: !isBolivia ? numeroDni : null,
+              ci: isBolivia ? numeroCi : null,
               domicilio: direccionDni,
               fecha_nacimiento: fechaNacimiento,
               foto_perfil: urlFotoPerfil,
@@ -281,27 +288,36 @@ if (isBolivia && !fotoDniPerfil) {
 
 
   useEffect(() => {
-    const verificarPais = async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        console.log("Permiso de ubicación denegado");
-        return;
-      }
+  const verificarPais = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      console.log("Permiso de ubicación denegado");
+      setLoadingPais(false);
+      return;
+    }
 
-      const location = await Location.getCurrentPositionAsync({});
-      const [address] = await Location.reverseGeocodeAsync(location.coords);
+    const location = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Highest,
+      maximumAge: 1000,
+      timeout: 5000,
+    });
 
-      if (address?.isoCountryCode === "BO") {
-        setIsBolivia(true);
-        console.log("Estás en Bolivia 🇧🇴");
-      } else {
-        setIsBolivia(false);
-        console.log("Estás fuera de Bolivia");
-      }
-    };
+    const [address] = await Location.reverseGeocodeAsync(location.coords);
 
-    verificarPais();
-  }, []);
+    if (address?.isoCountryCode?.toUpperCase() === "BO") {
+      setIsBolivia(true);
+      console.log("Estás en Bolivia 🇧🇴");
+    } else {
+      setIsBolivia(false);
+      console.log("Estás fuera de Bolivia");
+    }
+
+    setLoadingPais(false); // ✅ terminó de cargar
+  };
+
+  verificarPais();
+}, []);
+
 
 
   return (
@@ -393,76 +409,97 @@ if (isBolivia && !fotoDniPerfil) {
 
             {step === 2 && (
   <>
-    <TextInput
-      placeholder="Número de DNI"
-      placeholderTextColor="#4e827d"
-      value={numeroDni}
-      onChangeText={setNumeroDni}
-      keyboardType="numeric"
-      style={styles.input}
-    />
-    <TextInput
-      placeholder="Dirección (como figura en el DNI)"
-      placeholderTextColor="#4e827d"
-      value={direccionDni}
-      onChangeText={setDireccionDni}
-      style={styles.input}
-    />
-    <TextInput
-      placeholder="Fecha de nacimiento (DD/MM/AAAA)"
-      placeholderTextColor="#4e827d"
-      value={fechaNacimiento}
-      onChangeText={setFechaNacimiento}
-      style={styles.input}
-    />
-
-    {/* Campo foto DNI SOLO si estás en Bolivia */}
-    {isBolivia && (
-      <View style={styles.fotoWrapper}>
-        <Text style={styles.label}>Foto de perfil con DNI</Text>
-        <Text style={styles.label}>*Selfie del usuario sosteniendo el DNI</Text>
-        {fotoDniPerfil ? (
-          <Image source={{ uri: fotoDniPerfil }} style={styles.foto} />
+    {loadingPais ? (
+      <View style={{ alignItems: 'center', marginTop: 20 }}>
+        <ActivityIndicator size="large" color="#4A7C84" />
+        <Text style={{ color: '#4A7C84', marginTop: 10 }}>Detectando país...</Text>
+      </View>
+    ) : (
+      <>
+        {!isBolivia ? (
+          <TextInput
+            placeholder="Número de DNI"
+            placeholderTextColor="#4e827d"
+            value={numeroDni}
+            onChangeText={setNumeroDni}
+            keyboardType="numeric"
+            style={styles.input}
+          />
         ) : (
-          <View style={[styles.foto, styles.fotoPlaceholder2]}>
-            <Image 
-              source={require('../assets/fotoperfildni.png')} 
-              style={styles.fotoEjemplo}
-            />
-            <View style={styles.textoSuperpuesto}>
-              <Text style={{ color: "#fff", backgroundColor: "rgba(0,0,0,0.5)", padding: 5 }}>
-                *Foto selfie del usuario con DNI
-              </Text>
-            </View>
+          <TextInput
+            placeholder="Número de CI"
+            placeholderTextColor="#4e827d"
+            value={numeroCi}
+            onChangeText={setNumeroCi}
+            keyboardType="numeric"
+            style={styles.input}
+          />
+        )}
+
+        <TextInput
+          placeholder="Dirección (como figura en el documento)"
+          placeholderTextColor="#4e827d"
+          value={direccionDni}
+          onChangeText={setDireccionDni}
+          style={styles.input}
+        />
+        <TextInput
+          placeholder="Fecha de nacimiento (DD/MM/AAAA)"
+          placeholderTextColor="#4e827d"
+          value={fechaNacimiento}
+          onChangeText={setFechaNacimiento}
+          style={styles.input}
+        />
+
+        {/* Foto DNI solo si estás en Bolivia */}
+        {isBolivia && (
+          <View style={styles.fotoWrapper}>
+            <Text style={styles.label}>Foto de perfil con CI</Text>
+            <Text style={styles.label}>*Selfie del usuario sosteniendo el CI</Text>
+            {fotoDniPerfil ? (
+              <Image source={{ uri: fotoDniPerfil }} style={styles.foto} />
+            ) : (
+              <View style={[styles.foto, styles.fotoPlaceholder2]}>
+                <Image 
+                  source={require('../assets/fotoperfildni.png')} 
+                  style={styles.fotoEjemplo}
+                />
+                <View style={styles.textoSuperpuesto}>
+                  <Text style={{ color: "#fff", backgroundColor: "rgba(0,0,0,0.5)", padding: 5 }}>
+                    *Foto selfie del usuario con CI
+                  </Text>
+                </View>
+              </View>
+            )}
+            <TouchableOpacity
+              style={styles.botonFoto}
+              onPress={() => pedirFoto(setFotoDniPerfil)}
+            >
+              <Text style={styles.botonFotoTexto}>Tomar foto</Text>
+            </TouchableOpacity>
           </View>
         )}
-        <TouchableOpacity
-          style={styles.botonFoto}
-          onPress={() => pedirFoto(setFotoDniPerfil)}
-        >
-          <Text style={styles.botonFotoTexto}>Tomar foto</Text>
-        </TouchableOpacity>
-      </View>
-    )}
 
-    {/* Foto de perfil (siempre obligatoria) */}
-    <View style={styles.fotoWrapper}>
-      <Text style={styles.label}>Foto de perfil</Text>
-      <Text style={styles.label}>*Selfie del usuario</Text>
-      {fotoPerfil ? (
-        <Image source={{ uri: fotoPerfil }} style={styles.foto} />
-      ) : (
-        <View style={[styles.foto, styles.fotoPlaceholder]}>
-          <Text style={{ color: "#999" }}>*Foto selfie del usuario</Text>
+        {/* Foto de perfil siempre */}
+        <View style={styles.fotoWrapper}>
+          <Text style={styles.label}>Foto de perfil</Text>
+          <Text style={styles.label}>*Selfie del usuario</Text>
+          {fotoPerfil ? (
+            <Image source={{ uri: fotoPerfil }} style={styles.foto} />
+          ) : (
+            <View style={[styles.foto, styles.fotoPlaceholder]}>
+              <Text style={{ color: "#999" }}>*Foto selfie del usuario</Text>
+            </View>
+          )}
+          <TouchableOpacity
+            style={styles.botonFoto}
+            onPress={() => pedirFoto(setFotoPerfil)}
+          >
+            <Text style={styles.botonFotoTexto}>Tomar foto</Text>
+          </TouchableOpacity>
         </View>
-      )}
-      <TouchableOpacity
-        style={styles.botonFoto}
-        onPress={() => pedirFoto(setFotoPerfil)}
-      >
-        <Text style={styles.botonFotoTexto}>Tomar foto</Text>
-      </TouchableOpacity>
-    </View>
+      </>
+    )}
   </>
 )}
 

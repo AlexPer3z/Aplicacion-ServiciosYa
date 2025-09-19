@@ -6,6 +6,36 @@ import { supabase } from '../lib/supabase';
 import BotonSuscribirme from '../components/BotonSuscribirme';
 import BotonVolver from '../components/BotonVolver';
 
+import * as Location from "expo-location";
+
+async function detectarPais(): Promise<string | null> {
+  try {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") return null;
+
+    const location = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Highest,
+    });
+    console.log("📍 Ubicación:", location.coords);
+
+    const geocode = await Location.reverseGeocodeAsync(location.coords);
+
+    if (geocode.length > 0) {
+      console.log("🌎 País detectado:", geocode[0].country, geocode[0].isoCountryCode);
+      return geocode[0].isoCountryCode; // "BO", "AR", etc.
+    }
+
+    return null;
+  } catch (err) {
+    console.error("❌ Error detectando país:", err);
+    return null;
+  }
+}
+
+
+
+
+
 export default function PasarelaPago() {
   const navigation = useNavigation();
 
@@ -13,6 +43,20 @@ export default function PasarelaPago() {
   const [loading, setLoading] = useState(false);
   const [suscriptor, setsuscriptor] = useState(false);
   const [verificando, setVerificando] = useState(true);
+  const [pais, setPais] = useState(null);
+
+useEffect(() => {
+  // ⚠️ Para debug: forzar Bolivia
+  //setPais("Bolivia");
+
+  // 👉 En producción usar la API real
+  detectarPais().then((paisDetectado) => {
+    setPais(paisDetectado);
+    console.log("El país actual es:", paisDetectado);
+  });
+}, []);
+
+
 
   useEffect(() => {
     const handleDeepLink = async ({ url }) => {
@@ -88,35 +132,52 @@ export default function PasarelaPago() {
   const iniciarPago = async () => {
   setLoading(true);
   try {
-    // 👉 Obtener el usuario autenticado
     const { data: authData, error: authError } = await supabase.auth.getUser();
-    if (authError || !authData?.user) {
-      Alert.alert("Error", "No se pudo identificar al usuario.");
-      setLoading(false);
-      return;
-    }
+if (authError || !authData?.user) {
+  Alert.alert("Error", "No se pudo identificar al usuario.");
+  setLoading(false);
+  return;
+}
 
-    const userId = authData.user.id;
+const userId = authData.user.id;
+const email = authData.user.email; // 👈 extraer email también
+let endpoint = "";
+let body = {};
 
-    // 👉 Enviar userId al backend
-    const res = await fetch('https://backend-pagos.onrender.com/crear-preferencia', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        motivo: "cargar_credito",
-        userId: userId,   // 🔹 lo enviamos en el body
-      }),
+if (pais === "BO") {
+  endpoint = "https://backend-pagos.onrender.com/crear-pago-libelula";
+  body = {
+    motivo: "cargar_credito",
+    userId,
+    email,        // 👈 agregado
+    monto: 10,    // Bs
+  };
+} else {
+  endpoint = "https://backend-pagos.onrender.com/crear-preferencia";
+  body = {
+    motivo: "cargar_credito",
+    userId,
+    monto: 1000,
+  };
+}
+
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
 
     const data = await res.json();
 
-    if (res.ok && data.init_point) {
-      setUrlPago(data.init_point);
+    const url = data.url || data.init_point || data.url_pasarela_pagos;
+    if (res.ok && url) {
+      setUrlPago(url);
     } else {
-      Alert.alert('Error', data.error || 'No se pudo generar el link de pago.');
+      Alert.alert("Error", data.error || "No se pudo generar el link de pago.");
     }
   } catch (error) {
-    Alert.alert('Error de conexión', 'No se pudo conectar con el servidor.');
+    Alert.alert("Error de conexión", "No se pudo conectar con el servidor.");
   }
   setLoading(false);
 };
@@ -158,8 +219,10 @@ export default function PasarelaPago() {
     <View style={styles.container}>
       <BotonVolver />
       <Text style={styles.mensaje}>
-        Para cargar créditos a tu cuenta, realiza un pago único de $1.000 pesos argentinos.
-      </Text>
+  Para cargar créditos a tu cuenta, realiza un pago único de{" "}
+  {pais === "BO" ? "10 bs" : "$1.000 pesos Argentinos"}.
+</Text>
+
 
       {loading || verificando ? (
         <ActivityIndicator size="large" color="#27ae60" />
@@ -172,12 +235,16 @@ export default function PasarelaPago() {
         </TouchableOpacity>
       ) : (
         <>
-          <TouchableOpacity style={styles.boton} onPress={iniciarPago}>
-            <Text style={styles.textoBoton}>Cargar crédito ($1.000)</Text>
-          </TouchableOpacity>
+  <TouchableOpacity style={styles.boton} onPress={iniciarPago}>
+    <Text style={styles.textoBoton}>
+      Cargar crédito ({pais === "BO" ? "10 bs" : "$1.000"})
+    </Text>
+  </TouchableOpacity>
 
-          <BotonSuscribirme />
-        </>
+  {/* 👇 Ocultamos el botón si está en Bolivia */}
+  {pais !== "BO" && <BotonSuscribirme />}
+</>
+
       )}
     </View>
   );
@@ -215,7 +282,7 @@ const styles = StyleSheet.create({
   },
   textoBoton: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '900',
     letterSpacing: 1,
   },
