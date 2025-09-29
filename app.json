@@ -18,7 +18,7 @@
       "android",
       "web"
     ],
-    "version": "47.0.0",
+    "version": "51.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -57,7 +57,7 @@
       "appleTeamId": "HHY5MJ22J3"
     },
     "android": {
-      "versionCode": 47,
+      "versionCode": 51,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"

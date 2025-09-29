@@ -60,7 +60,7 @@ export const useServicesByCategory = (categoria: string) => {
   return useSuspenseQuery({
     queryKey: ["user", "services", categoria],
     queryFn: async ({ client }) => {
-      const locationParams = getLocationParamsFromClient(client);
+      const locationParams = await getLocationParamsFromClient(client);
 
       const { data, error } = await supabase.rpc(
         "test_get_servicios_with_worker_status",
@@ -96,7 +96,8 @@ export function useServicesCount() {
   const servicios = useSuspenseQuery({
     queryKey: servicesCountQuerKey,
     queryFn: async ({ client }) => {
-      const location = getLocationParamsFromClient(client);
+      const location = await getLocationParamsFromClient(client);
+
       const OnlyOnlineWorkers = (await client.ensureQueryData(settingsQuery))
         .OnlyOnlineWorkers;
       const worker_status_filter: WorkerStatus[] | null =
