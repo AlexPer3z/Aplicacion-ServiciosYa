@@ -4,6 +4,7 @@ import React, {
   useCallback,
   useEffect,
   Suspense,
+  useRef,
 } from "react";
 import {
   View,
@@ -13,6 +14,7 @@ import {
   Alert,
   Animated,
   TouchableWithoutFeedback,
+  
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native"; 
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -50,7 +52,7 @@ function Home({ navigation }: Props) {
   const [showCountsOnly, setShowCountsOnly] = useState(false);
   const [chatVisible, setChatVisible] = useState(false);
   const [videoVisible, setVideoVisible] = useState(false);
-
+  const onboardingShown = useRef(false);
   // Custom Hooks
   const { startOnboarding } = useOnboarding();
   const { settings, updateSettings } = useUserSettings();
@@ -116,18 +118,22 @@ function Home({ navigation }: Props) {
   }, []);*/
 
   // Onboarding
-  useFocusEffect(
-    useCallback(() => {
-      if (settings && !settings.onBoardingComplete) {
-        startOnboarding((results) =>
-          updateSettings({
-            useBiometric: results.useBiometric,
-            onBoardingComplete: true,
-          }),
-        );
-      }
-    }, [settings]),
-  );
+  
+
+    useFocusEffect(
+      useCallback(() => {
+        if (!onboardingShown.current && settings && !settings.onBoardingComplete) {
+        onboardingShown.current = true;
+          startOnboarding((results) =>
+            updateSettings({
+              useBiometric: results.useBiometric,
+              onBoardingComplete: true,
+            }),
+          );
+        }
+      }, [settings]),
+    );
+
 
 const handleCategoryPress = async (categoria: string) => {
   try {

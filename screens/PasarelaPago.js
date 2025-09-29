@@ -220,7 +220,7 @@ if (pais === "BO") {
       <BotonVolver />
       <Text style={styles.mensaje}>
   Para cargar créditos a tu cuenta, realiza un pago único de{" "}
-  {pais === "BO" ? "10 bs" : "$1.000 pesos Argentinos"}.
+  {pais === "BO" ? "10 bs" : "$1.500 pesos Argentinos"}.
 </Text>
 
 
@@ -237,7 +237,7 @@ if (pais === "BO") {
         <>
   <TouchableOpacity style={styles.boton} onPress={iniciarPago}>
     <Text style={styles.textoBoton}>
-      Cargar crédito ({pais === "BO" ? "10 bs" : "$1.000"})
+      Cargar crédito ({pais === "BO" ? "10 bs" : "$1.500"})
     </Text>
   </TouchableOpacity>
 
