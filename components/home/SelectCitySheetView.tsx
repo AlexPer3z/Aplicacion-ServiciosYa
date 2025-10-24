@@ -11,6 +11,7 @@ import { withSuspense } from "../withSuspense";
 import LoadingView from "../LoadingView";
 import { GenericButton } from "../GenericButtom";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useQueryClient } from "@tanstack/react-query";
 
 function SelectCitySheetView() {
   const { updateSettings, settings } = useUserSettings();
@@ -19,26 +20,42 @@ function SelectCitySheetView() {
   );
 
   const [city, setCity] = useState<City | null>(null);
+  const [loading, setLoading] = useState(false); // 🔹 estado loading
   const country = error ? "AR" : locationInfo.country;
-  const currentLocation = settings.customLocation ?? settings.lastGPSLocation;
 
-  const handleSubmit = () => {
-    if (city) {
-      updateSettings({
-        customLocation: cityToLocationData(city),
-      });
-    } else {
-      updateSettings({
-        customLocation: null,
-      });
+  const queryClient = useQueryClient();
+
+  const [currentLocation, setCurrentLocation] = useState(
+  settings.customLocation ?? settings.lastGPSLocation
+);
+
+const handleSubmit = async () => {
+  if (!city) return;
+  setLoading(true);
+  try {
+    const newLocation = cityToLocationData(city);
+
+    await updateSettings({ customLocation: newLocation });
+
+    // 🔹 Actualizamos el estado local inmediatamente
+    setCurrentLocation(newLocation);
+
+    queryClient.invalidateQueries({ queryKey: ["user", "services"] });
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  const handleClearCity = async () => {
+    setLoading(true);
+    try {
+      await updateSettings({ customLocation: null });
+      setCity(null);
+      queryClient.invalidateQueries({ queryKey: ["user", "services"] });
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleClearCity = () => {
-    updateSettings({
-      customLocation: null,
-    });
-    setCity(null);
   };
 
   return (
@@ -82,17 +99,21 @@ function SelectCitySheetView() {
         <CityAutocomplete
           label="Ciudad"
           countryCode={country}
-          onSelectCity={(city) => setCity(city || null)}
+          onSelectCity={(city) => {
+    console.log("Ciudad seleccionada:", city);
+    setCity(city || null);
+  }}
           placeholder="Selecciona una ciudad"
           dropdownProps={{ direction: "down" }}
         />
       </View>
 
+
       <GenericButton
-        title="Actualizar"
+        title={loading ? "Cargando..." : "Actualizar"} // 🔹 cambia título si carga
         onPress={handleSubmit}
         style={styles.button}
-        disabled={!city}
+        disabled={loading || !city} // 🔹 deshabilitado mientras carga
       />
     </SheetContainer>
   );

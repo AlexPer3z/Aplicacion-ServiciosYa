@@ -163,7 +163,7 @@ export default function RegistroCliente() {
       rol: "user",
       foto_perfil: urlFotoPerfil,
       perfil_completo: true,
-      creditos: 5,
+      creditos: 0,
       dni_verificado: true
     })
     .eq("id", user.id);

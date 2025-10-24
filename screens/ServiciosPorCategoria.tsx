@@ -141,36 +141,21 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
 
   // Función para controlar la contratación con límite y sin repetidos
   const handleContratarServicio = (servicioId: string) => {
-    if (serviciosContratados.includes(servicioId)) {
-      Alert.alert("Ya contratado", "Este servicio ya fue contratado.");
-      return false;
-    }
+  if (serviciosContratados.includes(servicioId)) {
+    Alert.alert("Ya contratado", "Este servicio ya fue contratado.");
+    return false;
+  }
 
-    if (userRole === "guest") {
-      Alert.alert("Acceso denegado", "Los usuarios invitados no pueden contratar servicios.");
-      return false;
-    }
+  if (userRole === "guest") {
+    Alert.alert("Acceso denegado", "Los usuarios invitados no pueden contratar servicios.");
+    return false;
+  }
 
-  if (!suscriptor && (creditos ?? 0) <= 0) {
-  Alert.alert(
-    "Sin créditos",
-    "No tenés créditos disponibles. Vas a ser redirigido para comprar uno.",
-    [
-      {
-        text: "Comprar crédito",
-        onPress: () => navigation.navigate("PasarelaPago"),
-      },
-      { text: "Cancelar", style: "cancel" },
-    ]
-  );
-  return false;
-}
+  const nuevosContratados = [...serviciosContratados, servicioId];
+  setServiciosContratados(nuevosContratados);
+  return true;
+};
 
-
-    const nuevosContratados = [...serviciosContratados, servicioId];
-    setServiciosContratados(nuevosContratados);
-    return true;
-  };
 
 
   const abrirModal = (servicio: Servicio) => {
@@ -381,12 +366,6 @@ if (!suscriptor) {
 >
   <Text style={styles.botonTexto}>Contratar</Text>
 </TouchableOpacity>
-{creditos !== null && (
-  <Text style={styles.modalTextoCreditos}>
-  {suscriptor ? "Suscripción activada" : `Créditos disponibles: ${creditos ?? 0}`}
-</Text>
-
-)}
                     
                     <TouchableOpacity
                         style={styles.botonReportar}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext  } from "react";
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { MainStackParamList } from "../types/navigation";
 import { supabase } from "../lib/supabase";
 import * as Location from "expo-location";
-
+import { AuthContext } from "../lib/context/AppContext"; 
 type NavigationProp = NativeStackNavigationProp<MainStackParamList>;
 
 export default function RegistroTrabajadorSimplificado() {
@@ -26,10 +26,8 @@ export default function RegistroTrabajadorSimplificado() {
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const [location, setLocation] = useState<null | {
-    latitude: number;
-    longitude: number;
-  }>(null);
+  const { location, setLocation } = useContext(AuthContext);
+
 
   // 🔹 Función que chequea si la ubicación está dentro de Bolivia
   const isInBolivia = (lat: number, lon: number) => {
@@ -62,7 +60,8 @@ export default function RegistroTrabajadorSimplificado() {
         longitude: loc.coords.longitude,
       };
 
-      setLocation(coords);
+      setLocation(coords); // ✅ Asignamos la ubicación global
+    console.log("Ubicación global asignada:", coords); // 🔹 Aquí sí se verá
       isInBolivia(coords.latitude, coords.longitude);
     })();
   }, []);
@@ -130,7 +129,7 @@ export default function RegistroTrabajadorSimplificado() {
         celular: numeroCelular,
         perfil_completo: true,
         pago: true,
-        creditos: 2,
+        creditos: 0,
         dni_verificado: true,
       };
       redirectTo = "Home";

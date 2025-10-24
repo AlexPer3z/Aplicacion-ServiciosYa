@@ -157,28 +157,7 @@ function ServicioSheetView({
                     </Suspense>
                 )}
 
-                {/* Credits / Subscription Info */}
-                {!isGuest(rol) && (
-                    <View style={styles.creditsCard}>
-                        {isSuscriptor ? (
-                            <>
-                                <View style={styles.creditsInfo}>
-                                    <Ionicons name="star-outline" size={16} color={colors.primary} />
-                                    <Text style={styles.creditsTitle}>Suscripción activa</Text>
-                                </View>
-                                <Ionicons name="checkmark-circle-outline" size={24} color={colors.primary} />
-                            </>
-                        ) : (
-                            <>
-                                <View style={styles.creditsInfo}>
-                                    <Ionicons name="wallet-outline" size={16} color={colors.primary} />
-                                    <Text style={styles.creditsTitle}>Créditos disponibles</Text>
-                                </View>
-                                <Text style={styles.creditsAmount}>{creditos || 0}</Text>
-                            </>
-                        )}
-                    </View>
-                )}
+               
             </ScrollView>
 
             {/* Action Buttons */}
