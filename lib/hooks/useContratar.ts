@@ -56,10 +56,6 @@ export default function useContratar({ onSuccess, onError }: UseContratarProps =
                 throw new Error(CONTRATAR_ERRORS.GUEST_USER);
             }
 
-            if (!user.isSuscriptor && creditos <= 0) {
-                const err = new Error(CONTRATAR_ERRORS.NO_CREDITS);
-                throw err;
-            }
 
             const { data: contratado } = await supabase // verificar si el servicio ya fue contratado
                 .from("servicios_contratados")
@@ -93,18 +89,7 @@ export default function useContratar({ onSuccess, onError }: UseContratarProps =
 
 
 
-            // 3. Descontar crédito solo a los no suscriptores
-            if (!user.isSuscriptor) {
-                const { error: updateError } = await supabase
-                    .from("usuarios")
-                    .update({ creditos: creditos - 1 })
-                    .eq("id", contratanteId);
-
-                if (updateError) {
-                    console.error("Error al descontar el crédito, pero el servicio fue contratado. Se ha creado una inconsistencia.", updateError);
-                    throw new Error(CONTRATAR_ERRORS.DECREMENT_CREDIT_FAILED);
-                }
-            }
+            
 
             // 4. Enviar notificación push (sin esperar respuesta)
             try {

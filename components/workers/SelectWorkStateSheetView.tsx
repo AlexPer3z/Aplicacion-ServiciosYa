@@ -37,7 +37,7 @@ const workStatusDescriptions: Record<WorkerStatus, string> = {
 async function updateWorkerStatus(status: WorkerStatus, client: QueryClient) {
   const user = getUserFromClient(client);
   const location = getLocationParamsFromClient(client);
-
+  
   const { error } = await supabase.from("workers").upsert(
     {
       user_id: user.id,
