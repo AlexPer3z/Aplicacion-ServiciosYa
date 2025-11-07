@@ -25,3 +25,5 @@ export type Database = MergeDeep<
     };
   }
 >;
+
+export type UserUpdate = Database["public"]["Tables"]["usuarios"]["Update"];

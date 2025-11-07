@@ -15,8 +15,9 @@ import { useMainNavigation } from "../lib/hooks/useNavigation";
 import OptionsButton from "./home/OptionsButton";
 import { useUserSettings } from "../lib/hooks/useUserSettings";
 import WorkerState from "./home/WorkerState";
-import { isWorker } from "../lib/utils/user";
+import { isGuest, isWorker } from "../lib/utils/user";
 import OnlineFilterCheckBox from "./home/OnlineFilterCheckBox";
+import ProgressChip from "./home/ProgressChip";
 
 interface HomeHeaderProps {
   onSearch: (query: string) => void;
@@ -121,6 +122,11 @@ function HomeHeader({
             <View style={styles.filtroColumn} />
           )}
         </View>
+        {!isGuest(rol) && (
+          <ProgressChip
+            label="Mis Logros"
+          />
+        )}
       </View>
     </View>
   );
@@ -132,7 +138,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: "#00B8A9",
     paddingTop: 12,
-    paddingBottom: 25,
+    paddingBottom: 10,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },

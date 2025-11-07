@@ -9,8 +9,12 @@ import logo from '../assets/logo.png';
 import { supabase } from '../lib/supabase'; 
 import BotonVolver from '../components/BotonVolver';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import { useReferrer } from '../lib/hooks/useReferrer';
+import { useGrantAchievement } from '../lib/services/achievements.services';
 
 export default function Register({ navigation }) {
+  const { getReferrer, setReferrer } = useReferrer({ capture: true });
+  const { refered } = useGrantAchievement();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [repeatPassword, setRepeatPassword] = useState('');
@@ -57,6 +61,12 @@ export default function Register({ navigation }) {
     }
     if (data.user) {
       await supabase.from('usuarios').insert([{ id: data.user.id, email }]);
+      // obtiene el codigo de referido
+      const code = await getReferrer();
+      // añade el referido al usuario si esta disponible
+      await setReferrer(data.user.id);
+      // le da el logro al usuario de quien pertenece el codigo
+      if (code) await refered(code);
       setShowMessage(true);
     }
   };

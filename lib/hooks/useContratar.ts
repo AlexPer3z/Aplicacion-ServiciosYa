@@ -123,7 +123,7 @@ export default function useContratar({ onSuccess, onError }: UseContratarProps =
                 );
             }
         },
-        onSuccess: () => {
+        onSuccess: async () => {
             queryClient.invalidateQueries({ queryKey: userCreditQueryOptions(user.id).queryKey });
             onSuccess?.();
         },

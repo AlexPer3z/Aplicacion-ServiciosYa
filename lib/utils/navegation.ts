@@ -1,15 +1,16 @@
 // navigation.ts
 import type { LinkingOptions } from "@react-navigation/native";
-import type { MainStackParamList } from "../../types/navigation";
+import type { AuthStackParamList, MainStackParamList } from "../../types/navigation";
 import * as Linking from "expo-linking";
 import * as Notifications from "expo-notifications";
 
-export const navegationLinkin: LinkingOptions<MainStackParamList> = {
+export const navegationLinkin: LinkingOptions<MainStackParamList | AuthStackParamList> = {
   // This is the prefix for your deep links, e.g., myapp://
-  prefixes: [Linking.createURL("/")],
+  prefixes: [Linking.createURL("/"), "https://inicio.serviciosya.info"],
   config: {
     screens: {
       NotificacionesScreen: "NotificacionesScreen",
+      Register: "invite/:referralCode"
     },
   },
   //   async getInitialURL() {
