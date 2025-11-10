@@ -400,7 +400,7 @@ export type Database = {
           horario: string | null
           id: number
           latitud: number | null
-          location: unknown | null
+          location: unknown
           longitud: number | null
           postal_code: string | null
           precio: number | null
@@ -423,7 +423,7 @@ export type Database = {
           horario?: string | null
           id?: number
           latitud?: number | null
-          location?: unknown | null
+          location?: unknown
           longitud?: number | null
           postal_code?: string | null
           precio?: number | null
@@ -446,7 +446,7 @@ export type Database = {
           horario?: string | null
           id?: number
           latitud?: number | null
-          location?: unknown | null
+          location?: unknown
           longitud?: number | null
           postal_code?: string | null
           precio?: number | null
@@ -507,6 +507,33 @@ export type Database = {
           },
         ]
       }
+      user_achievements: {
+        Row: {
+          achievement_key: string
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_key: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_key?: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       usuarios: {
         Row: {
           actualizado_en: string | null
@@ -514,6 +541,7 @@ export type Database = {
           calle: string | null
           categoria: string | null
           celular: number | null
+          ci: string | null
           ciudad: string | null
           codigo: string | null
           codigo_postal: string | null
@@ -543,6 +571,9 @@ export type Database = {
           precio: string | null
           provincia: string | null
           referencias: string | null
+          referral_code: string | null
+          referred_by: string | null
+          registropagado: boolean | null
           rol: Database["public"]["Enums"]["user_role"]
           selfie: string | null
           sexo: string | null
@@ -556,6 +587,7 @@ export type Database = {
           calle?: string | null
           categoria?: string | null
           celular?: number | null
+          ci?: string | null
           ciudad?: string | null
           codigo?: string | null
           codigo_postal?: string | null
@@ -585,6 +617,9 @@ export type Database = {
           precio?: string | null
           provincia?: string | null
           referencias?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
+          registropagado?: boolean | null
           rol?: Database["public"]["Enums"]["user_role"]
           selfie?: string | null
           sexo?: string | null
@@ -598,6 +633,7 @@ export type Database = {
           calle?: string | null
           categoria?: string | null
           celular?: number | null
+          ci?: string | null
           ciudad?: string | null
           codigo?: string | null
           codigo_postal?: string | null
@@ -627,6 +663,9 @@ export type Database = {
           precio?: string | null
           provincia?: string | null
           referencias?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
+          registropagado?: boolean | null
           rol?: Database["public"]["Enums"]["user_role"]
           selfie?: string | null
           sexo?: string | null
@@ -639,19 +678,19 @@ export type Database = {
       workers: {
         Row: {
           last_seen_at: string | null
-          location: unknown | null
+          location: unknown
           status: Database["public"]["Enums"]["worker_status"]
           user_id: string
         }
         Insert: {
           last_seen_at?: string | null
-          location?: unknown | null
+          location?: unknown
           status?: Database["public"]["Enums"]["worker_status"]
           user_id: string
         }
         Update: {
           last_seen_at?: string | null
-          location?: unknown | null
+          location?: unknown
           status?: Database["public"]["Enums"]["worker_status"]
           user_id?: string
         }
@@ -675,7 +714,7 @@ export type Database = {
           id: number | null
           latitud: number | null
           latitude: number | null
-          location: unknown | null
+          location: unknown
           longitud: number | null
           longitude: number | null
           postal_code: string | null
@@ -700,7 +739,7 @@ export type Database = {
           id?: number | null
           latitud?: number | null
           latitude?: never
-          location?: unknown | null
+          location?: unknown
           longitud?: number | null
           longitude?: never
           postal_code?: string | null
@@ -725,7 +764,7 @@ export type Database = {
           id?: number | null
           latitud?: number | null
           latitude?: never
-          location?: unknown | null
+          location?: unknown
           longitud?: number | null
           longitude?: never
           postal_code?: string | null
@@ -747,16 +786,33 @@ export type Database = {
       }
     }
     Functions: {
+      award_referred_achievement: {
+        Args: { referral_code_input: string }
+        Returns: Json
+      }
+      check_hirer_achievements: { Args: never; Returns: Json }
       count_active_by_category: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           categoria: string
           count: number
         }[]
       }
-      count_services_by_status_in_radius: {
-        Args:
-          | {
+      count_services_by_status_in_radius:
+        | {
+            Args: {
+              search_lat: number
+              search_lon: number
+              search_radius_meters: number
+              status_filter?: string
+            }
+            Returns: {
+              categoria: string
+              count: number
+            }[]
+          }
+        | {
+            Args: {
               p_categoria?: string
               search_lat?: number
               search_lon?: number
@@ -764,21 +820,12 @@ export type Database = {
               status_filter?: string
               worker_status_filter?: string[]
             }
-          | {
-              search_lat: number
-              search_lon: number
-              search_radius_meters: number
-              status_filter?: string
-            }
-        Returns: {
-          categoria: string
-          count: number
-        }[]
-      }
-      delete_user: {
-        Args: { uid: string }
-        Returns: undefined
-      }
+            Returns: {
+              categoria: string
+              count: number
+            }[]
+          }
+      delete_user: { Args: { uid: string }; Returns: undefined }
       get_services_by_category_in_radius: {
         Args: {
           categoria_filter?: string
@@ -803,7 +850,7 @@ export type Database = {
           horario: string | null
           id: number
           latitud: number | null
-          location: unknown | null
+          location: unknown
           longitud: number | null
           postal_code: string | null
           precio: number | null
@@ -812,39 +859,82 @@ export type Database = {
           usuario_id: string | null
           veces_contratado: number | null
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "servicios"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
-      get_servicios_with_online_workers: {
-        Args:
-          | Record<PropertyKey, never>
-          | {
+      get_servicios_with_online_workers:
+        | {
+            Args: never
+            Returns: {
+              aceptado: boolean | null
+              barrio: string | null
+              calificacion_promedio: number | null
+              categoria: string | null
+              categoria_id: string | null
+              ciudad: string | null
+              country: string | null
+              descripcion: string | null
+              estado: string | null
+              foto_perfil: string | null
+              horario: string | null
+              id: number
+              latitud: number | null
+              location: unknown
+              longitud: number | null
+              postal_code: string | null
+              precio: number | null
+              titulo: string
+              user_id: string | null
+              usuario_id: string | null
+              veces_contratado: number | null
+            }[]
+            SetofOptions: {
+              from: "*"
+              to: "servicios"
+              isOneToOne: false
+              isSetofReturn: true
+            }
+          }
+        | {
+            Args: {
               search_lat?: number
               search_lon?: number
               search_radius_meters?: number
             }
-        Returns: {
-          aceptado: boolean | null
-          barrio: string | null
-          calificacion_promedio: number | null
-          categoria: string | null
-          categoria_id: string | null
-          ciudad: string | null
-          country: string | null
-          descripcion: string | null
-          estado: string | null
-          foto_perfil: string | null
-          horario: string | null
-          id: number
-          latitud: number | null
-          location: unknown | null
-          longitud: number | null
-          postal_code: string | null
-          precio: number | null
-          titulo: string
-          user_id: string | null
-          usuario_id: string | null
-          veces_contratado: number | null
-        }[]
-      }
+            Returns: {
+              aceptado: boolean | null
+              barrio: string | null
+              calificacion_promedio: number | null
+              categoria: string | null
+              categoria_id: string | null
+              ciudad: string | null
+              country: string | null
+              descripcion: string | null
+              estado: string | null
+              foto_perfil: string | null
+              horario: string | null
+              id: number
+              latitud: number | null
+              location: unknown
+              longitud: number | null
+              postal_code: string | null
+              precio: number | null
+              titulo: string
+              user_id: string | null
+              usuario_id: string | null
+              veces_contratado: number | null
+            }[]
+            SetofOptions: {
+              from: "*"
+              to: "servicios"
+              isOneToOne: false
+              isSetofReturn: true
+            }
+          }
       get_servicios_with_worker_status: {
         Args: {
           p_categoria?: string
@@ -881,10 +971,7 @@ export type Database = {
         Args: { servicio_id_input: string }
         Returns: undefined
       }
-      set_stale_workers_offline: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      set_stale_workers_offline: { Args: never; Returns: undefined }
       test_get_servicios_with_worker_status: {
         Args: {
           p_categoria?: string

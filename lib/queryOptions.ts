@@ -38,7 +38,7 @@ export const perfilQueryOptions = queryOptions({
     }
     const { data, error } = await supabase
       .from("usuarios")
-      .select("perfil_completo, dni_verificado, foto_perfil, rol, nombre, id, suscriptor, creditos")
+      .select("perfil_completo, dni_verificado, foto_perfil, rol, nombre, id, suscriptor, creditos, referral_code")
       .eq("id", userId)
       .single();
 
