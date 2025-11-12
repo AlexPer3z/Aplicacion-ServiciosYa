@@ -92,10 +92,6 @@ function SelectWorkStateSheetView() {
           </Pressable>
         ))}
       </View>
-      <Text style={styles.disclaimer}>
-        Si no estás activo en la app durante 10 minutos, tu estado se cambiará
-        automáticamente a "Desconectado".
-      </Text>
     </SheetContainer>
   );
 }

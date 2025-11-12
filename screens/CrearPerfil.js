@@ -19,9 +19,11 @@ import { useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 import { useQueryClient } from '@tanstack/react-query';
 import { perfilQueryKey } from '../lib/queryOptions';
+import { useGrantAchievement } from "../lib/services/achievements.services";
 
 export default function FormularioRegistroDNI() {
 const queryClient = useQueryClient();
+const { completeProfile } = useGrantAchievement();
 const [nombre, setNombre] = useState('');
 const [apellido, setApellido] = useState('');
 const [edad, setEdad] = useState('');
@@ -161,6 +163,7 @@ try {
     
   // Invalidar la caché del perfil, necesario cada vez que se hagan cambios al perfil del usuario
   await queryClient.invalidateQueries({ queryKey: perfilQueryKey });
+  await completeProfile();
   Alert.alert('✅ Éxito', 'Datos guardados correctamente.');
   navigation.navigate('pagoInicial');
 

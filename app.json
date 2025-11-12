@@ -4,9 +4,7 @@
     "slug": "appTrabajo",
     "scheme": "solucionesya",
     "linking": {
-      "prefixes": [
-        "solucionesya://"
-      ],
+      "prefixes": ["solucionesya://"],
       "config": {
         "screens": {
           "pago-exitoso": "pago-exitoso"
@@ -49,12 +47,11 @@
             ]
           }
         ],
-        "LSApplicationQueriesSchemes": [
-          "whatsapp"
-        ]
+        "LSApplicationQueriesSchemes": ["whatsapp"]
       },
       "bundleIdentifier": "com.alex-6775.appTrabajo",
-      "appleTeamId": "HHY5MJ22J3"
+      "appleTeamId": "HHY5MJ22J3",
+      "associatedDomains": ["applinks:inicio.serviciosya.info"]
     },
     "android": {
       "versionCode": 57,
@@ -70,6 +67,19 @@
         "ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "https",
+              "host": "inicio.serviciosya.info",
+              "pathPrefix": "/invite"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
       ]
     },
     "web": {

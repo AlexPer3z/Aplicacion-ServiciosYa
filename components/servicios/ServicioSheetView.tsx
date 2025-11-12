@@ -14,6 +14,7 @@ import { isGuest } from "../../lib/utils/user";
 import useContratar, { CONTRATAR_ERRORS } from "../../lib/hooks/useContratar";
 import showToast from "../../lib/toast";
 import { useBottomSheetModal } from "@gorhom/bottom-sheet";
+import { useGrantAchievement } from "../../lib/services/achievements.services";
 
 interface ServicioSheetViewProps {
     servicio: Servicio;
@@ -31,11 +32,13 @@ function ServicioSheetView({
     showProfile = false,
 }: ServicioSheetViewProps) {
     const navigation = useMainNavigation();
+    const { checkService } = useGrantAchievement();
     const { rol, isSuscriptor } = useSuspenseProfile();
     const [showFullDescription, setShowFullDescription] = useState(false);
     const { dismiss } = useBottomSheetModal();
     const { creditos, mutate, isPending } = useContratar({
-        onSuccess() {
+        onSuccess: async () => {
+            await checkService();
             dismiss();
             showToast.success("¡Éxito!", "Tu propuesta fue enviada.");
         },
