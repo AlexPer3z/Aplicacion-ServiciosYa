@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, Alert, Linking } from 'react-native';
-import { supabase } from '../lib/supabase'; // Ajustá la ruta según tu proyecto
+import { supabase } from '../lib/supabase'; 
 
-const BACKEND_URL = 'https://backend-pagos.onrender.com'; // Cambiá por tu backend real
+const BACKEND_URL = 'https://backend-pagos.onrender.com';
 
 export default function BotonSuscribirme() {
   const [loading, setLoading] = useState(false);
@@ -39,7 +39,7 @@ export default function BotonSuscribirme() {
       const res = await fetch(`${BACKEND_URL}/crear-suscripcion`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, email }), // 🔹 mandamos ambos
+        body: JSON.stringify({ userId, email }), 
       });
 
       const data = await res.json();
@@ -65,7 +65,7 @@ export default function BotonSuscribirme() {
       {loading ? (
         <ActivityIndicator size="small" color="#fff" />
       ) : (
-        <Text style={styles.texto}>Suscribirme por $5.000</Text>
+        <Text style={styles.texto}>Promocion Plus por $5.000</Text>
       )}
     </TouchableOpacity>
   );
@@ -79,10 +79,12 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: 'center',
     marginBottom: 15,
+    zIndex: 2,
+    bottom: -200,
   },
   texto: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '900',
   },
 });

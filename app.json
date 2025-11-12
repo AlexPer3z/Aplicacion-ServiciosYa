@@ -11,8 +11,12 @@
         }
       }
     },
-    "platforms": ["ios", "android", "web"],
-    "version": "56.0.0",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "version": "57.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -50,7 +54,7 @@
       "associatedDomains": ["applinks:inicio.serviciosya.info"]
     },
     "android": {
-      "versionCode": 56,
+      "versionCode": 57,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
