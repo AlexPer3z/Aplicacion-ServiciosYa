@@ -8,11 +8,13 @@ import {
   Alert,
   Linking,
   TextInput,
+  Image,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import BotonVolver from "../components/BotonVolver";
 import { supabase } from "../lib/supabase";
 import * as Location from "expo-location";
+import BotonSuscribirme from "../components/BotonSuscribirme";
 
 // 📌 Detección del país por GPS
 async function detectarPais(): Promise<string | null> {
@@ -51,6 +53,43 @@ export default function PagoInicial() {
   useEffect(() => {
     detectarPais().then(setPais);
   }, []);
+
+  // ✅ Validar si el usuario ya tiene el registro pagado
+useEffect(() => {
+  const verificarPago = async () => {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) return;
+
+      const { data: usuario, error } = await supabase
+        .from("usuarios")
+        .select("registropagado") // o "pago" si así se llama en tu tabla
+        .eq("id", user.id)
+        .single();
+
+      if (error) {
+        console.error("Error al verificar pago:", error);
+        return;
+      }
+
+      // Si ya pagó → redirige a Home
+      if (usuario?.registropagado === true) {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Home" }],
+        });
+      }
+    } catch (err) {
+      console.error("❌ Error al validar registro pagado:", err);
+    }
+  };
+
+  verificarPago();
+
+  // 👇 Se ejecuta cada vez que la pantalla vuelve al foco
+  const unsubscribe = navigation.addListener("focus", verificarPago);
+  return unsubscribe;
+}, [navigation]);
 
 
   // Manejo de deep links
@@ -179,7 +218,13 @@ export default function PagoInicial() {
   }, [urlPago]);
 
   return (
-    <View style={styles.container}>
+    <View
+  style={[
+    styles.container,
+    { backgroundColor: pais === "BO" ? "#fff" : "#1f96a3" }, // 👈 cambio dinámico
+  ]}
+>
+
       <BotonVolver />
       <Text style={styles.mensajePrincipal}>
   Para completar tu registro necesitamos una verificación de pago de{" "}
@@ -188,10 +233,17 @@ export default function PagoInicial() {
 
   </Text>.
 </Text>
-      <Text style={styles.mensajeAclaracion}>
-        Este es un pago único y exclusivo por el alta de tu cuenta.{"\n"}
-        <Text style={{ fontWeight: "bold" }}>No volverás a pagar esto nunca más.</Text>
-      </Text>
+{pais === "AR" ? (
+  <Image
+    source={require("../assets/PasarelaPagos.png")}
+    style={styles.fondoArgentina}
+  />
+) : (
+  <Text style={styles.mensajeAclaracion}>
+    Este es un pago único y exclusivo por el alta de tu cuenta.{"\n"}
+    <Text style={{ fontWeight: "bold" }}>No volverás a pagar esto nunca más.</Text>
+  </Text>
+)}
 
       {/* 👉 Solo mostrar input de influencer en Bolivia */}
       {pais === "BO" && (
@@ -258,35 +310,55 @@ export default function PagoInicial() {
 
 
       {loading ? (
-        <ActivityIndicator size="large" color="#FFA13C" />
-      ) : (
-        <>
-          <TouchableOpacity style={styles.botonPago} onPress={iniciarPago}>
-            <Text style={styles.textoBoton}>
-              Pagar {pais === "BO" ? "10 bs" : "$1.500"} y registrar cuenta
-            </Text>
-          </TouchableOpacity>
+  <ActivityIndicator size="large" color="#FFA13C" />
+) : (
+  <>
+    {pais === "BO" ? (
+      <>
+        <TouchableOpacity style={styles.botonPagoBolivia} onPress={iniciarPago}>
+          <Text style={styles.textoBoton}>Pagar (10 Bs)</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.botonPago, { backgroundColor: "#999", marginTop: 15 }]}
-            onPress={() => navigation.navigate("Home")}
-          >
-            <Text style={styles.textoBoton}>Pagar más tarde</Text>
-          </TouchableOpacity>
-        </>
-      )}
+        <TouchableOpacity
+          style={[styles.botonPago, { backgroundColor: "#999", marginTop: 15 }]}
+          onPress={() => navigation.navigate("Home")}
+        >
+          <Text style={styles.textoBoton}>Pagar más tarde</Text>
+        </TouchableOpacity>
+      </>
+    ) : pais === "AR" ? (
+  <>
+    <TouchableOpacity
+      style={[styles.botonPagoArgentina, { backgroundColor: "#FFA13C" }]}
+      onPress={iniciarPago}
+    >
+      <Text style={styles.textoBoton}>Pagar ($1.500)</Text>
+    </TouchableOpacity>
+
+    {/* Botón de suscripción (usa su propia lógica interna) */}
+    <BotonSuscribirme />
+  </>
+) : (
+      <TouchableOpacity style={styles.botonPago} onPress={iniciarPago}>
+        <Text style={styles.textoBoton}>Pagar registro</Text>
+      </TouchableOpacity>
+    )}
+  </>
+)}
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: "#FFF8F0",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 30,
-  },
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+  padding: 30,
+},
+
+
   mensajePrincipal: {
     fontSize: 20,
     textAlign: "center",
@@ -320,6 +392,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
+    zIndex: 2, // 🔼 muy importante: queda encima del fondo
   },
   textoBoton: {
     color: "#fff",
@@ -327,4 +400,43 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 0.6,
   },
+  fondoArgentina: {
+  position: "absolute",
+  top: 100,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  width: "50vw",
+  height: "75%",
+  resizeMode: "cover", // o "contain" según tu imagen
+  zIndex: 1,          // 🔽 muy importante: queda debajo de los botones
+  opacity: 1,       // opcional: da efecto de fondo tenue
+},
+botonPagoArgentina: {
+  backgroundColor: "#FFA13C", // Azul Mercado Pago
+  paddingVertical: 16,
+  paddingHorizontal: 36,
+  borderRadius: 22,
+  elevation: 5,
+  shadowColor: "#FFA13C",
+  shadowOpacity: 0.2,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 4 },
+  zIndex: 2,
+  bottom: -180,
+},
+
+botonPagoBolivia: {
+  backgroundColor: "#FFA13C", // Verde Libélula
+  paddingVertical: 16,
+  paddingHorizontal: 36,
+  borderRadius: 22,
+  elevation: 5,
+  shadowColor: "#FFA13C",
+  shadowOpacity: 0.2,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 4 },
+  zIndex: 2,
+},
+
 });
