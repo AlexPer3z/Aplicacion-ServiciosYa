@@ -57,16 +57,6 @@ export default function useContratar({ onSuccess, onError }: UseContratarProps =
             }
 
 
-            const { data: contratado } = await supabase // verificar si el servicio ya fue contratado
-                .from("servicios_contratados")
-                .select("id")
-                .eq("servicio_id", servicio.id)
-                .eq("contratante_id", user.id)
-                .single();
-            if (contratado) {
-                throw new Error(CONTRATAR_ERRORS.ALREADY_HIRED);
-            }
-
             const contratanteId = user.id;
             const mensaje = `Un usuario ha solicitado tu servicio: ${servicio.titulo}`;
 

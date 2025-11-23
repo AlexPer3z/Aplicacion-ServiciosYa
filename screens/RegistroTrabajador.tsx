@@ -14,6 +14,8 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { MainStackParamList } from "../types/navigation";
 import { supabase } from "../lib/supabase";
 import * as Location from "expo-location";
+import * as Linking from "expo-linking";
+
 import { AuthContext } from "../lib/context/AppContext"; 
 type NavigationProp = NativeStackNavigationProp<MainStackParamList>;
 
@@ -194,12 +196,17 @@ export default function RegistroTrabajadorSimplificado() {
 
         <View style={styles.switchContainer}>
           <Switch
-            value={aceptaTerminos}
-            onValueChange={setAceptaTerminos}
-            trackColor={{ false: "#767577", true: "#E8C547" }}
-            thumbColor={aceptaTerminos ? "#A4D4AE" : "#f4f3f4"}
-          />
-          <Text style={styles.switchLabel}>Acepto los términos y condiciones</Text>
+    value={aceptaTerminos}
+    onValueChange={setAceptaTerminos}
+    trackColor={{ false: "#767577", true: "#E8C547" }}
+    thumbColor={aceptaTerminos ? "#A4D4AE" : "#f4f3f4"}
+  />
+
+  <TouchableOpacity onPress={() => Linking.openURL("https://inicio.serviciosya.info/Terminos-y-condiciones.html")}>
+    <Text style={[styles.switchLabel, { textDecorationLine: "underline" }]}>
+      Acepto los términos y condiciones
+    </Text>
+  </TouchableOpacity>
         </View>
 
         <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading}>

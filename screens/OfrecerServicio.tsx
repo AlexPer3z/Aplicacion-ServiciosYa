@@ -8,6 +8,7 @@ import {
   Alert,
   Platform, // Keep platform for potential future use
 } from "react-native";
+
 // 1. Import the new component
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { supabase } from "../lib/supabase";
@@ -88,19 +89,10 @@ function OfrecerServicio({ navigation }: Props) {
 
     // 🔹 Si no está pagado, redirigir a la pantalla de pago
     if (!perfil?.registropagado) {
-      Alert.alert(
-        "Pago requerido",
-        "Debes completar el pago inicial antes de publicar un servicio.",
-        [
-          {
-            text: "Ir al pago",
-            onPress: () => navigation.navigate("pagoInicial"),
-          },
-          { text: "Cancelar", style: "cancel" },
-        ]
-      );
-      return;
-    }
+  navigation.navigate("pagoInicial");
+  return;
+}
+
 
     // 🔹 Si el usuario ya pagó, crear el servicio
     const servicio = {

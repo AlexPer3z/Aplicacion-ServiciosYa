@@ -141,10 +141,6 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
 
   // Función para controlar la contratación con límite y sin repetidos
   const handleContratarServicio = (servicioId: string) => {
-  if (serviciosContratados.includes(servicioId)) {
-    Alert.alert("Ya contratado", "Este servicio ya fue contratado.");
-    return false;
-  }
 
   if (userRole === "guest") {
     Alert.alert("Acceso denegado", "Los usuarios invitados no pueden contratar servicios.");

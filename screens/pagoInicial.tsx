@@ -15,6 +15,28 @@ import BotonVolver from "../components/BotonVolver";
 import { supabase } from "../lib/supabase";
 import * as Location from "expo-location";
 import BotonSuscribirme from "../components/BotonSuscribirme";
+async function crearPreferencia(endpoint: string, userId: string) {
+  try {
+    const res = await fetch(`https://backend-pagos.onrender.com/${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+
+    const data = await res.json();
+
+    if (data?.init_point) {
+      Linking.openURL(data.init_point); // 🔗 Abre MP
+    } else if (data?.url) {
+      Linking.openURL(data.url);
+    } else {
+      Alert.alert("Error", "No se pudo generar la preferencia de pago");
+    }
+  } catch (err) {
+    console.log("❌ Error creando preferencia:", err);
+    Alert.alert("Error", "Falló la creación del pago");
+  }
+}
 
 // 📌 Detección del país por GPS
 async function detectarPais(): Promise<string | null> {
@@ -234,16 +256,56 @@ useEffect(() => {
   </Text>.
 </Text>
 {pais === "AR" ? (
-  <Image
-    source={require("../assets/PasarelaPagos.png")}
-    style={styles.fondoArgentina}
-  />
+  <>
+    {/* Fondo de pasarela */}
+    <Image
+      source={require("../assets/PasarelaPagos.png")}
+      style={styles.fondoArgentina}
+    />
+
+    {/* 3 Boxes de planes */}
+    <View style={styles.contenedorPlanes}>
+  <TouchableOpacity style={[styles.planBox, styles.botonPlan1]} onPress={async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    crearPreferencia("plan-basico", user.id);
+  }}>
+    <Text style={styles.planTitulo}>Plan Básico</Text>
+    <Text style={styles.planDetalle}>5 créditos → $5.000</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity 
+  style={[styles.planBox, styles.botonPlan2]}
+  onPress={async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    crearPreferencia("plan-pro", user.id);
+  }}
+>
+    <Text style={styles.planTitulo}>Plan Pro</Text>
+    <Text style={styles.planDetalle}>12 créditos → $10.000</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity 
+  style={[styles.planBox, styles.botonPlan3]}
+  onPress={async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    crearPreferencia("plan-ilimitado", user.id);
+  }}
+>
+    <Text style={styles.planTitulo}>Plan Ilimitado</Text>
+    <Text style={styles.planDetalle}>$15.000 / mes</Text>
+  </TouchableOpacity>
+</View>
+
+  </>
 ) : (
   <Text style={styles.mensajeAclaracion}>
     Este es un pago único y exclusivo por el alta de tu cuenta.{"\n"}
-    <Text style={{ fontWeight: "bold" }}>No volverás a pagar esto nunca más.</Text>
+    <Text style={{ fontWeight: "bold" }}>
+      No volverás a pagar esto nunca más.
+    </Text>
   </Text>
 )}
+
 
       {/* 👉 Solo mostrar input de influencer en Bolivia */}
       {pais === "BO" && (
@@ -328,15 +390,11 @@ useEffect(() => {
       </>
     ) : pais === "AR" ? (
   <>
-    <TouchableOpacity
-      style={[styles.botonPagoArgentina, { backgroundColor: "#FFA13C" }]}
-      onPress={iniciarPago}
+    <Text
+      style={[styles.botonPagoArgentina, { backgroundColor: "transparent" }]}
     >
-      <Text style={styles.textoBoton}>Pagar ($1.500)</Text>
-    </TouchableOpacity>
-
-    {/* Botón de suscripción (usa su propia lógica interna) */}
-    <BotonSuscribirme />
+      <Text style={styles.textoBoton}>Elige uno de los planes</Text>
+    </Text>
   </>
 ) : (
       <TouchableOpacity style={styles.botonPago} onPress={iniciarPago}>
@@ -413,7 +471,7 @@ const styles = StyleSheet.create({
   opacity: 1,       // opcional: da efecto de fondo tenue
 },
 botonPagoArgentina: {
-  backgroundColor: "#FFA13C", // Azul Mercado Pago
+  backgroundColor: "#ffa13c", // Azul Mercado Pago
   paddingVertical: 16,
   paddingHorizontal: 36,
   borderRadius: 22,
@@ -423,7 +481,7 @@ botonPagoArgentina: {
   shadowRadius: 10,
   shadowOffset: { width: 0, height: 4 },
   zIndex: 2,
-  bottom: -180,
+  bottom: -250,
 },
 
 botonPagoBolivia: {
@@ -437,6 +495,93 @@ botonPagoBolivia: {
   shadowRadius: 10,
   shadowOffset: { width: 0, height: 4 },
   zIndex: 2,
+},
+backgroundImage: {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  width: "100%",
+  height: "100%",
+  resizeMode: "cover",
+  zIndex: 0,
+},
+
+contenedorPlanes: {
+  width: "100%",
+  marginTop: 40,
+  zIndex: 10,             // 👈 Se superpone al fondo
+  alignItems: "center",
+  gap: 20,
+},
+
+planBox: {
+  width: "85%",
+  paddingVertical: 16,
+  paddingHorizontal: 20,
+  borderRadius: 16,
+  backgroundColor: "rgba(255,255,255,0.95)",
+  borderWidth: 3,
+  elevation: 6,
+  shadowColor: "#000",
+  shadowOpacity: 0.2,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 4 },
+  
+},
+
+planTitulo: {
+  fontSize: 15,
+  fontWeight: "900",
+  textAlign: "center",
+  marginBottom: 6,
+  color: "#ffffffff",
+},
+
+planDetalle: {
+  fontSize: 10,
+  textAlign: "center",
+  color: "#ffffffff",
+},
+contenedorPlanes: {
+  position: "absolute",
+  top: 180,   // 👈 mueve todo el grupo hacia abajo
+  left: 0,
+  right: 0,
+  zIndex: 10,
+},
+
+planBox: {
+  position: "absolute",   // 👈 MUY IMPORTANTE
+  width: "40%",
+  paddingVertical: 1,
+  paddingHorizontal: 2,
+  borderRadius: 10,
+  backgroundColor: "rgba(255,255,255,0.95)",
+  borderWidth: 3,
+  alignSelf: "center",
+  
+},
+
+// 👉 Ajustás estos valores para ubicarlos exactamente donde querés
+botonPlan1: {
+  top: 250,
+  
+  left:27,   // posición vertical
+  backgroundColor: "#3f82ffff",
+},
+
+botonPlan2: {
+  top: 257,
+  right:27, 
+  backgroundColor: "#ffa13cff",
+},
+
+botonPlan3: {
+  top: 430,
+  left:27,
+  backgroundColor: "#39b639ff",
 },
 
 });

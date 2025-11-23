@@ -21,6 +21,7 @@ export const categoriasDisponibles = [
   "Estilista",
   "Tatuador",
   "Marketing",
+  "Podologo",
   "Traductor",
   "Cuidado de niños",
   "Cuidado de ancianos",
@@ -216,7 +217,7 @@ export const iconosCategoria = {
   Pastelero: require("../../assets/icons/pastelero.png"),
   Delivery: require("../../assets/icons/delivery.png"),
   "Personal de limpieza de oficinas": require("../../assets/icons/personal_limpieza_oficinas.png"),
-
+  "Podologo": require("../../assets/icons/kinesiologo.png"),
   Ingeniero: require("../../assets/icons/ingeniero.png"),
   Médico: require("../../assets/icons/medico.png"),
   Arquitecto: require("../../assets/icons/arquitecto.png"),
@@ -329,7 +330,7 @@ export const categoriasPorSeccion = {
     "Decoraciones para eventos",
   ],
   Cuidados: ["Cuidado de niños", "Cuidado de adultos mayores", "Enfermero"],
-  Salud: ["Psicólogo", "Kinesiólogo", "Nutricionista"],
+  Salud: ["Psicólogo", "Kinesiólogo", "Nutricionista", "Podologo"],
   Construcción: [
     "Soldador",
     "Herrero",
