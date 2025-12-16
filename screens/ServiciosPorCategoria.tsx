@@ -147,9 +147,17 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
   }
 
   if (userRole === "guest") {
-    Alert.alert("Acceso denegado", "Los usuarios invitados no pueden contratar servicios.");
-    return false;
-  }
+  Alert.alert(
+    "Inicia sesión",
+    "Debes iniciar sesión para continuar.",
+    [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Iniciar sesión", onPress: () => navigation.navigate("AuthStack", { screen: "LoginSelect" }) }
+    ]
+  );
+  return false;
+}
+
 
   const nuevosContratados = [...serviciosContratados, servicioId];
   setServiciosContratados(nuevosContratados);

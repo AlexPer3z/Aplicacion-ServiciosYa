@@ -12,33 +12,48 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import AchievementsBottomSheet from '../AchievementsBottomSheet';
 import { ACHIEVEMENTS } from '../../lib/constants/achievements';
 import { useAchievements } from '../../lib/services/achievements.services';
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
+import { supabase } from '../../lib/supabase';
 
 interface ProgressChipProps {
   onPress?: () => void;
   label?: string;
 }
 
-const ProgressChip: React.FC<ProgressChipProps> = ({
-  onPress,
-  label = 'Mis Logros',
-}) => {
+const ProgressChip: React.FC<ProgressChipProps> = ({ onPress, label = 'Mis Logros' }) => {
   const colorScheme = useColorScheme();
-  const { present, dismiss, modalProps } = useBottomSheetModal({
+  const { present, modalProps } = useBottomSheetModal({
     snapPoints: ["90%"],
   });
-  const isDark = colorScheme === 'dark';
+
   const { items, progress } = useAchievements();
   const completedKeys = useMemo(() => items.map(item => item.key), [items]);
 
+  // ---- OBTENER USER ID DESDE SUPABASE ----
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id ?? null);
+    });
+  }, []);
+
+  // ---- AÑADIR UID AL LOGRO "REFER_FRIEND" ----
+  const mappedAchievements = useMemo(() => {
+    return ACHIEVEMENTS.map((ach) => {
+      if (ach.key === "refer_friend") {
+        return {
+          ...ach,
+          description: `${ach.description} (Tu ID: ${userId ?? "..."})`,
+        };
+      }
+      return ach;
+    });
+  }, [userId]);
 
   const colors = {
     accentOrange: '#F59E0B',
     white: '#FFFFFF',
-  };
-
-  const handlePress = () => {
-    present();
   };
 
   return (
@@ -48,43 +63,33 @@ const ProgressChip: React.FC<ProgressChipProps> = ({
           styles.container,
           pressed && styles.pressed,
         ]}
-        onPress={handlePress}
+        onPress={() => present()}
       >
         <View style={styles.content}>
-          {/* Progress Section */}
           <View style={styles.progressContainer}>
-            {/* Header */}
             <View style={styles.header}>
               <Text style={styles.label}>{label}</Text>
               <Text style={styles.percentage}>{progress}%</Text>
             </View>
 
-            {/* Progress Bar */}
             <View style={styles.progressBarBackground}>
               <View
                 style={[
                   styles.progressBarFill,
-                  {
-                    width: `${progress}%`,
-                    backgroundColor: colors.accentOrange,
-                  },
+                  { width: `${progress}%`, backgroundColor: colors.accentOrange },
                 ]}
               />
             </View>
           </View>
 
-          {/* Chevron Icon */}
           <View style={styles.iconContainer}>
-            <MaterialIcons
-              name="chevron-right"
-              size={28}
-              color={colors.white}
-            />
+            <MaterialIcons name="chevron-right" size={28} color={colors.white} />
           </View>
         </View>
       </Pressable>
+
       <BottomSheetModal {...modalProps} backgroundStyle={{ backgroundColor: "#F7FAFC" }}>
-        <AchievementsBottomSheet completedKeys={completedKeys} achievements={ACHIEVEMENTS} />
+        <AchievementsBottomSheet completedKeys={completedKeys} achievements={mappedAchievements} />
       </BottomSheetModal>
     </>
   );

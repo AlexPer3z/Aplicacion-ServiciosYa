@@ -84,7 +84,6 @@ const BottomNavBar = ({ unreadMessagesCount = 0 }: BottomNavBarProps) => {
   const navigation = useMainNavigation();
   const insets = useSafeAreaInsets();
 
-  const isDisabled = rol === "guest" || isUserRestricted;
 
 
 
@@ -134,13 +133,27 @@ const BottomNavBar = ({ unreadMessagesCount = 0 }: BottomNavBarProps) => {
 };
 
   const hanndleCenterPress = () => {
-    if (isUser(rol)) {
-      navigation.navigate("OnlineWorkers");
-      return;
-    }
+  if (rol === "guest") {
+  Alert.alert(
+    "Inicia sesión",
+    "Debes iniciar sesión para continuar.",
+    [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Iniciar sesión", onPress: () => navigation.navigate("AuthStack", { screen: "LoginSelect" }) }
+    ]
+  );
+  return;
+}
 
-    handlePressOfferService();
-  };
+
+  if (isUser(rol)) {
+    navigation.navigate("OnlineWorkers");
+    return;
+  }
+
+  handlePressOfferService();
+};
+
 
   return (
     <View style={[styles.navContainer, { marginBottom: insets.bottom }]}>
@@ -152,20 +165,22 @@ const BottomNavBar = ({ unreadMessagesCount = 0 }: BottomNavBarProps) => {
           onPress={hanndleCenterPress}
           style={[
             styles.publishButton,
-            isDisabled && styles.disabledButton,
           ]}
-          disabled={isDisabled}
         >
-          {isUser(rol) && (
-            <MaterialCommunityIcons
-              name="clipboard-list"
-              size={36}
-              color="white"
-            />
-          )}
-          {isWorker(rol) && (
-            <Ionicons name="add-circle-outline" size={36} color="#fff" />
-          )}
+         {/* user normal → icono user */}
+{isUser(rol) && (
+  <MaterialCommunityIcons
+    name="clipboard-list"
+    size={36}
+    color="white"
+  />
+)}
+
+{/* worker y guest → MISMO icono */}
+{(isWorker(rol) || rol === "guest") && (
+  <Ionicons name="add-circle-outline" size={36} color="#fff" />
+)}
+
         </TouchableOpacity>
       )}
 
