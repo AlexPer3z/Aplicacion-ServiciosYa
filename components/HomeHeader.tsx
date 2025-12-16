@@ -5,7 +5,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  Image,
+  Image,Alert,
 } from "react-native";
 import LocationChip from "./location/LocationChip";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,8 +15,9 @@ import { useMainNavigation } from "../lib/hooks/useNavigation";
 import OptionsButton from "./home/OptionsButton";
 import { useUserSettings } from "../lib/hooks/useUserSettings";
 import WorkerState from "./home/WorkerState";
-import { isWorker } from "../lib/utils/user";
+import { isGuest, isWorker } from "../lib/utils/user";
 import OnlineFilterCheckBox from "./home/OnlineFilterCheckBox";
+import ProgressChip from "./home/ProgressChip";
 
 interface HomeHeaderProps {
   onSearch: (query: string) => void;
@@ -68,12 +69,33 @@ function HomeHeader({
               )}
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() =>
-                perfil?.perfil_completo && navigation.navigate("Perfil")
-              }
-              disabled={!perfil?.perfil_completo}
-              style={styles.iconButton}
-            >
+  onPress={() => {
+    if (isGuest(rol)) {
+      Alert.alert(
+        "Acceso restringido",
+        "Debes registrarte para acceder a tu perfil.",
+        [
+          { text: "Cancelar", style: "cancel" },
+          { text: "Registrarme", onPress: () => navigation.navigate("AuthStack", { screen: "LoginSelect" })}
+        ]
+      );
+      return;
+    }
+
+    if (!perfil?.perfil_completo) {
+      Alert.alert(
+        "Perfil incompleto",
+        "Completa tu perfil antes de continuar.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+
+    navigation.navigate("Perfil");
+  }}
+  style={styles.iconButton}
+>
+
               {perfil?.foto_perfil ? (
                 <Image
                   source={{ uri: perfil?.foto_perfil }}
@@ -121,6 +143,11 @@ function HomeHeader({
             <View style={styles.filtroColumn} />
           )}
         </View>
+        {!isGuest(rol) && (
+          <ProgressChip
+            label="Mis Logros"
+          />
+        )}
       </View>
     </View>
   );
@@ -132,7 +159,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: "#00B8A9",
     paddingTop: 12,
-    paddingBottom: 25,
+    paddingBottom: 10,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },

@@ -130,17 +130,8 @@ export default function Perfil() {
         <Text style={styles.label}>Nombre</Text>
         <Text style={styles.info}>{userData.nombre}</Text>
 
-        <Text style={styles.label}>Apellido</Text>
-        <Text style={styles.info}>{userData.apellido}</Text>
-
         <Text style={styles.label}>Edad</Text>
         <Text style={styles.info}>{userData.edad}</Text>
-
-        <Text style={styles.label}>DNI</Text>
-        <Text style={styles.info}>{userData.dni}</Text>
-
-        <Text style={styles.label}>Domicilio</Text>
-        <Text style={styles.info}>{userData.domicilio}</Text>
       </View>
     </ScrollView>
   );

@@ -31,7 +31,7 @@ export type MainStackParamList = {
 export type AuthStackParamList = {
     LoginSelect: undefined;
     Login: undefined;
-    Register: undefined;
+    Register: { referralCode?: string };
     VerificacionPendiente: undefined;
 };
 

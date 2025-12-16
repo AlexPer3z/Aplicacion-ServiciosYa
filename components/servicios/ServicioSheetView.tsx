@@ -14,6 +14,7 @@ import { isGuest } from "../../lib/utils/user";
 import useContratar, { CONTRATAR_ERRORS } from "../../lib/hooks/useContratar";
 import showToast from "../../lib/toast";
 import { useBottomSheetModal } from "@gorhom/bottom-sheet";
+import { useGrantAchievement } from "../../lib/services/achievements.services";
 
 interface ServicioSheetViewProps {
     servicio: Servicio;
@@ -31,11 +32,13 @@ function ServicioSheetView({
     showProfile = false,
 }: ServicioSheetViewProps) {
     const navigation = useMainNavigation();
+    const { checkService } = useGrantAchievement();
     const { rol, isSuscriptor } = useSuspenseProfile();
     const [showFullDescription, setShowFullDescription] = useState(false);
     const { dismiss } = useBottomSheetModal();
     const { creditos, mutate, isPending } = useContratar({
-        onSuccess() {
+        onSuccess: async () => {
+            await checkService();
             dismiss();
             showToast.success("¡Éxito!", "Tu propuesta fue enviada.");
         },
@@ -157,46 +160,31 @@ function ServicioSheetView({
                     </Suspense>
                 )}
 
-                {/* Credits / Subscription Info */}
-                {!isGuest(rol) && (
-                    <View style={styles.creditsCard}>
-                        {isSuscriptor ? (
-                            <>
-                                <View style={styles.creditsInfo}>
-                                    <Ionicons name="star-outline" size={16} color={colors.primary} />
-                                    <Text style={styles.creditsTitle}>Suscripción activa</Text>
-                                </View>
-                                <Ionicons name="checkmark-circle-outline" size={24} color={colors.primary} />
-                            </>
-                        ) : (
-                            <>
-                                <View style={styles.creditsInfo}>
-                                    <Ionicons name="wallet-outline" size={16} color={colors.primary} />
-                                    <Text style={styles.creditsTitle}>Créditos disponibles</Text>
-                                </View>
-                                <Text style={styles.creditsAmount}>{creditos || 0}</Text>
-                            </>
-                        )}
-                    </View>
-                )}
+               
             </ScrollView>
 
             {/* Action Buttons */}
             <View style={styles.actionContainer}>
                 <GenericButton
-                    title="Cancelar"
-                    onPress={onCancel}
-                    style={styles.cancelButton}
-                    type="outline"
-                />
-                {!isGuest(rol) && (
-                    <GenericButton
-                        title="Contratar"
-                        onPress={handleContratarServicio}
-                        style={styles.hireButton}
-                        loading={isPending}
-                    />
-                )}
+    title="Contratar"
+    onPress={() => {
+        if (isGuest(rol)) {
+            Alert.alert(
+                "Inicia sesión",
+                "Debes iniciar sesión para contratar un servicio.",
+                [
+                    { text: "Cancelar", style: "cancel" },
+                    { text: "Iniciar sesión", onPress: () => navigation.navigate("AuthStack", { screen: "LoginSelect" }) },
+                ]
+            );
+        } else {
+            handleContratarServicio();
+        }
+    }}
+    style={styles.hireButton}
+    loading={isPending && !isGuest(rol)}
+/>
+
             </View>
         </SheetContainer>
     );

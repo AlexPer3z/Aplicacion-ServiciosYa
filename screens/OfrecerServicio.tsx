@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -8,6 +9,7 @@ import {
   Alert,
   Platform, // Keep platform for potential future use
 } from "react-native";
+
 // 1. Import the new component
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { supabase } from "../lib/supabase";
@@ -50,24 +52,49 @@ function OfrecerServicio({ navigation }: Props) {
   }, []);
 
   const handleSubmit = async () => {
-    if (
-      !titulo ||
-      !categoria ||
-      !horario ||
-      !precio ||
-      !descripcion ||
-      !ubicacion
-    ) {
-      Alert.alert("Error", "Por favor completa todos los campos.");
+  if (
+    !titulo ||
+    !categoria ||
+    !horario ||
+    !precio ||
+    !descripcion ||
+    !ubicacion
+  ) {
+    Alert.alert("Error", "Por favor completa todos los campos.");
+    return;
+  }
+
+  if (!userId) {
+    Alert.alert(
+      "Error",
+      "No se pudo obtener el usuario. Asegúrate de estar logueado."
+    );
+    return;
+  }
+
+  try {
+    // 🔹 Consultar si el usuario tiene el campo registroPagado = true
+    const { data: perfil, error: perfilError } = await supabase
+  .from("usuarios")
+  .select("registropagado")
+  .eq("id", userId)
+  .single();
+
+
+
+    if (perfilError) {
+      console.error("Error al obtener perfil:", perfilError);
+      Alert.alert("Error", "No se pudo verificar el estado del pago.");
       return;
     }
-    if (!userId) {
-      Alert.alert(
-        "Error",
-        "No se pudo obtener el usuario. Asegúrate de estar logueado.",
-      );
-      return;
-    }
+
+    // 🔹 Si no está pagado, redirigir a la pantalla de pago
+    if (!perfil?.registropagado) {
+  navigation.navigate("pagoInicial");
+}
+
+
+    // 🔹 Si el usuario ya pagó, crear el servicio
     const servicio = {
       user_id: userId,
       titulo,
@@ -78,21 +105,21 @@ function OfrecerServicio({ navigation }: Props) {
       location: locationQueryString(ubicacion.lat, ubicacion.lng),
       country: ubicacion.isoCountryCode,
     };
-    try {
-      const { data, error } = await supabase.from("servicios").insert(servicio);
 
-      if (error) {
-        console.error("Error de Supabase:", error);
-        throw new Error(error.message || "Error desconocido de Supabase");
-      }
+    const { data, error } = await supabase.from("servicios").insert(servicio);
 
-      Alert.alert("Éxito", "Servicio creado correctamente.");
-      navigation.navigate("Home");
-    } catch (err:any) {
-      console.error("Error al insertar el servicio:", err.message);
-      Alert.alert("Error", `No se pudo crear el servicio: ${err.message}`);
+    if (error) {
+      console.error("Error de Supabase:", error);
+      throw new Error(error.message || "Error desconocido de Supabase");
     }
-  };
+
+    Alert.alert("Éxito", "Servicio creado correctamente.");
+  } catch (err: any) {
+    console.error("Error al insertar el servicio:", err.message);
+    Alert.alert("Error", `No se pudo crear el servicio: ${err.message}`);
+  }
+};
+
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#E8FAF7" }}>

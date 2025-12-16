@@ -252,11 +252,20 @@ export default function Login({ navigation }: Props) {
 
       // Guardar credenciales y correo si el inicio de sesión es exitoso
       if (data?.user) {
-        await Promise.all([
-          saveCredentials(emailToAuth, password),
-          validateEmail(identifier) ? saveEmail(identifier) : Promise.resolve(),
-        ]);
-      }
+  await Promise.all([
+    saveCredentials(emailToAuth, password),
+    validateEmail(identifier) ? saveEmail(identifier) : Promise.resolve(),
+  ]);
+
+  // Forzar que Supabase guarde la sesión
+  if (data.session) {
+    await supabase.auth.setSession(data.session);
+  }
+
+  // Redirigir al MainStack y abrir Home
+  navigation.replace("MainStack", { screen: "Home" });
+}
+
     } catch (error) {
       console.error("Error de inicio de sesión:", error);
       setErrorMessage(ERROR_MESSAGES.GENERAL_ERROR);

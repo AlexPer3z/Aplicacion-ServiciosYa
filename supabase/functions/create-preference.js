@@ -11,7 +11,7 @@ serve(async (req) => {
           title: `Acceso a profesionales de ${categoria}`,
           quantity: 1,
           currency_id: "ARS",
-          unit_price: 1500,
+          unit_price: 5000,
         },
       ],
       back_urls: {
