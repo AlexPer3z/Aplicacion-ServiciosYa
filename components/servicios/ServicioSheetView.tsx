@@ -166,19 +166,25 @@ function ServicioSheetView({
             {/* Action Buttons */}
             <View style={styles.actionContainer}>
                 <GenericButton
-                    title="Cancelar"
-                    onPress={onCancel}
-                    style={styles.cancelButton}
-                    type="outline"
-                />
-                {!isGuest(rol) && (
-                    <GenericButton
-                        title="Contratar"
-                        onPress={handleContratarServicio}
-                        style={styles.hireButton}
-                        loading={isPending}
-                    />
-                )}
+    title="Contratar"
+    onPress={() => {
+        if (isGuest(rol)) {
+            Alert.alert(
+                "Inicia sesión",
+                "Debes iniciar sesión para contratar un servicio.",
+                [
+                    { text: "Cancelar", style: "cancel" },
+                    { text: "Iniciar sesión", onPress: () => navigation.navigate("AuthStack", { screen: "LoginSelect" }) },
+                ]
+            );
+        } else {
+            handleContratarServicio();
+        }
+    }}
+    style={styles.hireButton}
+    loading={isPending && !isGuest(rol)}
+/>
+
             </View>
         </SheetContainer>
     );

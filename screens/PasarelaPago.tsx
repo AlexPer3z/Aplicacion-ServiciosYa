@@ -70,7 +70,7 @@ export default function PagoInicial() {
   const [loading, setLoading] = useState(false);
   const [pais, setPais] = useState<string | null>(null);
   const [codigo, setCodigo] = useState<string>("");
-  const [loadingPais, setLoadingPais] = useState(true);
+const [loadingPais, setLoadingPais] = useState(true);
 
   // Detectar país al cargar
   useEffect(() => {
@@ -81,44 +81,6 @@ export default function PagoInicial() {
   };
   cargarPais();
 }, []);
-
-
-  // ✅ Validar si el usuario ya tiene el registro pagado
-useEffect(() => {
-  const verificarPago = async () => {
-    try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) return;
-
-      const { data: usuario, error } = await supabase
-        .from("usuarios")
-        .select("registropagado") // o "pago" si así se llama en tu tabla
-        .eq("id", user.id)
-        .single();
-
-      if (error) {
-        console.error("Error al verificar pago:", error);
-        return;
-      }
-
-      // Si ya pagó → redirige a Home
-      if (usuario?.registropagado === true) {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: "Home" }],
-        });
-      }
-    } catch (err) {
-      console.error("❌ Error al validar registro pagado:", err);
-    }
-  };
-
-  verificarPago();
-
-  // 👇 Se ejecuta cada vez que la pantalla vuelve al foco
-  const unsubscribe = navigation.addListener("focus", verificarPago);
-  return unsubscribe;
-}, [navigation]);
 
 
   // Manejo de deep links
@@ -247,6 +209,8 @@ useEffect(() => {
   }, [urlPago]);
 
 
+
+
   if (loadingPais) {
   return (
     <View style={styles.container}>
@@ -290,6 +254,7 @@ useEffect(() => {
     crearPreferencia("plan-basico", user.id);
   }}>
     <Text style={styles.planTitulo}>Plan Básico</Text>
+    <Text style={styles.planDetalle}>5 créditos → $5.000</Text>
   </TouchableOpacity>
 
   <TouchableOpacity 
@@ -300,6 +265,7 @@ useEffect(() => {
   }}
 >
     <Text style={styles.planTitulo}>Plan Pro</Text>
+    <Text style={styles.planDetalle}>12 créditos → $10.000</Text>
   </TouchableOpacity>
 
   <TouchableOpacity 
@@ -310,16 +276,7 @@ useEffect(() => {
   }}
 >
     <Text style={styles.planTitulo}>Plan Ilimitado</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity 
-  style={[styles.planBox, styles.botonPlan4]}
-  onPress={async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    crearPreferencia("credito-simple", user.id);
-  }}
->
-    <Text style={styles.planTitulo}>Credito Simple</Text>
+    <Text style={styles.planDetalle}>$15.000 / mes</Text>
   </TouchableOpacity>
 </View>
 
@@ -328,7 +285,7 @@ useEffect(() => {
   <Text style={styles.mensajeAclaracion}>
     Este es un pago único y exclusivo por el alta de tu cuenta.{"\n"}
     <Text style={{ fontWeight: "bold" }}>
-      No volverás a pagar esto nunca más
+      No volverás a pagar esto nunca más.
     </Text>
   </Text>
 )}
@@ -420,12 +377,7 @@ useEffect(() => {
     <Text
       style={[styles.botonPagoArgentina, { backgroundColor: "transparent" }]}
     >
-      <TouchableOpacity
-          style={[styles.botonPago, { width: 400, alignSelf: "center", paddingVertical: 16 }]}
-          onPress={() => navigation.navigate("Home")}
-        >
-          <Text style={styles.textoBoton}>Pagar más tarde</Text>
-        </TouchableOpacity>
+      <Text style={styles.textoBoton}>Elige uno de los planes</Text>
     </Text>
   </>
 ) : (
@@ -481,7 +433,6 @@ const styles = StyleSheet.create({
     shadowColor: "#FFA13C",
     shadowOpacity: 0.15,
     shadowRadius: 10,
-    color: "#000",
     shadowOffset: { width: 0, height: 4 },
     zIndex: 2, // 🔼 muy importante: queda encima del fondo
   },
@@ -498,7 +449,7 @@ const styles = StyleSheet.create({
   right: 0,
   bottom: 0,
   width: "50vw",
-  height: "75%",
+  height: "84%",
   resizeMode: "cover", // o "contain" según tu imagen
   zIndex: 1,          // 🔽 muy importante: queda debajo de los botones
   opacity: 1,       // opcional: da efecto de fondo tenue
@@ -599,32 +550,22 @@ planBox: {
 
 // 👉 Ajustás estos valores para ubicarlos exactamente donde querés
 botonPlan1: {
-  top: 98,
-  width: "310",
-  height: "30",
+  top: 250,
+  
   left:27,   // posición vertical
   backgroundColor: "#3f82ffff",
 },
 
 botonPlan2: {
-  top: 233,
-  right:27,
-  width: "310",
-  height: "30",
+  top: 257,
+  right:27, 
   backgroundColor: "#ffa13cff",
 },
 
 botonPlan3: {
-  top: 368,
+  top: 430,
   left:27,
-  height: "30",
   backgroundColor: "#39b639ff",
-},
-botonPlan4: {
-  top: 368,
-  left:193,
-  height: "30",
-  backgroundColor: "#2975d8ff",
 },
 
 });

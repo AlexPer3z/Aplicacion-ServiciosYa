@@ -8,12 +8,17 @@ import {
   ImageBackground,
   Switch,
   Alert,
+  Image,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { MainStackParamList } from "../types/navigation";
 import { supabase } from "../lib/supabase";
 import * as Location from "expo-location";
+import * as Linking from "expo-linking";
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
+
 import { AuthContext } from "../lib/context/AppContext"; 
 type NavigationProp = NativeStackNavigationProp<MainStackParamList>;
 
@@ -28,6 +33,7 @@ export default function RegistroTrabajadorSimplificado() {
 
   const { location, setLocation } = useContext(AuthContext);
 
+  const [fotoPerfil, setFotoPerfil] = useState(null);
 
   // 🔹 Función que chequea si la ubicación está dentro de Bolivia
   const isInBolivia = (lat: number, lon: number) => {
@@ -66,6 +72,57 @@ export default function RegistroTrabajadorSimplificado() {
     })();
   }, []);
 
+
+  const seleccionarFotoPerfil = async () => {
+  try {
+    const permiso = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permiso.granted) {
+      Alert.alert("Permiso requerido", "Debes permitir acceso a la galería.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.7
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      const uri = result.assets[0].uri;
+      setFotoPerfil(uri);
+    }
+  } catch (e) {
+    console.log("Error seleccionando foto:", e);
+  }
+};
+
+const subirFoto = async (uri) => {
+  const user = (await supabase.auth.getUser()).data.user;
+
+  const nombreArchivo = `${user.id}-perfil-${Date.now()}.jpg`;
+
+  const base64 = await FileSystem.readAsStringAsync(uri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  const buffer = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+
+  const { error } = await supabase.storage
+    .from("imagenes")
+    .upload(nombreArchivo, buffer, {
+      contentType: "image/jpeg",
+      upsert: true,
+    });
+
+  if (error) throw error;
+
+  const { data } = supabase.storage
+    .from("imagenes")
+    .getPublicUrl(nombreArchivo);
+
+  return data.publicUrl;
+};
+
+
   const handleSubmit = async () => {
   if (!nombre.trim() || !edad || !numeroCelular.trim()) {
     Alert.alert("Error", "Todos los campos son obligatorios.");
@@ -94,6 +151,7 @@ export default function RegistroTrabajadorSimplificado() {
   }
 
   setLoading(true);
+
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -102,39 +160,44 @@ export default function RegistroTrabajadorSimplificado() {
       return;
     }
 
-    const enBolivia = isInBolivia(location.latitude, location.longitude);
-
-    let updateData;
-    let redirectTo: keyof MainStackParamList;
-
-    if (enBolivia) {
-      // ✅ Dentro de Bolivia → sin créditos, pago deshabilitado
-      updateData = {
-        rol: "worker",
-        nombre,
-        edad: edadNum,
-        celular: numeroCelular,
-        perfil_completo: true,
-        pago: false,
-        creditos: 0,
-        dni_verificado: true,
-      };
-      redirectTo = "pagoInicial";
-    } else {
-      // ❌ Fuera de Bolivia → créditos y pago habilitados
-      updateData = {
-        rol: "worker",
-        nombre,
-        edad: edadNum,
-        celular: numeroCelular,
-        perfil_completo: true,
-        pago: true,
-        creditos: 0,
-        dni_verificado: true,
-      };
-      redirectTo = "Home";
+    // ⭐ 1. Subir foto si existe
+    let urlFotoPerfil = null;
+    if (fotoPerfil) {
+      try {
+        urlFotoPerfil = await subirFoto(fotoPerfil);
+      } catch (e) {
+        console.log("Error subiendo foto:", e);
+        Alert.alert("Error", "No se pudo subir la foto de perfil.");
+      }
     }
 
+    const enBolivia = isInBolivia(location.latitude, location.longitude);
+
+    // ⭐ 2. Armar los datos finales
+    let updateData: any = {
+      rol: "worker",
+      nombre,
+      edad: edadNum,
+      celular: numeroCelular,
+      perfil_completo: true,
+      dni_verificado: true,
+    };
+
+    if (urlFotoPerfil) {
+      updateData.foto_perfil = urlFotoPerfil;
+    }
+
+    if (enBolivia) {
+      updateData.pago = false;
+      updateData.creditos = 0;
+    } else {
+      updateData.pago = true;
+      updateData.creditos = 0;
+    }
+
+    const redirectTo = enBolivia ? "pagoInicial" : "Home";
+
+    // ⭐ 3. Guardar en BD
     const { error } = await supabase
       .from("usuarios")
       .update(updateData)
@@ -142,7 +205,7 @@ export default function RegistroTrabajadorSimplificado() {
 
     if (error) {
       console.error("Error al guardar en Supabase:", error);
-      Alert.alert("Error", "No se pudo guardar la información. Intenta más tarde.");
+      Alert.alert("Error", "No se pudo guardar la información.");
       setLoading(false);
       return;
     }
@@ -150,6 +213,7 @@ export default function RegistroTrabajadorSimplificado() {
     Alert.alert("Registro completado", "Tus datos se guardaron correctamente.", [
       { text: "OK", onPress: () => navigation.navigate(redirectTo) },
     ]);
+
   } catch (err) {
     console.error("Error en el registro:", err);
     Alert.alert("Error", "Ocurrió un error al registrar tus datos.");
@@ -157,6 +221,7 @@ export default function RegistroTrabajadorSimplificado() {
     setLoading(false);
   }
 };
+
 
 
   return (
@@ -167,6 +232,42 @@ export default function RegistroTrabajadorSimplificado() {
     >
       <View style={styles.overlay}>
         <Text style={styles.title}>Registro</Text>
+
+
+        <Text style={{ fontSize: 16, fontWeight: "600", color: "#4A7C84", marginBottom: 8 }}>
+  Foto de perfil
+</Text>
+
+<TouchableOpacity
+  onPress={seleccionarFotoPerfil}
+  style={{
+    backgroundColor: "#E8C547",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginBottom: 10,
+  }}
+>
+  <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
+    Seleccionar foto
+  </Text>
+</TouchableOpacity>
+
+{fotoPerfil && (
+  <View style={{ alignItems: "center", marginBottom: 20 }}>
+    <Image
+      source={{ uri: fotoPerfil }}
+      style={{
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        borderWidth: 2,
+        borderColor: "#E8C547",
+      }}
+    />
+  </View>
+)}
+
 
         <TextInput
           placeholder="Nombre completo"
@@ -194,12 +295,17 @@ export default function RegistroTrabajadorSimplificado() {
 
         <View style={styles.switchContainer}>
           <Switch
-            value={aceptaTerminos}
-            onValueChange={setAceptaTerminos}
-            trackColor={{ false: "#767577", true: "#E8C547" }}
-            thumbColor={aceptaTerminos ? "#A4D4AE" : "#f4f3f4"}
-          />
-          <Text style={styles.switchLabel}>Acepto los términos y condiciones</Text>
+    value={aceptaTerminos}
+    onValueChange={setAceptaTerminos}
+    trackColor={{ false: "#767577", true: "#E8C547" }}
+    thumbColor={aceptaTerminos ? "#A4D4AE" : "#f4f3f4"}
+  />
+
+  <TouchableOpacity onPress={() => Linking.openURL("https://inicio.serviciosya.info/Terminos-y-condiciones.html")}>
+    <Text style={[styles.switchLabel, { textDecorationLine: "underline" }]}>
+      Acepto los términos y condiciones
+    </Text>
+  </TouchableOpacity>
         </View>
 
         <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading}>

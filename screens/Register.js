@@ -13,8 +13,6 @@ import { useReferrer } from '../lib/hooks/useReferrer';
 import { useGrantAchievement } from '../lib/services/achievements.services';
 
 export default function Register({ navigation }) {
-  const { getReferrer, setReferrer } = useReferrer({ capture: true });
-  const { refered } = useGrantAchievement();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [repeatPassword, setRepeatPassword] = useState('');
@@ -38,38 +36,50 @@ export default function Register({ navigation }) {
   const esSegura = Object.values(requisitos).every(Boolean);
 
   const handleRegister = async () => {
-    if (!validateEmail(email)) {
-      Alert.alert('Formato inválido', 'Por favor ingresa un email válido.');
-      return;
+  if (!validateEmail(email)) {
+    Alert.alert('Formato inválido', 'Por favor ingresa un email válido.');
+    return;
+  }
+  if (!esSegura) {
+    Alert.alert('Contraseña débil', 'La contraseña debe cumplir con todos los requisitos de seguridad.');
+    return;
+  }
+  if (password !== repeatPassword) {
+    Alert.alert('Error', 'Las contraseñas no coinciden.');
+    return;
+  }
+
+  const { data, error } = await supabase.auth.signUp({ email, password });
+
+  if (error) {
+    if (error.message.includes('already registered')) {
+      Alert.alert('Correo en uso', 'Este correo ya está registrado.');
+    } else {
+      Alert.alert('Error al registrarse', error.message);
     }
-    if (!esSegura) {
-      Alert.alert('Contraseña débil', 'La contraseña debe cumplir con todos los requisitos de seguridad.');
-      return;
-    }
-    if (password !== repeatPassword) {
-      Alert.alert('Error', 'Las contraseñas no coinciden.');
-      return;
-    }
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) {
-      if (error.message.includes('already registered')) {
-        Alert.alert('Correo en uso', 'Este correo ya está registrado.');
-      } else {
-        Alert.alert('Error al registrarse', error.message);
-      }
-      return;
-    }
-    if (data.user) {
-      await supabase.from('usuarios').insert([{ id: data.user.id, email }]);
-      // obtiene el codigo de referido
-      const code = await getReferrer();
-      // añade el referido al usuario si esta disponible
-      await setReferrer(data.user.id);
-      // le da el logro al usuario de quien pertenece el codigo
-      if (code) await refered(code);
-      setShowMessage(true);
-    }
-  };
+    return;
+  }
+
+  if (data.user) {
+    await supabase.from('usuarios').insert([{ id: data.user.id, email }]);
+
+    // ⬇️ IMPORTANTE: cargar los hooks recién ahora
+    const { getReferrer, setReferrer } = useReferrer({ capture: true });
+    const { refered } = useGrantAchievement();
+
+    // obtiene el codigo de referido
+    const code = await getReferrer();
+
+    // añade el referido al usuario si está disponible
+    await setReferrer(data.user.id);
+
+    // da el logro al usuario dueño del código
+    if (code) await refered(code);
+
+    setShowMessage(true);
+  }
+};
+
 
   const renderRequisito = (cumple, texto) => (
     <View style={styles.requisito}>
