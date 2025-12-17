@@ -322,6 +322,15 @@ export default function Login({ navigation }: Props) {
               showPassword={showPassword}
               onTogglePassword={() => setShowPassword(!showPassword)}
             />
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Recuperar contraseña")}
+              style={{ alignSelf: "flex-end", marginTop: -10, marginBottom: 10 }}
+            >
+              <Text style={{ color: "#19D4C6", fontSize: 13 }}>
+                ¿Olvidaste tu contraseña?
+              </Text>
+            </TouchableOpacity>
+
           </View>
 
           <TouchableOpacity
