@@ -35,7 +35,15 @@ export default function AuthStackNavigator() {
                 name="VerificacionPendiente"
                 component={withSafeArea(VerificacionPendiente)}
             />
+             {/* RECUPERAR CONTRASEÑA */}
+            <Stack.Screen name="Recuperar contraseña" component={RecuperarContrasena}
+              />
+            
+            <Stack.Screen name="Nueva contraseña" component={NuevaContrasena}
+  />
         </Stack.Navigator>
+        
+
     );
 }
 
