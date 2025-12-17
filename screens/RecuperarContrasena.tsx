@@ -15,7 +15,7 @@ export default function RecuperarContrasena() {
     setCargando(true);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: "serviciosya://reset-password",
+      redirectTo: "solucionesya://reset-password",
     });
 
     setCargando(false);
