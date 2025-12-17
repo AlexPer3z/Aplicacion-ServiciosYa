@@ -7,6 +7,9 @@ import Login from '../screens/Login';
 import Register from '../screens/Register';
 import type { AuthStackParamList } from '../types/navigation';
 import VerificacionPendiente from '../screens/VerificacionPendiente';
+import RecuperarContrasena from "../screens/RecuperarContrasena";
+import NuevaContrasena from "../screens/NuevaContrasena";
+
 
 interface WithSafeAreaProps {
     [key: string]: any;
