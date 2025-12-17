@@ -5,6 +5,8 @@ import React, { useEffect } from "react";
 import {
   NavigationContainer,
 } from "@react-navigation/native";
+import * as Linking from "expo-linking";
+import { supabase } from "./lib/supabase";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as SplashScreen2 from "expo-splash-screen";
@@ -29,6 +31,38 @@ SplashScreen2.setOptions({
 export default function App() {
   const { isInitializing, isAuth } = useAuth(queryClient);
   const { navigationRef, handleInitialNotification } = useNotificationHandler();
+  useEffect(() => {
+  const extraerTokens = (url: string) => {
+    const hash = url.split("#")[1] || "";
+    const query = url.split("?")[1] || "";
+    const params = new URLSearchParams(hash || query);
+
+    return {
+      type: params.get("type"), // recovery
+      access_token: params.get("access_token"),
+      refresh_token: params.get("refresh_token"),
+    };
+  };
+
+  const manejarUrl = async (url: string) => {
+    const { type, access_token, refresh_token } = extraerTokens(url);
+
+    if (type === "recovery" && access_token && refresh_token) {
+      await supabase.auth.setSession({ access_token, refresh_token });
+    }
+  };
+
+  Linking.getInitialURL().then((url) => {
+    if (url) manejarUrl(url);
+  });
+
+  const sub = Linking.addEventListener("url", (event) => {
+    manejarUrl(event.url);
+  });
+
+  return () => sub.remove();
+}, []);
+
 
   if (isInitializing) return null;
 
