@@ -1,8 +1,13 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
 import { supabase } from "../lib/supabase";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { AuthStackParamList } from "../types/navigation";
 
-export default function NuevaContrasena() {
+
+type Props = NativeStackScreenProps<AuthStackParamList, "Nueva contraseña">;
+
+export default function NuevaContrasena({ navigation }: Props) {
   const [contrasena, setContrasena] = useState("");
   const [confirmacion, setConfirmacion] = useState("");
   const [cargando, setCargando] = useState(false);
@@ -26,7 +31,16 @@ export default function NuevaContrasena() {
       return;
     }
 
-    Alert.alert("Listo", "Tu contraseña fue actualizada.");
+    Alert.alert("Listo", "Tu contraseña fue actualizada.", [
+  {
+    text: "Aceptar",
+    onPress: async () => {
+      await supabase.auth.signOut();
+      navigation.replace("Login");
+    },
+  },
+]);
+
   };
 
   return (
