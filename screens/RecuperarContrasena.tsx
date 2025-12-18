@@ -1,8 +1,13 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
 import { supabase } from "../lib/supabase";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { AuthStackParamList } from "../types/navigation";
 
-export default function RecuperarContrasena() {
+
+type Props = NativeStackScreenProps<AuthStackParamList, "Recuperar contraseña">;
+
+export default function RecuperarContrasena({ navigation }: Props) {
   const [email, setEmail] = useState("");
   const [cargando, setCargando] = useState(false);
 
@@ -25,10 +30,16 @@ export default function RecuperarContrasena() {
       return;
     }
 
-    Alert.alert(
-      "Listo",
-      "Te enviamos un link a tu correo para crear una nueva contraseña."
-    );
+   Alert.alert(
+    "Listo",
+      "Te enviamos un link a tu correo para crear una nueva contraseña.",
+    [
+      {
+        text: "Aceptar",
+        onPress: () => navigation.goBack(),
+      },
+    ]
+  );
   };
 
   return (
