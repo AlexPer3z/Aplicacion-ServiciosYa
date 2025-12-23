@@ -159,7 +159,12 @@ export const useNotifications = () => {
 
         // Handle notification tap/interaction
         // You can add navigation logic here based on response.notification.request.content.data
-        const { screen, params } = response.notification.request.content.data;
+        const { screen, params } = response.notification.request.content.data; 
+
+        // 🔴 Si es ChatIndividual, NO usar Linking
+        if (screen === "ChatIndividual") {
+          return;
+        }
 
         if (screen) {
           // Create a URL from the notification data
