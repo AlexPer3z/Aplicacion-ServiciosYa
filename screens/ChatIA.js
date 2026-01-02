@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
      borderRadius: 23,
      marginRight: 10,
      borderWidth: 2,
-     borderColor: '#19D4C6',
+     borderColor: '#069eb3',
      backgroundColor: '#F3FFFE' 
   },
   textos: { 

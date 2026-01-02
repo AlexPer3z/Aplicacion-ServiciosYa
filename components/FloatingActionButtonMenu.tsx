@@ -115,7 +115,7 @@ const FloatingActionButtonMenu: React.FC<FloatingActionButtonMenuProps> = ({
             >
               <TouchableOpacity
                 onPress={() => handleButtonPress(onChatPress)}
-                style={[styles.button, { backgroundColor: "#FFA13C" }]}
+                style={[styles.button, { backgroundColor: "#fe971a" }]}
               >
                 <Ionicons name="chatbubble-ellipses" size={24} color="#fff" />
               </TouchableOpacity>
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     right: 0,
   },
   mainButton: {
-    backgroundColor: "#00B8A9",
+    backgroundColor: "#069eb3",
     width: 56,
     height: 56,
     borderRadius: 28,

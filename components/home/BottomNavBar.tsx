@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    backgroundColor: "#FFA13C",
+    backgroundColor: "#fe971a",
     borderTopWidth: 1,
     borderTopColor: "#f26700",
   },
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   publishButton: {
-    backgroundColor: "#00B9ba",
+    backgroundColor: "#069eb3",
     padding: 12,
     borderRadius: 30,
     top: -25,

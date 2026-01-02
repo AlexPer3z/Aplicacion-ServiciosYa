@@ -1,6 +1,13 @@
 import React, { useCallback, useMemo } from "react";
-import { RefreshControl, Text, View } from "react-native";
-import Animated, { FadeInDown, Layout } from "react-native-reanimated";
+import {
+  RefreshControl,
+  Text,
+  View,
+  SectionList,
+  StyleSheet,
+} from "react-native";
+import Animated from "react-native-reanimated";
+
 import { CategorySection } from "./CategorySection";
 import { categoriasPorSeccion } from "../../lib/utils/categorias";
 import { useServicesCount } from "../../lib/hooks/useServices";
@@ -15,7 +22,8 @@ interface CategoryListProps {
   onRefresh: () => void;
 }
 
-const AnimatedScrollView = Animated.ScrollView;
+const AnimatedSectionList =
+  Animated.createAnimatedComponent(SectionList);
 
 export const CategoryList = ({
   busqueda,
@@ -31,38 +39,44 @@ export const CategoryList = ({
   const error = serviciosCount?.error;
   const refetch = serviciosCount?.refetch;
 
-  
-
   const { settings } = useUserSettings();
   const showAllCategories = settings?.showAllCategories ?? true;
 
+  // 🔹 Map categoria → cantidad
   const conteosMap = useMemo(() => {
-    const map = (conteos ?? []).reduce((acc: Record<string, number>, item) => {
+    return (conteos ?? []).reduce((acc: Record<string, number>, item) => {
       acc[item.categoria] = item.count;
       return acc;
     }, {});
-    console.log("ConteosMap:", map);
-    return map;
   }, [conteos]);
 
+  // 🔹 Filtrar categorías
   const filteredCategorias = useMemo(() => {
     return Object.entries(categoriasPorSeccion).reduce(
       (acc, [seccion, categorias]) => {
-        acc[seccion] = categorias.filter((cat) => {
+        const filtradas = categorias.filter((cat) => {
           const count = conteosMap[cat] || 0;
           return (
             (showAllCategories || count > 0) &&
             cat.toLowerCase().includes(busqueda.toLowerCase())
           );
         });
+
+        if (filtradas.length > 0) {
+          acc.push({
+            title: seccion,
+            data: [filtradas], // ⚠️ IMPORTANTE
+          });
+        }
+
         return acc;
       },
-      {} as Record<string, string[]>
+      [] as { title: string; data: string[][] }[]
     );
-  }, [showAllCategories, busqueda, conteosMap]);
+  }, [busqueda, conteosMap, showAllCategories]);
 
   const handleOnRefresh = useCallback(() => {
-    if (refetch) refetch();
+    refetch?.();
     onRefresh();
   }, [refetch, onRefresh]);
 
@@ -81,40 +95,54 @@ export const CategoryList = ({
   }
 
   return (
-    <AnimatedScrollView
-      style={{ flex: 1 }}
+    <AnimatedSectionList
+      sections={filteredCategorias}
+      keyExtractor={(_, index) => index.toString()}
+
+      renderSectionHeader={({ section }) => (
+        <Text style={styles.sectionTitle}>{section.title}</Text>
+      )}
+
+      renderItem={({ item, section }) => (
+        <CategorySection
+          title={section.title}
+          categories={item}
+          conteos={conteosMap}
+          onCategoryPress={onCategoryPress}
+          disabled={isUserRestricted}
+        />
+      )}
+
       refreshControl={
         <RefreshControl
-          colors={["#00B8A9", "#FFA13C"]}
+          colors={["#00B8A9", "#fe971a"]}
           refreshing={isFetching || refreshing}
           onRefresh={handleOnRefresh}
         />
       }
-      contentContainerStyle={{ paddingTop: 10, paddingBottom: 100 }}
-    >
-      {Object.entries(filteredCategorias).map(
-        ([seccion, categorias], index) => {
-          if (categorias.length === 0) return null;
 
-          return (
-            <Animated.View
-              key={seccion}
-              entering={FadeInDown.delay(index * 100)
-                .springify()
-                .damping(14)}
-              layout={Layout.springify()}
-            >
-              <CategorySection
-                title={seccion}
-                categories={categorias}
-                conteos={conteosMap}
-                onCategoryPress={onCategoryPress}
-                disabled={isUserRestricted}
-              />
-            </Animated.View>
-          );
-        }
-      )}
-    </AnimatedScrollView>
+      contentContainerStyle={{ paddingBottom: 120 }}
+
+      // 🔥 VIRTUALIZACIÓN REAL
+      initialNumToRender={2}
+      maxToRenderPerBatch={2}
+      windowSize={3}
+      removeClippedSubviews
+    />
   );
 };
+
+const styles = StyleSheet.create({
+  sectionTitle: {
+    fontWeight: "900",
+    color: "#333",
+    backgroundColor: "white",
+    paddingVertical: 6,
+    paddingHorizontal: 26,
+    borderRadius: 10,
+    marginLeft: 16,
+    marginBottom: 8,
+    alignSelf: "flex-start",
+    elevation: 3,
+  },
+});

@@ -94,13 +94,13 @@ const styles = StyleSheet.create({
   // Base chip style (size-specific properties are now applied dynamically)
   chip: {
     height: "100%",
-    backgroundColor: "#FFA13C",
+    backgroundColor: "#fe971a",
     flexDirection: "row",
     alignItems: "center",
   },
   // Style when the chip is checked
   chipChecked: {
-    backgroundColor: "#FFA13C",
+    backgroundColor: "#fe971a",
   },
   // Style when the chip is being pressed
   chipPressed: {

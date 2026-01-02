@@ -156,41 +156,37 @@ const handleCategoryPress = async (categoria: string) => {
       return;
     }
 
-    if (data?.pago) {
-      // ✅ Pago activo → continuar flujo normal
-      Alert.alert(
-        "Acceso Verificado",
-        "✅ Acceso permitido, puedes continuar.",
-        [
-          {
-            text: "OK",
-            onPress: async () => {
-              try {
-                const response = await fetch("https://insightpulse.store/api/registrar_evento.php", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    tipo_evento: "categoria_visitada",
-                    datos: {
-                      usuario_id: user.id,
-                      categoria: categoria
-                    }
-                  })
-                });
+   if (data?.pago) {
+  // ✅ Pago activo → continuar flujo normal
 
-                const result = await response.json();
-                console.log("Respuesta del backend:", result);
-              } catch (error) {
-                console.error("Error al registrar categoría:", error);
-              }
-
-              // Navegar después de registrar
-              navigation.navigate("ServiciosPorCategoria", { categoria });
-            }
-          }
-        ]
+  // Registrar evento (no bloquea la navegación)
+  (async () => {
+    try {
+      const response = await fetch(
+        "https://insightpulse.store/api/registrar_evento.php",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tipo_evento: "categoria_visitada",
+            datos: {
+              usuario_id: user.id,
+              categoria: categoria,
+            },
+          }),
+        }
       );
-    } else {
+
+      const result = await response.json();
+      console.log("Respuesta del backend:", result);
+    } catch (error) {
+      console.error("Error al registrar categoría:", error);
+    }
+  })();
+
+  // 👉 Redirigir automáticamente
+  navigation.navigate("ServiciosPorCategoria", { categoria });
+} else {
       // ❌ Pago inactivo → bloquear flujo y redirigir a pagoInicial
       Alert.alert(
         "Verificación requerida",
@@ -250,11 +246,6 @@ useEffect(() => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ImageBackground
-        source={require("../assets/fondo_home.png")}
-        style={styles.background}
-        resizeMode="cover"
-      >
         <View style={styles.container}>
           <HomeHeader
             onSearch={setBusqueda}
@@ -295,7 +286,6 @@ useEffect(() => {
             onClose={() => setChatVisible(false)}
           />
         </View>
-      </ImageBackground>
 
       <BottomNavBar unreadMessagesCount={unreadMessagesCount} />
     </SafeAreaView>
@@ -307,7 +297,7 @@ export default withDropDownProvider(
 );
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#00B8A9" },
-  background: { flex: 1 },
-  container: { flex: 1, backgroundColor: "rgba(255, 255, 255, 0.40)" },
+  safeArea: { flex: 1, backgroundColor: "#069eb3" },
+  background: { flex: 1, backgroundColor: "#0882b3ff" },
+  container: { flex: 1, backgroundColor: "rgba(255, 255, 255, 0)" },
 });
