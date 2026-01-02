@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, FlatList, StyleSheet } from "react-native";
+
 import { CategoryItem } from "./CategoryItem";
 
 interface CategorySectionProps {
@@ -21,22 +22,30 @@ export const CategorySection = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {categories.map((cat) => (
-          <CategoryItem
-            key={cat}
-            categoria={cat}
-            count={conteos[cat] || 0}
-            onPress={() => onCategoryPress(cat)}
-            disabled={disabled}
-          />
-        ))}
-      </ScrollView>
+      <FlatList
+  horizontal
+  data={categories}
+  keyExtractor={(item) => item}
+  renderItem={({ item }) => (
+    <CategoryItem
+      categoria={item}
+      count={conteos[item] || 0}
+      onPress={() => onCategoryPress(item)}
+      disabled={disabled}
+    />
+  )}
+  showsHorizontalScrollIndicator={false}
+  contentContainerStyle={styles.scrollContent}
+
+  // 🔥 CLAVES
+  initialNumToRender={4}
+  maxToRenderPerBatch={4}
+  windowSize={2}
+  removeClippedSubviews={true}
+  updateCellsBatchingPeriod={50}
+/>
+
+
     </View>
   );
 };

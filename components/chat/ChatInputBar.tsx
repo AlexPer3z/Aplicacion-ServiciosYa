@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   botonEnviar: {
-    backgroundColor: "#FFA13C",
+    backgroundColor: "#fe971a",
     borderRadius: 18,
     padding: 13,
     justifyContent: "center",

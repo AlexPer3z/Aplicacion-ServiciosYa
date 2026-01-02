@@ -114,17 +114,8 @@ const WorkerProfile: React.FC<Props> = ({
                 </View>
 
                 {/* Services Section */}
-                <Suspense
-                    fallback={
-                        <ActivityIndicator
-                            style={{ marginTop: 24 }}
-                            size="large"
-                            color={colors.primary}
-                        />
-                    }
-                >
-                    <WorkerServicesList userId={id} onServiceSelected={handleServiceSelected} />
-                </Suspense>
+                <WorkerServicesList userId={id} onServiceSelected={handleServiceSelected} />
+
             </ScrollView>
             <BottomSheetModal {...modalProps}>
                 {servicioSeleccionado && <ServicioSheetView servicio={servicioSeleccionado} onHire={handleContratar} onCancel={() => dismiss()} />}

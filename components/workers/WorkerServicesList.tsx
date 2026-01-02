@@ -23,9 +23,14 @@ const WorkerServicesList: React.FC<WorkerServicesListProps> = ({
   userId,
   onServiceSelected,
 }) => {
-  const { data: servicios } = useSuspenseQuery(
-    userServiceListQueryOptions(userId),
-  );
+  const { data: servicios = [], isLoading } = useQuery(
+  userServiceListQueryOptions(userId)
+);
+
+if (isLoading) {
+  return <ActivityIndicator />;
+}
+
 
   const renderServiceItem = (service: Servicio) => (
     <TouchableOpacity

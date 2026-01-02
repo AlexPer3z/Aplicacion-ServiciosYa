@@ -53,7 +53,7 @@ function HomeHeader({
       <View style={{ marginHorizontal: 15 }}>
         <View style={styles.headerTop}>
           <View style={styles.saludoContainer}>
-            <Text style={styles.saludo}>¡Servicios Ya!</Text>
+            <Text style={styles.saludo}>¡Servicios <Text style={styles.saludo2}>Ya!</Text></Text>
             <Text style={styles.subtitulo}>¿Qué necesitás hoy?</Text>
           </View>
           <View style={styles.iconsContainer}>
@@ -157,7 +157,7 @@ export default HomeHeader;
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: "#00B8A9",
+    backgroundColor: "#069eb3",
     paddingTop: 12,
     paddingBottom: 10,
     borderBottomLeftRadius: 20,
@@ -172,7 +172,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   saludo: {
-    color: "#fff",
+    color: "#2D2A6E",
+    fontSize: 30,
+    fontWeight: "900",
+  },
+  saludo2: {
+    color: "#fe971a",
     fontSize: 30,
     fontWeight: "900",
   },

@@ -11,9 +11,11 @@ import fondo from '../assets/fondo.png';
 import logo from '../assets/logo.png';
 import useAuthSession from '../lib/hooks/useAuthSession';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 import BtnLoginGoogle from '../components/BtnLoginGoogle';
 import { saveAuthSession } from '../lib/storage';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 import AppleSignInButton from "../components/AppleSignInButton";
 
@@ -27,7 +29,7 @@ const LoginButton = ({ icon, label, onPress, style = {} }) => (
     accessibilityLabel={label}
     activeOpacity={0.85}
   >
-    <MaterialIcons name={icon} size={22} color="#fff" style={styles.loginButtonIcon} />
+    <MaterialIcons name={icon} size={22} color="#faae4bff" style={styles.loginButtonIcon} />
     <Text style={styles.loginButtonText}>{label}</Text>
   </TouchableOpacity>
 );
@@ -165,35 +167,84 @@ export default function LoginSelect({ navigation }) {
   return (
     <ImageBackground source={fondo} style={styles.background} resizeMode="cover">
       <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-        <Image source={logo} style={styles.logo} />
-        <Text style={styles.title}>Seleccione su método de inicio de sesión preferido</Text>
+        <View style={styles.logoLightWrapper}>
+  <Image source={logo} style={styles.logo} />
+</View>
+
+
+
+        <Text style={styles.appTitle}>SERVICIOS YA</Text>
+<Text style={styles.title}>
+  Seleccione su <Text style={styles.bold}>método de inicio de sesión</Text> preferido
+</Text>
+
+
         {errorMessage !== '' && <ErrorBox message={errorMessage} />}
 
         <View style={[styles.buttonsWrapper, { gap: 12, marginBottom: 8, marginTop: 10 }]}>
-          <LoginButton
-            icon="email"
-            label="Inicia con tu correo"
-            onPress={handleEmailLogin}
-          />
-          <LoginButton
-            icon="fingerprint"
-            label="Inicia con tu huella"
-            onPress={handleHuellaLogin}
-          />
-          <BtnLoginGoogle onLogin={handleLoginGoogle} />
+          <TouchableOpacity
+  style={styles.loginButton}
+  onPress={handleEmailLogin}
+  activeOpacity={0.85}
+>
+  <MaterialIcons
+    name="email"
+    size={22}
+    style={styles.loginButtonIcon}
+  />
+  <Text style={styles.loginButtonText}>
+    Inicia con tu <Text style={styles.orange}>correo</Text>
+  </Text>
+</TouchableOpacity>
+
+          <TouchableOpacity
+  style={styles.loginButton}
+  onPress={handleHuellaLogin}
+  activeOpacity={0.85}
+>
+  <MaterialCommunityIcons
+    name="fingerprint"
+    size={24}
+    style={styles.fingerprintIcon}
+  />
+  <Text style={styles.loginButtonText}>
+    Inicia con tu <Text style={styles.orange}>huella</Text>
+  </Text>
+</TouchableOpacity>
+
+  <TouchableOpacity
+  style={styles.loginButton}
+  activeOpacity={0.85}
+  onPress={() => handleLoginGoogle(null, {/* tu flujo */})}
+>
+  <Image
+    source={require('../assets/google.png')}
+    style={styles.googleIcon}
+  />
+  <Text style={styles.loginButtonText}>
+    Iniciar con Google
+  </Text>
+</TouchableOpacity>
+
+
           <AppleSignInButton />
           <LoginButton
             icon="person-outline"
             label="Entrar como invitado"
             onPress={handleGuestLogin}
-            style={{ backgroundColor: '#A9A9A9' }} // gris suave
+            style={{ backgroundColor: '#F1F1F1', display: 'none' }}
+
           />
 
         </View>
 
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={styles.registerText}>¿No tienes cuenta? Regístrate</Text>
-        </TouchableOpacity>
+  <Text style={styles.registerText}>
+    ¿No tienes cuenta?{' '}
+    <Text style={styles.link}>Regístrate</Text>
+  </Text>
+</TouchableOpacity>
+
  
  
         <Text style={[styles.text,{marginTop:25}]}>
@@ -223,99 +274,173 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    width: '100%',
-    backgroundColor: '#E8FAF7',
+    backgroundColor: '#E6F4F1',
   },
+
   container: {
     width: '88%',
     paddingVertical: 36,
-    paddingHorizontal: 20,
-    borderRadius: 32,
-    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+    paddingHorizontal: 22,
+    borderRadius: 40,
+
+    backgroundColor: 'rgba(255, 255, 255, 0.76)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.35)',
+
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.18,
+    shadowRadius: 30,
+    elevation: 15,
+
     alignItems: 'center',
-    elevation: 9,
-    shadowColor: '#19D4C6',
-    shadowOffset: { width: 0, height: 13 },
-    shadowOpacity: 0.15,
-    shadowRadius: 18,
+    backdropFilter: 'blur(12px)',
   },
+  orange: {
+    color: '#F5A623', // 🔥 naranja exacto de la imagen
+  },
+googleIcon: {
+  width: 22,
+  height: 22,
+  marginRight: 12,
+  resizeMode: 'contain',
+},
+
+  logoLightWrapper: {
+    marginBottom: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+
+    shadowColor: '#FFE27A',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 30,
+    elevation: 25,
+  },
+fingerprintIcon: {
+  marginRight: 12,
+  color: '#8E44AD', // 🟣 morado biométrico (como la imagen)
+},
+
   logo: {
-    width: 150,
-    height: 150,
-    marginBottom: 22,
-    alignSelf: 'center',
-    borderRadius: 45,
-    borderColor: '#19D4C6',
+    width: 88,
+    height: 88,
+    resizeMode: 'contain',
   },
+
+appTitle: {
+  fontSize: 22,
+  fontWeight: '900',
+  fontStyle: 'italic',
+  color: '#2D2A6E',
+  letterSpacing: 1.3,
+  marginBottom: 6,
+  textShadowColor: 'rgba(0,0,0,0.15)',
+  textShadowOffset: { width: 1, height: 1 },
+  textShadowRadius: 1,
+},
+
+
+
   title: {
     fontSize: 15,
-    fontWeight: '900',
-    color: '#19D4C6',
-    marginBottom: 28,
+    color: '#444',
     textAlign: 'center',
-    letterSpacing: 1,
+    marginBottom: 26,
   },
-  errorBox: {
-    backgroundColor: '#FBE9E7',
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#FF7043',
-    width: '100%',
-    shadowColor: '#FF7043',
-    shadowOpacity: 0.13,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
+
+  bold: {
+    fontWeight: '800',
+    color: '#2D2A6E',
   },
-  errorText: {
-    color: '#FF7043',
-    textAlign: 'center',
-    fontWeight: '600',
-    fontSize: 15,
-  },
+
   buttonsWrapper: {
     width: '100%',
-    marginBottom: 18,
-  },
-  loginButton: {
-    backgroundColor: '#00bfa6',
-    paddingVertical: 15,
-    borderRadius: 30,
-    alignItems: 'center',
-    width: '100%',
-    elevation: 5,
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  loginButtonIcon: {
-    marginRight: 10,
-  },
-  loginButtonText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 16,
-  },
-  socialWrapper: {
-    width: '100%',
+    gap: 14,
     marginTop: 10,
-    marginBottom: 8,
-    gap: 10,
+  },
+
+  loginButton: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 15,
+    borderRadius: 999,
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    elevation: 6,
+  },
+
+loginButtonIcon: {
+  marginRight: 12,
+  color: '#F5A623', // 🔥 naranja exacto de la imagen
+},
+
+loginButtonText: {
+  color: '#111111', // 🔥 negro real, no gris
+  fontWeight: '600', // en la imagen no es ultra bold
+  fontSize: 16,
+},
+
+
+  text: {
+    marginTop: 24,
+    fontSize: 13,
+    textAlign: 'center',
+    color: '#666',
+    lineHeight: 18,
+  },
+
+  link: {
+    color: '#C0392B',
+    fontWeight: '900',
+  },
+
+  errorBox: {
+    backgroundColor: '#FFEDEC',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 16,
+    width: '100%',
+    borderColor: '#FF7A5C',
+    borderWidth: 1,
+  },
+
+  errorText: {
+    color: '#D84315',
+    textAlign: 'center',
+    fontWeight: '700',
   },
   registerText: {
-    textAlign: 'center',
-    color: '#FFA13C',
-    marginTop: 16,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-    text: {
-    textAlign: 'center',
-    fontSize: 14,
-    color: '#666',
-  },
-  link: {
-    color: '#007AFF',
-    fontWeight: 'bold',
-  },
+  marginTop: 18,
+  fontSize: 15,
+  fontWeight: '900',
+  color: '#fd9c00ff', // naranja claro
+},
+
+registerLink: {
+  color: '#E67E22', // naranja más fuerte (como la imagen)
+  fontWeight: '700',
+},
+text: {
+  marginTop: 25,
+  fontSize: 13,
+  textAlign: 'center',
+  color: '#4A4A4A', // gris oscuro real
+  lineHeight: 18,
+},
+
+appTitle: {
+  fontSize: 22,
+  fontWeight: '800', // antes 900
+  color: '#2D2A6E',
+  letterSpacing: 0.8,
+  marginBottom: 8,
+},
+
 });

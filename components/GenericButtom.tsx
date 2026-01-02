@@ -58,7 +58,7 @@ export const GenericButton: React.FC<GenericButtonProps> = ({
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: "#FFA13C", // secondary
+    backgroundColor: "#fe971a", // secondary
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",

@@ -170,12 +170,12 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginTop: 28,
-    backgroundColor: "#FFA13C", // Naranja
+    backgroundColor: "#fe971a", // Naranja
     paddingVertical: 16,
     borderRadius: 22,
     alignItems: "center",
     elevation: 4,
-    shadowColor: "#FFA13C",
+    shadowColor: "#fe971a",
     shadowOpacity: 0.1,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 2 },

@@ -14,7 +14,7 @@ function LoadingView({ withNavBarMargin = false }: LoadingViewProps) {
         withNavBarMargin ? { marginBottom: 100 } : undefined,
       ]}
     >
-      <ActivityIndicator size="large" color="#FFA13C" />
+      <ActivityIndicator size="large" color="#fe971a" />
     </View>
   );
 }

@@ -290,7 +290,9 @@ export default function Login({ navigation }: Props) {
         ]}
       >
         <KeyboardAwareScrollView style={{width:'100%'}}>
+          <View style={styles.logoLightWrapper}>
           <Image source={logo} style={styles.logo} />
+          </View>
           <Text style={styles.title}>Iniciar Sesión</Text>
 
           {errorMessage !== "" && <ErrorBox message={errorMessage} />}
@@ -354,36 +356,67 @@ export default function Login({ navigation }: Props) {
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    width: "100%",
-    backgroundColor: "#E8FAF7",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#E6F4F1',
   },
+
   container: {
-    width: "88%",
+    width: '88%',
     paddingVertical: 36,
-    paddingHorizontal: 20,
-    borderRadius: 32,
-    backgroundColor: "rgba(255, 255, 255, 0.96)",
-    alignItems: "center",
-    elevation: 9,
-    shadowColor: "#19D4C6",
-    shadowOffset: { width: 0, height: 13 },
-    shadowOpacity: 0.15,
-    shadowRadius: 18,
+    paddingHorizontal: 22,
+    borderRadius: 40,
+
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.35)',
+
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.18,
+    shadowRadius: 30,
+    elevation: 15,
+
+    alignItems: 'center',
+    backdropFilter: 'blur(12px)',
   },
+  orange: {
+    color: '#F5A623', // 🔥 naranja exacto de la imagen
+  },
+googleIcon: {
+  width: 22,
+  height: 22,
+  marginRight: 12,
+  resizeMode: 'contain',
+},
+
+  logoLightWrapper: {
+    marginBottom: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+
+    shadowColor: '#FFE27A',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 30,
+    elevation: 25,
+  },
+fingerprintIcon: {
+  marginRight: 12,
+  color: '#8E44AD', // 🟣 morado biométrico (como la imagen)
+},
+
   logo: {
-    width: 150,
-    height: 150,
-    marginBottom: 22,
-    alignSelf: "center",
-    borderRadius: 45,
-    borderColor: "#19D4C6",
+    width: 88,
+    height: 88,
+    resizeMode: 'contain',
   },
+
+
   title: {
     fontSize: 28,
     fontWeight: "900",
-    color: "#19D4C6",
+    color: "#2D2A6E",
     marginBottom: 28,
     textAlign: "center",
     letterSpacing: 1,
@@ -438,7 +471,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loginButton: {
-    backgroundColor: "#00bfa6",
+    backgroundColor: "#FF7043",
     paddingVertical: 15,
     borderRadius: 30,
     marginBottom: 20,

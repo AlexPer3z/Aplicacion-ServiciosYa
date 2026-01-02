@@ -1,7 +1,7 @@
 const colors = {
-  primary: "#00B8A9",
-  primaryLight: "#5DD0C5",
-  primaryLighter: "#A0E6DF",
+  primary: "#069eb3",
+  primaryLight: "#069eb3",
+  primaryLighter: "#069eb3",
   primaryDark: "#00897B",
   secondary: "#FFA13C",
   secondaryLight: "#FFB96A",
@@ -107,7 +107,7 @@ interface Theme {
 
 export const theme: Theme = {
   description: "Material Theme",
-  seed: "#00B8A9",
+  seed: "#069eb3",
   coreColors: {
     primary: "#00B8A9",
     secondary: "#FFA13C",

@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderTopWidth: 1,
     borderTopColor: '#f26700',
-    backgroundColor: '#FFA13C',
+    backgroundColor: '#fe971a',
     position: 'absolute',
     bottom: 0,
     left: 0,
@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   btnPublicar: {
-    backgroundColor: '#00B9ba',
+    backgroundColor: '#069eb3',
     padding: 12,
     borderRadius: 30,
     marginHorizontal: 10,
