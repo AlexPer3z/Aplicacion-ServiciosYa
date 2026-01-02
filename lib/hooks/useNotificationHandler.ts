@@ -11,13 +11,21 @@ export const useNotificationHandler = () => {
     (response: Notifications.NotificationResponse) => {
       const data = response.notification.request.content.data;
 
-      if (data?.screen && typeof data.screen === "string") {
+      if (data?.screen !== "ChatIndividual" && typeof data.screen === "string") {
         if (navigationRef.current?.isReady()) {
           navigationRef.current.navigate(
             data.screen as keyof MainStackParamList,
             data.params,
           );
         }
+      }else if (data?.screen === "ChatIndividual") {
+        if (navigationRef.current?.isReady()) {
+          navigationRef.current.navigate(
+            "ChatIndividual",
+            data.params,
+          );
+        }
+        return;
       }
     },
     [],

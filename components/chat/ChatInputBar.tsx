@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useRef , memo } from "react";
 import CustomTextInput from "../inputs/CustomTextInput";
 import { TouchableOpacity, View, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -13,14 +13,23 @@ interface ChatInputBarProps {
 
 function ChatInputBar({ onSend }: ChatInputBarProps) {
   const [message, setMessage] = React.useState("");
+  const [sending, setSending] = React.useState(false);
+
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
 
-  const handleSend = () => {
-    if (message.trim()) {
-      onSend(message);
+  const handleSend = async () => {
+    if (!message.trim() || sending) return;
+
+    setSending(true);
+
+    try {
+      await onSend(message);
       setMessage("");
+    } finally {
+      setSending(false);
     }
   };
+
 
   const MoreButtonPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -54,6 +63,7 @@ function ChatInputBar({ onSend }: ChatInputBarProps) {
         />
         <TouchableOpacity
           onPress={handleSend}
+          disabled={sending}
           style={styles.botonEnviar}
           activeOpacity={0.7}
         >
@@ -67,7 +77,7 @@ function ChatInputBar({ onSend }: ChatInputBarProps) {
   );
 }
 
-export default ChatInputBar;
+export default memo(ChatInputBar);
 
 const styles = StyleSheet.create({
   inputBarContainer: {

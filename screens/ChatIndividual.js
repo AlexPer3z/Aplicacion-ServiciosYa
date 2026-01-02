@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback  } from "react";
 import {
   View,
   Text,
@@ -137,6 +137,7 @@ function ChatIndividual({ route }) {
           // Si el mensaje no es mío, marcarlo como leído
           if (nuevo.remitente_id !== userId) {
             marcarComoLeidos([nuevo], userId);
+             return;
           }
           setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
         }
@@ -147,26 +148,24 @@ function ChatIndividual({ route }) {
   };
 
   // --- Enviar mensaje y notificar
-  const enviarMensaje = async (mensaje) => {
+  const enviarMensaje = useCallback(async (mensaje) => {
     if (!mensaje.trim() || !usuarioId) return;
-    try {
-      const receptorId = usuarioId === usuarioId1 ? usuarioId2 : usuarioId1;
-      const { error } = await supabase.from("mensajes").insert({
-        chat_id: chatId,
-        remitente_id: usuarioId,
-        receptor_id: receptorId,
-        contenido: mensaje.trim(),
-        leido_por_emisor: true,
-        leido_por_receptor: false,
-      });
-      if (error) console.error("Error al enviar mensaje:", error.message);
-      else {
-        await enviarNotificacionPush(mensaje.trim(), receptorId);
-      }
-    } catch (e) {
-      console.error("Error en enviarMensaje:", e);
+
+    const receptorId = usuarioId === usuarioId1 ? usuarioId2 : usuarioId1;
+
+    const { error } = await supabase.from("mensajes").insert({
+      chat_id: chatId,
+      remitente_id: usuarioId,
+      receptor_id: receptorId,
+      contenido: mensaje.trim(),
+      leido_por_emisor: true,
+      leido_por_receptor: false,
+    });
+
+    if (!error) {
+      enviarNotificacionPush(mensaje.trim(), receptorId);
     }
-  };
+  }, [usuarioId, chatId, usuarioId1, usuarioId2]);
 
   const enviarNotificacionPush = async (mensaje, receptorId) => {
     try {
@@ -311,11 +310,11 @@ function ChatIndividual({ route }) {
           <FlatList
             ref={flatListRef}
             data={mensajesConFechas()}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item, index) => item.id?.toString() ?? `fecha-${index}`}
             renderItem={renderItem}
             contentContainerStyle={{ paddingVertical: 10, paddingHorizontal: 10 }}
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            //onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            //onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
           />
         )}
 
