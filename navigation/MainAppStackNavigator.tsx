@@ -31,8 +31,9 @@ import RegistroCliente from "../screens/RegistroCliente";
 import RegistroTrabajador from "../screens/RegistroTrabajador";
 import PasarelaPagoWorker from '../screens/PasarelaPagoWorker';
 
-import InicioRouter from '../screens/InicioRouter'; 
+import InicioRouter from '../screens/InicioRouter';
 import WorkerProfile from "../components/workers/WorkerProfile";
+import { useInitializeHomeEvents } from "../lib/hooks/useInitializeHomeEvents";
 
 const withSafeArea = <P extends object>(Component: FC<P>) => {
   const WrappedComponent: FC<P> = (props: PropsWithChildren<P>) => (
@@ -47,12 +48,13 @@ const withSafeArea = <P extends object>(Component: FC<P>) => {
 const Stack = createNativeStackNavigator<MainStackParamList>();
 
 export default function MainStackNavigator() {
+  useInitializeHomeEvents();
   useNotifications();
   useGPSLocation();
   return (
     <Stack.Navigator
       screenOptions={{ headerShown: false }}
-      initialRouteName="InicioRouter"
+      initialRouteName="Home"
     >
       <Stack.Screen name="InicioRouter" component={InicioRouter} />
       <Stack.Screen name="SeleccionRol" component={withSafeArea(SeleccionRol)} />
@@ -80,10 +82,10 @@ export default function MainStackNavigator() {
         component={withSafeArea(PasarelaPago)}
       />
       <Stack.Screen
-  name="PasarelaPagoWorker"
-  component={PasarelaPagoWorker}
-  options={{ headerShown: false }}
-/>
+        name="PasarelaPagoWorker"
+        component={PasarelaPagoWorker}
+        options={{ headerShown: false }}
+      />
       <Stack.Screen name="ChatIA" component={withSafeArea(ChatIA)} />
       <Stack.Screen
         name="ChatIndividual"

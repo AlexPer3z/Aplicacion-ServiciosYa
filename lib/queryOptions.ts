@@ -1,7 +1,8 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "./supabase";
 import type { Session } from "@supabase/supabase-js";
-import type { LocationIpInfo } from "../types/location";
+import type { Coords } from "../types/location";
+import { getUserID } from "../store/authStore";
 
 export const sessionQueryKey = ["session"];
 
@@ -29,13 +30,8 @@ export const perfilQueryKey = ["user", "perfil"];
 
 export const perfilQueryOptions = queryOptions({
   queryKey: perfilQueryKey,
-  queryFn: async ({ client }) => {
-    const session = client.getQueryData<Session>(sessionQueryKey);
-    // Get the user ID from the session
-    const userId = session?.user.id;
-    if (!userId) {
-      throw new Error("userId is required to fetch user profile");
-    }
+  queryFn: async () => {
+    const userId = getUserID();
     const { data, error } = await supabase
       .from("usuarios")
       .select("perfil_completo, dni_verificado, foto_perfil, rol, nombre, id, suscriptor, creditos, referral_code")
@@ -47,8 +43,6 @@ export const perfilQueryOptions = queryOptions({
     }
     return data;
   },
-  refetchOnWindowFocus: false,
-  refetchOnMount: false,
 });
 
 export const notificationsQueryOptions = (userId: string) =>
@@ -108,34 +102,34 @@ export const serviciosCategoriaQueryOptions = (lat: number, lng: number) =>
 
 export const workerStatusQueryOptions = queryOptions({
   queryKey: ["user", "worker", "status"],
-  queryFn: async ({ client }) => {
-    const session = client.getQueryData<Session>(sessionQueryKey);
-    if (!session || !session.user) {
-      throw new Error("No session or user found");
-    }
-    const { data, error } = await supabase
+  queryFn: async () => {
+    const { data } = await supabase
       .from("workers")
       .select("status")
-      .eq("user_id", session.user.id)
+      .eq("user_id", getUserID())
       .single();
 
-    if (error) {
-      throw error;
-    }
-    return data.status;
+    return data ? data.status : "OFFLINE";
   },
-  refetchInterval: 60 * 1000, // Refetch every minute
 });
 
-export const locationIpInfoQueryOptions = queryOptions({
+export const locationIpInfoQueryOptions = queryOptions<Coords>({
   queryKey: ['user', 'location', 'api'],
-  queryFn: async (): Promise<LocationIpInfo> => {
-    const response = await fetch('https://ipinfo.io/json');
+  queryFn: async () => {
+    const response = await fetch("http://ip-api.com/json/");
     if (!response.ok) {
-      throw new Error(`ipinfo.io returned ${response.status}`);
+      throw new Error(`ip-api.com returned ${response.status}`);
     }
-    return response.json();
+    const data = await response.json();
+    return {
+      latitude: data.lat,
+      longitude: data.lon,
+      city: data.city || "N/A",
+      country: data.countryCode || "N/A",
+    }
   },
+
+  staleTime: 120 * 1000,
 });
 
 export const userServiceCountQueryOptions = (id: string) => queryOptions({

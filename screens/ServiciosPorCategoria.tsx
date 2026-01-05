@@ -31,6 +31,7 @@ import { useBottomSheetModal } from "../lib/hooks/useBottomSheetModal";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import ServicioSheetView from "../components/servicios/ServicioSheetView";
 import { withModalProvider } from "../components/sheet/withModalProvider";
+import { useIsGuest } from "../store/authStore";
 const screenHeight = Dimensions.get("window").height;
 
 type Props = NativeStackScreenProps<
@@ -75,64 +76,12 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
   const [confirmacionVisible, setConfirmacionVisible] = useState(false);
   const [reportVisible, setReportVisible] = useState(false);
   const [suscriptor, setSuscriptor] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null); // <-- Estado para el rol del usuario
+  const isGuest = useIsGuest();
   const insets = useSafeAreaInsets();
   const [creditos, setCreditos] = useState<number | null>(null);
   const { present, dismiss, modalProps } = useBottomSheetModal({
     snapPoints: ["90%"],
   });
-
-  useEffect(() => {
-    const verificarSuscripcion = async () => {
-      if (!user) return;
-      const { data, error } = await supabase
-        .from("usuarios")
-        .select("suscriptor")
-        .eq("id", user.id)
-        .single();
-
-      if (!error && data?.suscriptor === true) {
-        setSuscriptor(true);
-      } else {
-        setSuscriptor(false);
-      }
-    };
-
-    const fetchUserRole = async () => {
-      if (!user) return;
-      const { data, error } = await supabase
-        .from("usuarios")
-        .select("rol")
-        .eq("id", user.id)
-        .single();
-
-      if (error) {
-        console.error("Error obteniendo rol:", error);
-        setUserRole(null);
-      } else {
-        setUserRole(data?.rol ?? null);
-      }
-    };
-
-    // Defino fetchCreditos aquí, fuera de fetchUserRole
-    const fetchCreditos = async () => {
-      if (!user) return;
-      const { data, error } = await supabase
-        .from("usuarios")
-        .select("creditos")
-        .eq("id", user.id)
-        .single();
-
-      if (!error && data?.creditos !== undefined) {
-        setCreditos(data.creditos);
-      }
-    };
-
-    verificarSuscripcion();
-    fetchUserRole();
-    fetchCreditos();
-  }, [user]);
-
 
   // Estado para servicios contratados (array de IDs)
   const [serviciosContratados, setServiciosContratados] = useState<string[]>([]);
@@ -141,28 +90,28 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
 
   // Función para controlar la contratación con límite y sin repetidos
   const handleContratarServicio = (servicioId: string) => {
-  if (serviciosContratados.includes(servicioId)) {
-    Alert.alert("Ya contratado", "Este servicio ya fue contratado.");
-    return false;
-  }
+    if (serviciosContratados.includes(servicioId)) {
+      Alert.alert("Ya contratado", "Este servicio ya fue contratado.");
+      return false;
+    }
 
-  if (userRole === "guest") {
-  Alert.alert(
-    "Inicia sesión",
-    "Debes iniciar sesión para continuar.",
-    [
-      { text: "Cancelar", style: "cancel" },
-      { text: "Iniciar sesión", onPress: () => navigation.navigate("AuthStack", { screen: "LoginSelect" }) }
-    ]
-  );
-  return false;
-}
+    if (isGuest) {
+      Alert.alert(
+        "Inicia sesión",
+        "Debes iniciar sesión para continuar.",
+        [
+          { text: "Cancelar", style: "cancel" },
+          { text: "Iniciar sesión", onPress: () => navigation.navigate("AuthStack", { screen: "LoginSelect" }) }
+        ]
+      );
+      return false;
+    }
 
 
-  const nuevosContratados = [...serviciosContratados, servicioId];
-  setServiciosContratados(nuevosContratados);
-  return true;
-};
+    const nuevosContratados = [...serviciosContratados, servicioId];
+    setServiciosContratados(nuevosContratados);
+    return true;
+  };
 
 
 
@@ -215,19 +164,19 @@ function ServiciosPorCategoria({ route, navigation }: Props) {
         servicio_id: `${servicioSeleccionado?.id}`
       });
 
-    // Descontar crédito SOLO si no es suscriptor
-if (!suscriptor) {
-  const { error: updateError } = await supabase
-    .from("usuarios")
-    .update({ creditos: (creditos ?? 1) - 1 })
-    .eq("id", user.id);
+      // Descontar crédito SOLO si no es suscriptor
+      if (!suscriptor) {
+        const { error: updateError } = await supabase
+          .from("usuarios")
+          .update({ creditos: (creditos ?? 1) - 1 })
+          .eq("id", user.id);
 
-  if (updateError) {
-    throw new Error("Error al descontar crédito.");
-  }
+        if (updateError) {
+          throw new Error("Error al descontar crédito.");
+        }
 
-  setCreditos((prev) => (prev ?? 1) - 1);
-}
+        setCreditos((prev) => (prev ?? 1) - 1);
+      }
 
 
       // Intentar enviar notificación push pero sin que afecte el flujo si falla
@@ -368,19 +317,19 @@ if (!suscriptor) {
                     Descripción: {servicioSeleccionado.descripcion}
                   </Text>
 
-                    <TouchableOpacity
-  style={styles.botonContratar}
-  onPress={contratarServicio}
->
-  <Text style={styles.botonTexto}>Contratar</Text>
-</TouchableOpacity>
-                    
-                    <TouchableOpacity
-                        style={styles.botonReportar}
-                         onPress={() => handleReport(servicioSeleccionado)}
-                          >
-                        <Text style={styles.textoReportar}>Reportar</Text>
-                    </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.botonContratar}
+                    onPress={contratarServicio}
+                  >
+                    <Text style={styles.botonTexto}>Contratar</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.botonReportar}
+                    onPress={() => handleReport(servicioSeleccionado)}
+                  >
+                    <Text style={styles.textoReportar}>Reportar</Text>
+                  </TouchableOpacity>
 
                   <TouchableOpacity onPress={cerrarModal}>
                     <Text style={styles.cancelar}>Cerrar</Text>
@@ -456,7 +405,7 @@ if (!suscriptor) {
       </View>
       <BottomNavBar />
       <BottomSheetModal {...modalProps}>
-        {servicioSeleccionado && <ServicioSheetView servicio={servicioSeleccionado} onHire={() => handleContratar()} onCancel={() => dismiss()} onReport={() => handleReportar()} showProfile/>}
+        {servicioSeleccionado && <ServicioSheetView servicio={servicioSeleccionado} onHire={() => handleContratar()} onCancel={() => dismiss()} onReport={() => handleReportar()} showProfile />}
       </BottomSheetModal>
     </SafeAreaView>
   );

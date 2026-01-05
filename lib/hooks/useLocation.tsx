@@ -36,18 +36,18 @@ export const fetchUserLocation = async (): Promise<LocationData> => {
   };
 };
 
-const fetchUserLocationFromIP = async (): Promise<LocationData> => {
-  const response = await fetch("https://ipapi.co/json/");
+export const fetchUserLocationFromIP = async (): Promise<LocationData> => {
+  const response = await fetch("http://ip-api.com/json/");
   if (!response.ok) {
-    throw new Error("Error fetching location from IP");
+    throw new Error(`${response.status} ${response.statusText}`);
   }
   const data = await response.json();
 
   return {
-    latitude: data.latitude,
-    longitude: data.longitude,
+    latitude: data.lat,
+    longitude: data.lon,
     city: data.city || "N/A",
-    country: data.country_code || "N/A",
+    country: data.countryCode || "N/A",
     fullAddress: [], // No full address available from IP
   };
 };
@@ -104,4 +104,3 @@ export function useLocation() {
 
   return { location, isLoading, isError, error, refetch, isFetching };
 }
-

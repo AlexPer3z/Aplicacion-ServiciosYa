@@ -33,3 +33,14 @@ export interface LocationIpInfo {
   timezone: string;
   readme: string;
 }
+
+export type Coords = {
+  latitude: number;
+  longitude: number;
+  accuracy?: number | null;
+  city?: string | null;
+  country?: string | null;
+};
+
+export type LocationSource = "device" | "custom" | "ip";
+

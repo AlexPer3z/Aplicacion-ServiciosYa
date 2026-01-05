@@ -2,6 +2,7 @@ import React from "react";
 import { Alert, Platform } from "react-native";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { supabase } from "../lib/supabase";
+import vexo from "../lib/vexo";
 
 export default function AppleSignInButton() {
   const [loading, setLoading] = React.useState(false);
@@ -54,10 +55,10 @@ export default function AppleSignInButton() {
         .eq("id", userId)
         .single();
 
-        console.log('existingUser ',existingUser);
-        
+      console.log('existingUser ', existingUser);
+
       // Si no se encuentra, insertarlo
-      if (existingUser == null) { 
+      if (existingUser == null) {
         console.log('registrar usuario ');
         const { error: insertError } = await supabase
           .from("usuarios")
@@ -69,6 +70,8 @@ export default function AppleSignInButton() {
           return;
         }
       }
+
+      vexo.login("apple");
 
       Alert.alert("¡Sesión iniciada con Apple!");
 
@@ -87,7 +90,7 @@ export default function AppleSignInButton() {
   return (
     <AppleAuthentication.AppleAuthenticationButton
       buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-      buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK} 
+      buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
       cornerRadius={30}
       style={{ width: "100%", height: 55, paddingVertical: 15, borderRadius: 30 }}
       onPress={handleAppleLogin}

@@ -10,6 +10,8 @@ import type { City } from "../../components/inputs/CityAutocomplete";
 import countries from "../constants/country";
 import * as Location from "expo-location";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import queryClient from "../reactQuery";
+import { useLocationStore } from "../../store/locationStore";
 
 export function locationQueryString(lat: number, lng: number): string {
   return `POINT(${lng} ${lat})`;
@@ -94,7 +96,7 @@ export async function getLocationParamsFromClient(
         console.log("📍 Usando lastKnownPosition:", coords);
       }
     }
-
+    // TODO: Fix Slow Location
     // 4️⃣ Si tampoco hay, pedir una nueva (más lenta)
     if (!coords) {
       console.log("⏳ Obteniendo nueva ubicación GPS...");
@@ -187,4 +189,23 @@ export function cityToLocationData(city: City): LocationData {
     country,
     fullAddress: [],
   };
+}
+
+export async function buildLocationParams(): Promise<LocationParams> {
+  const { searchRadius } = await queryClient.ensureQueryData(query);
+  const location = useLocationStore.getState().effectiveLocation;
+
+  if (!location) {
+    return {
+      search_lat: null,
+      search_lon: null,
+      search_radius_meters: searchRadius,
+    }
+  }
+
+  return {
+    search_lat: location.latitude,
+    search_lon: location.longitude,
+    search_radius_meters: searchRadius,
+  }
 }

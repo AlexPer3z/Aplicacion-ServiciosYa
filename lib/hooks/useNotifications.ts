@@ -7,7 +7,8 @@ import Constants from "expo-constants";
 import { Alert, Platform } from "react-native";
 import { supabase } from "../supabase";
 import { useQueryClient } from "@tanstack/react-query";
-import { getUserFromClient } from "../utils/user";
+import { useNotificationsCount } from "./useNotificationsCount";
+import { getUserID } from "../../store/authStore";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -19,6 +20,7 @@ Notifications.setNotificationHandler({
 });
 
 export const useNotifications = () => {
+  useNotificationsCount();
   const queryClient = useQueryClient();
   const [expoPushToken, setExpoPushToken] = useState<string>("");
   const [notification, setNotification] = useState<
@@ -29,12 +31,12 @@ export const useNotifications = () => {
 
   const saveTokenToSupabase = useCallback(async (token: string) => {
     try {
-      const user = getUserFromClient(queryClient);
+      const userId = getUserID();
 
       const { error: updateError } = await supabase
         .from("usuarios")
         .update({ expo_token: token })
-        .eq("id", user.id);
+        .eq("id", userId);
 
       if (updateError) {
         console.error("Error saving push token:", updateError);

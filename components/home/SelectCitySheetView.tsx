@@ -12,8 +12,11 @@ import LoadingView from "../LoadingView";
 import { GenericButton } from "../GenericButtom";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
+import { useLocationStore } from "../../store/locationStore";
 
 function SelectCitySheetView() {
+  const { effectiveLocation, source, setCustomLocation, clearCustomLocation } = useLocationStore();
+  const [initialLocation, setInitialLocation] = useState(effectiveLocation);
   const { updateSettings, settings } = useUserSettings();
   const { data: locationInfo, error } = useSuspenseQuery(
     locationIpInfoQueryOptions,
@@ -25,26 +28,26 @@ function SelectCitySheetView() {
 
   const queryClient = useQueryClient();
 
-  const [currentLocation, setCurrentLocation] = useState(
-  settings.customLocation ?? settings.lastGPSLocation
-);
+  const [currentLocation, setCurrentLocation] = useState(effectiveLocation);
+  const canClear = initialLocation !== currentLocation || source === "custom";
 
-const handleSubmit = async () => {
-  if (!city) return;
-  setLoading(true);
-  try {
-    const newLocation = cityToLocationData(city);
+  const handleSubmit = async () => {
+    if (!city) return;
+    setLoading(true);
+    try {
 
-    await updateSettings({ customLocation: newLocation });
+      const newLocation = cityToLocationData(city);
+      await setCustomLocation(newLocation);
+      await updateSettings({ customLocation: newLocation });
 
-    // 🔹 Actualizamos el estado local inmediatamente
-    setCurrentLocation(newLocation);
+      // 🔹 Actualizamos el estado local inmediatamente
+      setCurrentLocation(newLocation);
 
-    queryClient.invalidateQueries({ queryKey: ["user", "services"] });
-  } finally {
-    setLoading(false);
-  }
-};
+      queryClient.invalidateQueries({ queryKey: ["user", "services"] });
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   const handleClearCity = async () => {
@@ -52,6 +55,7 @@ const handleSubmit = async () => {
     try {
       await updateSettings({ customLocation: null });
       setCity(null);
+      clearCustomLocation();
       queryClient.invalidateQueries({ queryKey: ["user", "services"] });
     } finally {
       setLoading(false);
@@ -77,7 +81,7 @@ const handleSubmit = async () => {
               {currentLocation?.city}, {currentLocation?.country}
             </Text>
           </View>
-          {settings.customLocation && (
+          {canClear && (
             <TouchableOpacity
               style={styles.clearButton}
               onPress={handleClearCity}
@@ -90,7 +94,7 @@ const handleSubmit = async () => {
       </View>
 
       <Text style={styles.infoTextLong}>
-        {settings.customLocation
+        {source === "custom"
           ? "Puedes cambiar tu ciudad personalizada o eliminarla para usar tu ubicación GPS automática."
           : "Si no seleccionas una ciudad específica, utilizaremos tu ubicación GPS para mostrarte contenido relevante de tu área."}
       </Text>
@@ -100,9 +104,9 @@ const handleSubmit = async () => {
           label="Ciudad"
           countryCode={country}
           onSelectCity={(city) => {
-    console.log("Ciudad seleccionada:", city);
-    setCity(city || null);
-  }}
+            console.log("Ciudad seleccionada:", city);
+            setCity(city || null);
+          }}
           placeholder="Selecciona una ciudad"
           dropdownProps={{ direction: "down" }}
         />

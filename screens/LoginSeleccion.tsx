@@ -6,17 +6,14 @@ import {
 } from 'react-native';
 import { supabase } from '../lib/supabase';
 import * as WebBrowser from 'expo-web-browser';
-import { registrarTokenPush } from '../lib/notificaciones';
 import fondo from '../assets/fondo.png';
 import logo from '../assets/logo.png';
 import useAuthSession from '../lib/hooks/useAuthSession';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
-import { saveAuthSession } from '../lib/storage';
-import AntDesign from '@expo/vector-icons/AntDesign';
-
 import AppleSignInButton from "../components/AppleSignInButton"; 
+import vexo from '../lib/vexo';
 import { useGoogleAuth } from './useGoogleAuth';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -68,11 +65,10 @@ export default function LoginSelect({ navigation }) {
     ]).start();
   }, []);
 
-  useEffect(() => {
-    // registrarTokenPush();
-  }, []);
-
-  const handleEmailLogin = () => navigation.navigate('Login');
+  const handleEmailLogin = () => {
+    vexo.login("email");
+    navigation.navigate('Login')
+  };
 
   const handleHuellaLogin = async () => {
     try {
@@ -113,10 +109,10 @@ export default function LoginSelect({ navigation }) {
         .eq('id', userId)
         .single();
 
-      console.log('existingUser ',existingUser);
+      console.log('existingUser ', existingUser);
 
       // Si no se encuentra, insertarlo
-      if (existingUser == null) { 
+      if (existingUser == null) {
         console.log('registrar usuario ');
         const { error: insertError } = await supabase
           .from('usuarios')
@@ -129,6 +125,8 @@ export default function LoginSelect({ navigation }) {
         }
       }
 
+      vexo.login("google");
+
       // Continúa el flujo normal
       console.log('Inicio de sesión exitoso con Google');
 
@@ -138,10 +136,8 @@ export default function LoginSelect({ navigation }) {
     }
   };
 
-  const handleFacebookSuccess = () => {
-    // navigation.replace('Home');
-  };
   const handleGuestLogin = async () => {
+    vexo.login("guest");
     const { data, error } = await supabase.auth.signInWithPassword({
       email: 'guest@example.com',
       password: 'guestpassword',
@@ -157,47 +153,47 @@ export default function LoginSelect({ navigation }) {
       routes: [{ name: 'InicioRouter' }],
     });
   };
-  
+
   const openURL = (url: string) => {
     Linking.openURL(url).catch(err => console.error("Error al abrir el enlace:", err));
   };
 
 
-  
+
 
 
   return (
     <ImageBackground source={fondo} style={styles.background} resizeMode="cover">
       <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
         <View style={styles.logoLightWrapper}>
-  <Image source={logo} style={styles.logo} />
-</View>
+          <Image source={logo} style={styles.logo} />
+        </View>
 
 
 
         <Text style={styles.appTitle}>SERVICIOS YA</Text>
-<Text style={styles.title}>
-  Seleccione su <Text style={styles.bold}>método de inicio de sesión</Text> preferido
-</Text>
+        <Text style={styles.title}>
+          Seleccione su <Text style={styles.bold}>método de inicio de sesión</Text> preferido
+        </Text>
 
 
         {errorMessage !== '' && <ErrorBox message={errorMessage} />}
 
         <View style={[styles.buttonsWrapper, { gap: 12, marginBottom: 8, marginTop: 10 }]}>
           <TouchableOpacity
-  style={styles.loginButton}
-  onPress={handleEmailLogin}
-  activeOpacity={0.85}
->
-  <MaterialIcons
-    name="email"
-    size={22}
-    style={styles.loginButtonIcon}
-  />
-  <Text style={styles.loginButtonText}>
-    Inicia con tu <Text style={styles.orange}>correo</Text>
-  </Text>
-</TouchableOpacity>
+            style={styles.loginButton}
+            onPress={handleEmailLogin}
+            activeOpacity={0.85}
+          >
+            <MaterialIcons
+              name="email"
+              size={22}
+              style={styles.loginButtonIcon}
+            />
+            <Text style={styles.loginButtonText}>
+              Inicia con tu <Text style={styles.orange}>correo</Text>
+            </Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
   style={styles.loginButton}
@@ -241,30 +237,26 @@ export default function LoginSelect({ navigation }) {
         </View>
 
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-  <Text style={styles.registerText}>
-    ¿No tienes cuenta?{' '}
-    <Text style={styles.link}>Regístrate</Text>
-  </Text>
-</TouchableOpacity>
+          <Text style={styles.registerText}>¿No tienes cuenta? Regístrate</Text>
+        </TouchableOpacity>
 
- 
- 
-        <Text style={[styles.text,{marginTop:25}]}>
+
+        <Text style={[styles.text, { marginTop: 25 }]}>
           Al usar esta aplicación, aceptas nuestros{' '}
-          <Text 
+          <Text
             style={styles.link}
             onPress={() => openURL('https://inicio.serviciosya.info/Terminos-y-condiciones.html')}
           >
             Términos y Condiciones
           </Text>{' '}
           y nuestra{' '}
-          <Text 
+          <Text
             style={styles.link}
             onPress={() => openURL('https://inicio.serviciosya.info/politicas-de-privacidad.html')}
           >
             Política de Privacidad
           </Text>.
-        </Text> 
+        </Text>
 
       </Animated.View>
     </ImageBackground>
@@ -301,12 +293,12 @@ const styles = StyleSheet.create({
   orange: {
     color: '#F5A623', // 🔥 naranja exacto de la imagen
   },
-googleIcon: {
-  width: 22,
-  height: 22,
-  marginRight: 12,
-  resizeMode: 'contain',
-},
+  googleIcon: {
+    width: 22,
+    height: 22,
+    marginRight: 12,
+    resizeMode: 'contain',
+  },
 
   logoLightWrapper: {
     marginBottom: 16,
@@ -319,10 +311,10 @@ googleIcon: {
     shadowRadius: 30,
     elevation: 25,
   },
-fingerprintIcon: {
-  marginRight: 12,
-  color: '#8E44AD', // 🟣 morado biométrico (como la imagen)
-},
+  fingerprintIcon: {
+    marginRight: 12,
+    color: '#8E44AD', // 🟣 morado biométrico (como la imagen)
+  },
 
   logo: {
     width: 88,
@@ -330,17 +322,17 @@ fingerprintIcon: {
     resizeMode: 'contain',
   },
 
-appTitle: {
-  fontSize: 22,
-  fontWeight: '900',
-  fontStyle: 'italic',
-  color: '#2D2A6E',
-  letterSpacing: 1.3,
-  marginBottom: 6,
-  textShadowColor: 'rgba(0,0,0,0.15)',
-  textShadowOffset: { width: 1, height: 1 },
-  textShadowRadius: 1,
-},
+  appTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    fontStyle: 'italic',
+    color: '#2D2A6E',
+    letterSpacing: 1.3,
+    marginBottom: 6,
+    textShadowColor: 'rgba(0,0,0,0.15)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 1,
+  },
 
 
 
@@ -378,16 +370,16 @@ appTitle: {
     elevation: 6,
   },
 
-loginButtonIcon: {
-  marginRight: 12,
-  color: '#F5A623', // 🔥 naranja exacto de la imagen
-},
+  loginButtonIcon: {
+    marginRight: 12,
+    color: '#F5A623', // 🔥 naranja exacto de la imagen
+  },
 
-loginButtonText: {
-  color: '#111111', // 🔥 negro real, no gris
-  fontWeight: '600', // en la imagen no es ultra bold
-  fontSize: 16,
-},
+  loginButtonText: {
+    color: '#111111', // 🔥 negro real, no gris
+    fontWeight: '600', // en la imagen no es ultra bold
+    fontSize: 16,
+  },
 
 
   text: {
@@ -419,30 +411,30 @@ loginButtonText: {
     fontWeight: '700',
   },
   registerText: {
-  marginTop: 18,
-  fontSize: 15,
-  fontWeight: '900',
-  color: '#fd9c00ff', // naranja claro
-},
+    marginTop: 18,
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#fd9c00ff', // naranja claro
+  },
 
-registerLink: {
-  color: '#E67E22', // naranja más fuerte (como la imagen)
-  fontWeight: '700',
-},
-text: {
-  marginTop: 25,
-  fontSize: 13,
-  textAlign: 'center',
-  color: '#4A4A4A', // gris oscuro real
-  lineHeight: 18,
-},
+  registerLink: {
+    color: '#E67E22', // naranja más fuerte (como la imagen)
+    fontWeight: '700',
+  },
+  text: {
+    marginTop: 25,
+    fontSize: 13,
+    textAlign: 'center',
+    color: '#4A4A4A', // gris oscuro real
+    lineHeight: 18,
+  },
 
-appTitle: {
-  fontSize: 22,
-  fontWeight: '800', // antes 900
-  color: '#2D2A6E',
-  letterSpacing: 0.8,
-  marginBottom: 8,
-},
+  appTitle: {
+    fontSize: 22,
+    fontWeight: '800', // antes 900
+    color: '#2D2A6E',
+    letterSpacing: 0.8,
+    marginBottom: 8,
+  },
 
 });

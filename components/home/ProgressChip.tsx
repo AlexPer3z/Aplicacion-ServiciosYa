@@ -14,6 +14,7 @@ import { ACHIEVEMENTS } from '../../lib/constants/achievements';
 import { useAchievements } from '../../lib/services/achievements.services';
 import { useMemo, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { getUserID } from '../../store/authStore';
 
 interface ProgressChipProps {
   onPress?: () => void;
@@ -29,27 +30,18 @@ const ProgressChip: React.FC<ProgressChipProps> = ({ onPress, label = 'Mis Logro
   const { items, progress } = useAchievements();
   const completedKeys = useMemo(() => items.map(item => item.key), [items]);
 
-  // ---- OBTENER USER ID DESDE SUPABASE ----
-  const [userId, setUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUserId(data.user?.id ?? null);
-    });
-  }, []);
-
   // ---- AÑADIR UID AL LOGRO "REFER_FRIEND" ----
   const mappedAchievements = useMemo(() => {
     return ACHIEVEMENTS.map((ach) => {
       if (ach.key === "refer_friend") {
         return {
           ...ach,
-          description: `${ach.description} (Tu ID: ${userId ?? "..."})`,
+          description: `${ach.description} (Tu ID: ${getUserID() ?? "..."})`,
         };
       }
       return ach;
     });
-  }, [userId]);
+  }, []);
 
   const colors = {
     accentOrange: '#F59E0B',
