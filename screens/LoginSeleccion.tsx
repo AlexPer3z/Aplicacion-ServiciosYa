@@ -13,11 +13,11 @@ import useAuthSession from '../lib/hooks/useAuthSession';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
-import BtnLoginGoogle from '../components/BtnLoginGoogle';
 import { saveAuthSession } from '../lib/storage';
 import AntDesign from '@expo/vector-icons/AntDesign';
 
-import AppleSignInButton from "../components/AppleSignInButton";
+import AppleSignInButton from "../components/AppleSignInButton"; 
+import { useGoogleAuth } from './useGoogleAuth';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -44,6 +44,8 @@ export default function LoginSelect({ navigation }) {
   const [errorMessage, setErrorMessage] = useState('');
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
+
+  const { signInWithGoogle } = useGoogleAuth();
 
   const { biometricLogin } = useAuthSession({
     onAuthSuccess: () => navigation.replace('Home'),
@@ -79,7 +81,7 @@ export default function LoginSelect({ navigation }) {
       setErrorMessage('No se pudo iniciar sesión con huella.');
     }
   };
-
+  
   const handleLoginGoogle = async (errorResponse, response) => {
     if (errorResponse) {
       setErrorMessage(errorResponse);
@@ -211,20 +213,20 @@ export default function LoginSelect({ navigation }) {
     Inicia con tu <Text style={styles.orange}>huella</Text>
   </Text>
 </TouchableOpacity>
-
-  <TouchableOpacity
-  style={styles.loginButton}
-  activeOpacity={0.85}
-  onPress={() => handleLoginGoogle(null, {/* tu flujo */})}
->
-  <Image
-    source={require('../assets/google.png')}
-    style={styles.googleIcon}
-  />
-  <Text style={styles.loginButtonText}>
-    Iniciar con Google
-  </Text>
-</TouchableOpacity>
+ 
+        <TouchableOpacity
+          style={styles.loginButton}
+          activeOpacity={0.85}
+          onPress={() => signInWithGoogle(handleLoginGoogle)}
+        >
+          <Image
+            source={require('../assets/google.png')}
+            style={styles.googleIcon}
+          />
+          <Text style={styles.loginButtonText}>
+            Iniciar con Google
+          </Text>
+        </TouchableOpacity> 
 
 
           <AppleSignInButton />
