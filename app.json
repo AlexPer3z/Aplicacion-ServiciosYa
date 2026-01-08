@@ -11,11 +11,7 @@
         }
       }
     },
-    "platforms": [
-      "ios",
-      "android",
-      "web"
-    ],
+    "platforms": ["ios", "android", "web"],
     "version": "65.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -32,6 +28,9 @@
       "assets/adaptive-icon.png",
       "assets/favicon.png"
     ],
+    "experiments": {
+      "reactCompiler": true
+    },
     "ios": {
       "supportsTablet": false,
       "usesAppleSignIn": true,

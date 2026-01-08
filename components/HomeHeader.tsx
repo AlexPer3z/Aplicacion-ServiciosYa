@@ -5,57 +5,64 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  Image,Alert,
+  Image,
+  Alert,
 } from "react-native";
+import { Suspense } from "react";
 import LocationChip from "./location/LocationChip";
 import { Ionicons } from "@expo/vector-icons";
-import { useQuery } from "@tanstack/react-query";
-import { perfilQueryOptions } from "../lib/queryOptions";
 import { useMainNavigation } from "../lib/hooks/useNavigation";
 import OptionsButton from "./home/OptionsButton";
-import { useUserSettings } from "../lib/hooks/useUserSettings";
 import WorkerState from "./home/WorkerState";
-import { isGuest, isWorker } from "../lib/utils/user";
 import OnlineFilterCheckBox from "./home/OnlineFilterCheckBox";
 import ProgressChip from "./home/ProgressChip";
+import { useIsGuest } from "../store/authStore";
+import { useNotificationStore } from "../store/notificationStore";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { perfilQueryOptions } from "../lib/queryOptions";
 
 interface HomeHeaderProps {
   onSearch: (query: string) => void;
   onShowCountsOnlyChange: (value: boolean) => void;
-  notificationsCount: number;
-  unreadMessagesCount: number;
 }
 
-function HomeHeader({
-  onSearch,
-  onShowCountsOnlyChange,
-  notificationsCount,
-  unreadMessagesCount,
-}: HomeHeaderProps) {
+function HomeHeader({ onSearch, onShowCountsOnlyChange }: HomeHeaderProps) {
   const navigation = useMainNavigation();
-  const { settings } = useUserSettings();
-  const [soloConServicios, setSoloConServicios] = useState(false);
+  const notificationsCount = useNotificationStore((state) => state.unreadCount);
+  const isGuest = useIsGuest();
   const [busqueda, setBusqueda] = useState("");
-  const { data: perfil } = useQuery(perfilQueryOptions);
-  const useGPS = settings?.useGPS ?? false;
-  const rol = perfil?.rol ?? "user";
+
+  const handleGuestProfileClick = React.useCallback(() => {
+    Alert.alert(
+      "Acceso restringido",
+      "Debes registrarte para acceder a tu perfil.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Registrarme",
+          onPress: () => navigation.navigate("AuthStack", { screen: "LoginSelect" }),
+        },
+      ]
+    );
+  }, [navigation]);
 
   useEffect(() => {
-    onSearch(busqueda.trim());
+    const timer = setTimeout(() => {
+      onSearch(busqueda.trim());
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [busqueda, onSearch]);
-
-  useEffect(() => {
-    onShowCountsOnlyChange(soloConServicios);
-  }, [soloConServicios, onShowCountsOnlyChange]);
 
   return (
     <View style={styles.header}>
-      <View style={{ marginHorizontal: 15 }}>
+      <View style={styles.container}>
         <View style={styles.headerTop}>
           <View style={styles.saludoContainer}>
             <Text style={styles.saludo}>¡Servicios <Text style={styles.saludo2}>Ya!</Text></Text>
             <Text style={styles.subtitulo}>¿Qué necesitás hoy?</Text>
           </View>
+
           <View style={styles.iconsContainer}>
             <TouchableOpacity
               onPress={() => navigation.navigate("NotificacionesScreen")}
@@ -68,62 +75,35 @@ function HomeHeader({
                 </View>
               )}
             </TouchableOpacity>
-            <TouchableOpacity
-  onPress={() => {
-    if (isGuest(rol)) {
-      Alert.alert(
-        "Acceso restringido",
-        "Debes registrarte para acceder a tu perfil.",
-        [
-          { text: "Cancelar", style: "cancel" },
-          { text: "Registrarme", onPress: () => navigation.navigate("AuthStack", { screen: "LoginSelect" })}
-        ]
-      );
-      return;
-    }
 
-    if (!perfil?.perfil_completo) {
-      Alert.alert(
-        "Perfil incompleto",
-        "Completa tu perfil antes de continuar.",
-        [{ text: "OK" }]
-      );
-      return;
-    }
-
-    navigation.navigate("Perfil");
-  }}
-  style={styles.iconButton}
->
-
-              {perfil?.foto_perfil ? (
-                <Image
-                  source={{ uri: perfil?.foto_perfil }}
-                  style={styles.avatar}
-                />
-              ) : (
+            {isGuest ? (
+              <TouchableOpacity
+                onPress={handleGuestProfileClick}
+                style={styles.iconButton}
+              >
                 <Ionicons name="person-circle-outline" size={36} color="#fff" />
-              )}
-            </TouchableOpacity>
+              </TouchableOpacity>
+            ) : (
+              <Suspense
+                fallback={
+                  <View style={styles.iconButton}>
+                    <Ionicons name="person-circle-outline" size={36} color="#fff" />
+                  </View>
+                }
+              >
+                <ProfileAvatar />
+              </Suspense>
+            )}
           </View>
         </View>
 
-        <View style={[styles.filtroContainer, { marginVertical: 6 }]}>
-          {useGPS && settings && (
-            <LocationChip
-              location={settings.customLocation ?? settings?.lastGPSLocation}
-            />
-          )}
+        <View style={[styles.filtroContainer, styles.locationContainer]}>
+          <LocationChip />
         </View>
 
         <View style={styles.searchBarContainer}>
           <View style={styles.buscadorContainer}>
-            <Ionicons
-              name="search"
-              size={22}
-              color="#333"
-              style={{ marginLeft: 12 }}
-            />
+            <Ionicons name="search" size={22} color="#333" style={styles.searchIcon} />
             <TextInput
               placeholder="Buscar categoría..."
               placeholderTextColor="#333"
@@ -135,25 +115,77 @@ function HomeHeader({
           <OptionsButton />
         </View>
 
-        <View style={styles.filtroContainer}>
-          <OnlineFilterCheckBox style={styles.filtroColumn} />
-          {isWorker(rol) ? (
-            <WorkerState style={styles.filtroColumn} />
-          ) : (
-            <View style={styles.filtroColumn} />
-          )}
-        </View>
-        {!isGuest(rol) && (
-          <ProgressChip
-            label="Mis Logros"
-          />
+        {!isGuest && (
+          <GuestContent onShowCountsOnlyChange={onShowCountsOnlyChange} />
         )}
       </View>
     </View>
   );
 }
 
+const GuestContent = React.memo(
+  ({ onShowCountsOnlyChange }: { onShowCountsOnlyChange: (value: boolean) => void }) => {
+    const [soloConServicios, setSoloConServicios] = useState(false);
+
+    useEffect(() => {
+      onShowCountsOnlyChange(soloConServicios);
+    }, [soloConServicios, onShowCountsOnlyChange]);
+
+    return (
+      <>
+        <View style={styles.filtroContainer}>
+          <OnlineFilterCheckBox style={styles.filtroColumn} />
+          <WorkerState style={styles.filtroColumn} />
+        </View>
+        <ProgressChip label="Mis Logros" />
+      </>
+    );
+  }
+);
+
 export default HomeHeader;
+
+
+function ProfileAvatar() {
+  const navigation = useMainNavigation();
+  const { data: perfil } = useSuspenseQuery(perfilQueryOptions);
+
+  const handlePress = React.useCallback(() => {
+    if (!perfil?.perfil_completo) {
+      Alert.alert("Perfil incompleto", "Completa tu perfil antes de continuar.", [
+        { text: "OK" },
+      ]);
+      return;
+    }
+    navigation.navigate("Perfil");
+  }, [perfil?.perfil_completo, navigation]);
+
+  return (
+    <TouchableOpacity onPress={handlePress} style={styles.iconButton}>
+      {perfil?.foto_perfil ? (
+        <Image source={{ uri: perfil.foto_perfil }} style={styles2.avatar} />
+      ) : (
+        <Ionicons name="person-circle-outline" size={36} color="#fff" />
+      )}
+    </TouchableOpacity>
+  );
+}
+
+
+const styles2 = StyleSheet.create({
+  iconButton: {
+    marginLeft: 12,
+    padding: 6,
+    position: "relative",
+  },
+  avatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1.5,
+    borderColor: "#fff",
+  },
+});
 
 const styles = StyleSheet.create({
   header: {
@@ -162,6 +194,9 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
+  },
+  container: {
+    marginHorizontal: 15,
   },
   headerTop: {
     flexDirection: "row",
@@ -194,7 +229,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgb(255, 255, 255)",
+    backgroundColor: "#fff",
     borderRadius: 15,
     paddingVertical: 8,
   },
@@ -205,9 +240,15 @@ const styles = StyleSheet.create({
     color: "#333",
     paddingVertical: 0,
   },
+  searchIcon: {
+    marginLeft: 12,
+  },
   filtroContainer: {
     flexDirection: "row",
     gap: 8,
+  },
+  locationContainer: {
+    marginVertical: 6,
   },
   filtroColumn: {
     flex: 1,

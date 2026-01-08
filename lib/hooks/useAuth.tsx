@@ -13,6 +13,7 @@ import {
 import { lastUserId } from "../storage";
 import { clearSettingsToStorage, queryKey } from "./useUserSettings";
 import { sessionQueryOptions } from "../queryOptions";
+import { useAuthStore } from "../../store/authStore";
 
 // Prevenir que la pantalla de inicio se oculte automáticamente antes de que estemos listos
 SplashScreen.preventAutoHideAsync();
@@ -28,13 +29,23 @@ export const sessionQueryKey = ["session"];
  * @param queryClient - La instancia del cliente TanStack Query.
  */
 export function useAuth(queryClient: QueryClient) {
-  // Usar `useQuery` para obtener la sesión inicial.
-  // Pasamos el `queryClient` directamente, por lo que funciona fuera de un <QueryClientProvider>.
-  const {
-    data: session,
-    // isPending es el equivalente moderno de isLoading y es perfecto para el estado de inicialización.
-    isPending: isInitializing,
-  } = useQuery(sessionQueryOptions, queryClient);
+  const { isAuth, isInitialized, initialize, session } = useAuthStore();
+
+  useEffect(() => {
+    const bootstrap = async () => {
+      // Initialize auth (loads cache synchronously, verifies in background)
+      await initialize();
+
+      // Hide splash - auth is ready (either from cache or fresh)
+      await SplashScreen.hideAsync();
+    };
+
+    bootstrap();
+
+    return () => {
+      useAuthStore.getState().cleanup();
+    };
+  }, []);
 
   const handleDeepLink = useCallback(async (event: { url: string }) => {
     const { url } = event;
@@ -95,13 +106,6 @@ export function useAuth(queryClient: QueryClient) {
     // Las dependencias son estables, por lo que este efecto se ejecuta solo una vez.
   }, [queryClient, handleDeepLink]);
 
-  // Ocultar la pantalla de inicio una vez que se completa la obtención inicial de la sesión
-  useEffect(() => {
-    if (!isInitializing) {
-      SplashScreen.hideAsync();
-    }
-  }, [isInitializing]);
-
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (nextAppState === "active") {
@@ -157,8 +161,8 @@ export function useAuth(queryClient: QueryClient) {
 
   return {
     session,
-    isInitializing,
-    isAuth: !!session?.user,
+    isInitialized,
+    isAuth
   };
 }
 

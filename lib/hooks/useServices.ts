@@ -6,11 +6,12 @@ import {
 import { supabase } from "../supabase";
 import type { Servicio } from "../../types/servicios";
 import { query as settingsQuery } from "./useUserSettings";
-import { getLocationParamsFromClient } from "../utils/location";
+import { buildLocationParams, getLocationParamsFromClient } from "../utils/location";
 import type { WorkerStatus } from "../../types/worker";
 import { useContext } from "react";
 import { AuthContext } from "../context/AppContext";
 import { useUserSettings } from "./useUserSettings";
+import { useLocationStore } from "../../store/locationStore";
 
 // -------------------
 // Funciones de fetch
@@ -62,11 +63,7 @@ export const useServicesByCategory = (categoria: string) => {
   return useSuspenseQuery({
     queryKey: ["user", "services", categoria, currentCity],
     queryFn: async ({ client }) => {
-      // 🔹 Obtiene los params correctos según customLocation o authLocation
-      const locationParams = await getLocationParamsFromClient(
-        client,
-        settings?.customLocation ?? authLocation
-      );
+      const locationParams = await buildLocationParams();
 
       const { data, error } = await supabase.rpc(
         "test_get_servicios_with_worker_status",
@@ -94,27 +91,14 @@ export const useServicesByCategory = (categoria: string) => {
 export const servicesCountQuerKey = ["user", "services", "count"];
 
 export function useServicesCount() {
-  const { location: authLocation } = useContext(AuthContext);
-  const { settings } = useUserSettings();
-  const queryClient = useQueryClient();
-
-  const city = settings?.customLocation?.city ?? authLocation?.city ?? "";
-
   const servicios = useSuspenseQuery({
-    queryKey: [...servicesCountQuerKey, city],
-    queryFn: async ({ client }) => {
-      const locationParams = await getLocationParamsFromClient(
-        client,
-        settings?.customLocation ?? authLocation
-      );
-
-      const OnlyOnlineWorkers = (await client.ensureQueryData(settingsQuery)).OnlyOnlineWorkers;
-      const worker_status_filter: WorkerStatus[] | null =
-        OnlyOnlineWorkers === true ? ["ONLINE"] : null;
+    queryKey: servicesCountQuerKey,
+    queryFn: async () => {
+      const locationParams = await buildLocationParams();
 
       const { data, error } = await supabase.rpc(
         "count_services_by_status_in_radius",
-        { ...locationParams, worker_status_filter, p_categoria: null }
+        { ...locationParams, worker_status_filter: null, p_categoria: null }
       );
 
       if (error) throw error;

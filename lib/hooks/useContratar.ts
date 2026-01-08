@@ -6,6 +6,7 @@ import { supabase } from "../supabase";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
 import { isGuest } from "../utils/user";
+import vexo from "../vexo";
 
 export const CONTRATAR_ERRORS = {
     GUEST_USER: "Los usuarios invitados no pueden contratar servicios.",
@@ -87,9 +88,7 @@ export default function useContratar({ onSuccess, onError }: UseContratarProps =
                 servicio_id: `${servicio.id}`
             }).throwOnError();
 
-
-
-            
+            vexo.contratar(servicio.id);
 
             // 4. Enviar notificación push (sin esperar respuesta)
             try {
@@ -124,7 +123,7 @@ export default function useContratar({ onSuccess, onError }: UseContratarProps =
             }
         },
         onSuccess: async () => {
-            queryClient.invalidateQueries({ queryKey: userCreditQueryOptions(user.id).queryKey });
+            await queryClient.invalidateQueries({ queryKey: userCreditQueryOptions(user.id).queryKey });
             onSuccess?.();
         },
         onError: (error: Error) => {

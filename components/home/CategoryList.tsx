@@ -1,102 +1,130 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import {
   RefreshControl,
+  StyleSheet,
   Text,
   View,
-  SectionList,
-  StyleSheet,
+  SectionList
 } from "react-native";
-import Animated from "react-native-reanimated";
+import Animated, { FadeInDown, Layout } from "react-native-reanimated";
 
+// Components & Utils
 import { CategorySection } from "./CategorySection";
+import LoadingView from "../../components/LoadingView";
 import { categoriasPorSeccion } from "../../lib/utils/categorias";
+
+// Hooks
 import { useServicesCount } from "../../lib/hooks/useServices";
 import { useUserSettings } from "../../lib/hooks/useUserSettings";
-import LoadingView from "../../components/LoadingView";
+import { withSuspense } from "../withSuspense";
+import { useHomeEventsStore } from "../../store/homeEventsStore";
 
 interface CategoryListProps {
   busqueda: string;
   onCategoryPress: (category: string) => void;
   isUserRestricted: boolean;
-  refreshing: boolean;
-  onRefresh: () => void;
+  // Removed 'refreshing' and 'onRefresh' as they were not used (logic is internal)
 }
 
 const AnimatedSectionList =
   Animated.createAnimatedComponent(SectionList);
 
-export const CategoryList = ({
+const CategoryList = ({
   busqueda,
   onCategoryPress,
   isUserRestricted,
-  refreshing,
-  onRefresh,
 }: CategoryListProps) => {
-  const { servicios: serviciosCount } = useServicesCount();
-  const conteos = serviciosCount?.data;
-  const isLoading = serviciosCount?.isLoading;
-  const isFetching = serviciosCount?.isFetching;
-  const error = serviciosCount?.error;
-  const refetch = serviciosCount?.refetch;
-
+  // 1. Hooks & State
+  const { servicios: servicesQuery } = useServicesCount();
   const { settings } = useUserSettings();
-  const showAllCategories = settings?.showAllCategories ?? true;
+  const [isPullingToRefresh, setIsPullingToRefresh] = useState(false);
+  const setHomeDataReady = useHomeEventsStore(s => s.setHomeDataReady);
 
-  // 🔹 Map categoria → cantidad
+  // 2. Data Destructuring
+  const {
+    data: conteosData,
+    isLoading,
+    error,
+    refetch,
+    isRefetching
+  } = servicesQuery || {};
+
+  const showAllCategories = settings?.showAllCategories ?? true;
+  const isRefreshing = (isRefetching ?? false) && isPullingToRefresh;
+
+  // 3. Derived State (Memoization)
+
+  // Create a map for O(1) access to counts
   const conteosMap = useMemo(() => {
-    return (conteos ?? []).reduce((acc: Record<string, number>, item) => {
+    if (!conteosData) return {};
+    return conteosData.reduce((acc: Record<string, number>, item: any) => {
       acc[item.categoria] = item.count;
       return acc;
     }, {});
-  }, [conteos]);
+  }, [conteosData]);
 
-  // 🔹 Filtrar categorías
-  const filteredCategorias = useMemo(() => {
+  // Filter categories based on search and settings
+  const filteredSections = useMemo(() => {
+    const searchLower = busqueda.toLowerCase();
+
     return Object.entries(categoriasPorSeccion).reduce(
       (acc, [seccion, categorias]) => {
-        const filtradas = categorias.filter((cat) => {
+        const activeCategories = categorias.filter((cat) => {
           const count = conteosMap[cat] || 0;
-          return (
-            (showAllCategories || count > 0) &&
-            cat.toLowerCase().includes(busqueda.toLowerCase())
-          );
+          const matchesSearch = cat.toLowerCase().includes(searchLower);
+          const hasItemsOrShowAll = showAllCategories || count > 0;
+
+          return matchesSearch && hasItemsOrShowAll;
         });
 
-        if (filtradas.length > 0) {
+        if (activeCategories.length > 0) {
           acc.push({
             title: seccion,
-            data: [filtradas], // ⚠️ IMPORTANTE
+            data: [activeCategories], // ⚠️ IMPORTANTE
           });
         }
-
         return acc;
       },
       [] as { title: string; data: string[][] }[]
     );
   }, [busqueda, conteosMap, showAllCategories]);
 
-  const handleOnRefresh = useCallback(() => {
-    refetch?.();
-    onRefresh();
-  }, [refetch, onRefresh]);
+  // 4. Handlers
+  const handleOnRefresh = useCallback(async () => {
+    if (!refetch) return;
+    try {
+      setIsPullingToRefresh(true);
+      await refetch();
+    } catch (e) {
+      console.error("Refresh failed:", e);
+    } finally {
+      setIsPullingToRefresh(false);
+    }
+  }, [refetch]);
 
+  // 5. Render Logic
   if (isLoading) {
     return <LoadingView withNavBarMargin />;
   }
 
-  if (error instanceof Error) {
+  if (error) {
+    const errorMessage = error instanceof Error ? error.message : "Error desconocido";
     return (
-      <View style={{ padding: 20 }}>
-        <Text style={{ color: "red", textAlign: "center" }}>
-          Error al cargar las categorías: {error.message}
+      <View style={styles.centerContainer}>
+        <Text style={styles.errorText}>
+          Error al cargar las categorías: {errorMessage}
         </Text>
       </View>
     );
   }
 
+  useEffect(() => {
+    setHomeDataReady(true);
+  }, []);
+
   return (
-    <AnimatedSectionList
-      sections={filteredCategorias}
+    <SectionList
+      sections={filteredSections}
       keyExtractor={(_, index) => index.toString()}
 
       renderSectionHeader={({ section }) => (
@@ -116,7 +144,7 @@ export const CategoryList = ({
       refreshControl={
         <RefreshControl
           colors={["#00B8A9", "#fe971a"]}
-          refreshing={isFetching || refreshing}
+          refreshing={isRefreshing}
           onRefresh={handleOnRefresh}
         />
       }
@@ -132,6 +160,12 @@ export const CategoryList = ({
   );
 };
 
+export default withSuspense(
+  CategoryList,
+  <LoadingView withNavBarMargin />,
+);
+
+// 6. Styles
 const styles = StyleSheet.create({
   sectionTitle: {
     fontWeight: "900",
@@ -144,5 +178,21 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     alignSelf: "flex-start",
     elevation: 3,
+  },
+  container: {
+    flex: 1,
+  },
+  contentContainer: {
+    paddingTop: 10,
+    paddingBottom: 100,
+  },
+  centerContainer: {
+    padding: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    color: "red",
+    textAlign: "center",
   },
 });

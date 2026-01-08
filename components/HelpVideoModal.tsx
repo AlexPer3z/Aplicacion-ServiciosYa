@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   Modal,
   View,
@@ -8,38 +8,73 @@ import {
   SafeAreaView,
   Dimensions,
 } from 'react-native';
-import { Video } from 'expo-av';
+import { Video, ResizeMode } from 'expo-av';
+import type { HomeEventComponentProps } from '../store/homeEventsStore';
 
 const { width } = Dimensions.get("window");
 const VIDEO_HEIGHT = width * 1;
 
-export default function HelpVideoModal({ visible, onClose, videoSource }) {
-  const videoRef = useRef(null);
+interface HelpVideoData {
+  videoSource: string;
+}
+
+export default function HelpVideoModal({
+  eventId,
+  onComplete,
+  onDismiss,
+  data
+}: HomeEventComponentProps) {
+  const videoRef = useRef<Video>(null);
+  const [isVisible, setIsVisible] = useState(true);
+
+  const { videoSource } = (data as unknown as HelpVideoData) || {};
 
   useEffect(() => {
-    if (visible && videoRef.current) {
+    console.log(`HelpVideoModal mounted for event: ${eventId}`);
+    
+    if (videoRef.current) {
       videoRef.current.setStatusAsync({
         shouldPlay: true,
         positionMillis: 0,
         isLooping: true,
       });
-    } else if (videoRef.current) {
-      videoRef.current.setStatusAsync({
-        shouldPlay: false,
-        positionMillis: 0,
-      });
     }
-  }, [visible]);
+
+    return () => {
+      console.log(`HelpVideoModal unmounting for event: ${eventId}`);
+      if (videoRef.current) {
+        videoRef.current.setStatusAsync({ shouldPlay: false });
+      }
+    };
+  }, [eventId]);
 
   const handleClose = async () => {
+    console.log(`HelpVideoModal closing, event: ${eventId}`);
+    
     if (videoRef.current) {
-      await videoRef.current.setStatusAsync({ shouldPlay: false, positionMillis: 0 });
+      await videoRef.current.setStatusAsync({ shouldPlay: false });
     }
-    onClose();
+
+    setIsVisible(false);
+    
+    // Mark as completed so it won't show again
+    onComplete();
   };
 
+  if (!videoSource) {
+    console.warn("HelpVideoModal: No videoSource provided in event data");
+    return null;
+  }
+
+  console.log(`HelpVideoModal rendering for event: ${eventId}, video: ${videoSource}`);
+
   return (
-    <Modal animationType="fade" transparent={true} visible={visible} onRequestClose={handleClose}>
+    <Modal
+      animationType="fade"
+      transparent={true}
+      visible={isVisible}
+      onRequestClose={handleClose}
+    >
       <SafeAreaView style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           <View style={styles.header}>
@@ -53,7 +88,7 @@ export default function HelpVideoModal({ visible, onClose, videoSource }) {
             ref={videoRef}
             source={videoSource}
             style={styles.video}
-            resizeMode="contain"
+            resizeMode={ResizeMode.CONTAIN}
             shouldPlay
             isLooping
             useNativeControls

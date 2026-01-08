@@ -20,7 +20,9 @@ import MainStackNavigator from "./navigation/MainAppStackNavigator";
 import AuthStackNavigator from "./navigation/AuthStackNavigator";
 import { navegationLinkin } from "./lib/utils/navegation";
 import { useNotificationHandler } from "./lib/hooks/useNotificationHandler";
-import { Platform } from 'react-native';
+import { vexo } from 'vexo-analytics'; 
+
+vexo('758249de-a9ff-461d-82b8-aed7f221472b')
 
 SplashScreen2.setOptions({
   duration: 1000,
@@ -29,7 +31,7 @@ SplashScreen2.setOptions({
 
 
 export default function App() {
-  const { isInitializing, isAuth } = useAuth(queryClient);
+  const { isInitialized, isAuth } = useAuth(queryClient);
   const { navigationRef, handleInitialNotification } = useNotificationHandler();
   useEffect(() => {
   const extraerTokens = (url: string) => {
@@ -64,7 +66,7 @@ export default function App() {
 }, []);
 
 
-  if (isInitializing) return null;
+  if (!isInitialized) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

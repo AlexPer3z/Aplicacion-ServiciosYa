@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  Platform, // Keep platform for potential future use
+  Platform,
+  Dimensions, // Keep platform for potential future use
 } from "react-native";
 
 // 1. Import the new component
@@ -24,7 +25,11 @@ import type { LocationItem } from "../types/location";
 import { locationQueryString } from "../lib/utils/location";
 import type { MainStackParamList } from "../types/navigation";
 import BotonVolver from "../components/BotonVolver";
-import SelectDropdown from 'react-native-select-dropdown' 
+import SelectDropdown from 'react-native-select-dropdown'
+import GenericAutocomplete from "../components/GenericAutocomplete";
+import vexo from "../lib/vexo";
+import { getUserID } from "../store/authStore";
+import showToast from "../lib/toast";
 
 type Props = NativeStackScreenProps<MainStackParamList, "OfrecerServicio">;
 
@@ -35,95 +40,55 @@ function OfrecerServicio({ navigation }: Props) {
   const [horario, setHorario] = useState("");
   const [precio, setPrecio] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [userId, setUserId] = useState("");
   const [ubicacion, setUbicacion] = useState<LocationItem>();
 
-  useEffect(() => {
-    const getUser = async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (data?.user) {
-        setUserId(data.user.id);
-      } else {
-        Alert.alert("Error", "No se pudo obtener el usuario");
-        console.error("Error al obtener el usuario:", error);
-      }
-    };
-    getUser();
-  }, []);
-
   const handleSubmit = async () => {
-  if (
-    !titulo ||
-    !categoria ||
-    !horario ||
-    !precio ||
-    !descripcion ||
-    !ubicacion
-  ) {
-    Alert.alert("Error", "Por favor completa todos los campos.");
-    return;
-  }
-
-  if (!userId) {
-    Alert.alert(
-      "Error",
-      "No se pudo obtener el usuario. Asegúrate de estar logueado."
-    );
-    return;
-  }
-
-  try {
-    // 🔹 Consultar si el usuario tiene el campo registroPagado = true
-    const { data: perfil, error: perfilError } = await supabase
-  .from("usuarios")
-  .select("registropagado")
-  .eq("id", userId)
-  .single();
-
-
-
-    if (perfilError) {
-      console.error("Error al obtener perfil:", perfilError);
-      Alert.alert("Error", "No se pudo verificar el estado del pago.");
+    if (
+      !titulo ||
+      !categoria ||
+      !horario ||
+      !precio ||
+      !descripcion ||
+      !ubicacion
+    ) {
+      Alert.alert("Error", "Por favor completa todos los campos.");
       return;
     }
 
-    // 🔹 Si no está pagado, redirigir a la pantalla de pago
-    if (!perfil?.registropagado) {
-  navigation.navigate("pagoInicial");
-}
+    const userId = getUserID();
 
+    try {
+      // 🔹 Si el usuario ya pagó, crear el servicio
+      const servicio = {
+        user_id: userId,
+        titulo,
+        categoria,
+        horario,
+        precio: Number(precio),
+        descripcion,
+        location: locationQueryString(ubicacion.lat, ubicacion.lng),
+        country: ubicacion.isoCountryCode,
+      };
 
-    // 🔹 Si el usuario ya pagó, crear el servicio
-    const servicio = {
-      user_id: userId,
-      titulo,
-      categoria,
-      horario,
-      precio: Number(precio),
-      descripcion,
-      location: locationQueryString(ubicacion.lat, ubicacion.lng),
-      country: ubicacion.isoCountryCode,
-    };
+      const { data, error } = await supabase.from("servicios").insert(servicio);
+      vexo.servicio(servicio.titulo);
 
-    const { data, error } = await supabase.from("servicios").insert(servicio);
-
-    if (error) {
-      console.error("Error de Supabase:", error);
-      throw new Error(error.message || "Error desconocido de Supabase");
+      if (error) {
+        console.error("Error de Supabase:", error);
+        throw new Error(error.message || "Error desconocido de Supabase");
+      }
+      showToast.success("Éxito", "Servicio creado correctamente.");
+      navigation.goBack();
+    } catch (err: any) {
+      console.error("Error al insertar el servicio:", err.message);
+      Alert.alert("Error", `No se pudo crear el servicio: ${err.message}`);
     }
-
-    Alert.alert("Éxito", "Servicio creado correctamente.");
-  } catch (err: any) {
-    console.error("Error al insertar el servicio:", err.message);
-    Alert.alert("Error", `No se pudo crear el servicio: ${err.message}`);
-  }
-};
+  };
 
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#E8FAF7" }}>
-      <BotonVolver/>
+      <BotonVolver />
       <KeyboardAwareScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContentContainer}
@@ -132,7 +97,7 @@ function OfrecerServicio({ navigation }: Props) {
         extraScrollHeight={Platform.OS === "ios" ? 20 : 0} // Optional: fine-tune scroll distance
         enableOnAndroid={true}
       >
-        <Text style={[styles.title,{marginTop:20}]}>Publicar un Servicio</Text>
+        <Text style={[styles.title, { marginTop: 20 }]}>Publicar un Servicio</Text>
 
         <View style={styles.inputContainer}>
           {/* All your inputs remain the same */}
@@ -145,36 +110,23 @@ function OfrecerServicio({ navigation }: Props) {
             onChangeText={setTitulo}
           />
 
-          <Text style={styles.label}>Categoría</Text>
-          <View style={styles.pickerContainer}>
-             <SelectDropdown
-                data={categoriasDisponibles}
-                onSelect={(selectedItem, index) => {
-                  setCategoria(selectedItem)
-                }}
-                renderButton={(selectedItem, isOpened) => {
-                  return (
-                    <View style={styles.dropdownButtonStyle}>
-                      <Text style={[
-                        styles.dropdownButtonTxtStyle,
-                        !selectedItem && {color: '#999'}
-                      ]}>
-                        {(selectedItem) || 'Ej: Categoria'}
-                      </Text>
-                    </View>
-                  );
-                }}
-                renderItem={(item, index, isSelected) => {
-                  return (
-                    <View style={{...styles.dropdownItemStyle, ...(isSelected && {backgroundColor: '#D2D9DF'})}}>
-                      <Text style={styles.dropdownItemTxtStyle}>{item}</Text>
-                    </View>
-                  );
-                }}
-                showsVerticalScrollIndicator={false}
-                dropdownStyle={styles.dropdownMenuStyle}
-              />
-          </View>
+          <GenericAutocomplete<string>
+            label="Categoría"
+            data={categoriasDisponibles}
+            onSelectItem={(value) => setCategoria(value ?? "")}
+            placeholder="Ej: Categoria"
+            itemToDropdownItem={(value) => ({
+              id: value,
+              title: value,
+              payload: value,
+            })}
+            dropdownProps={{
+              InputComponent: TextInput,
+              flatListProps: undefined,
+              suggestionsListContainerStyle: undefined,
+              suggestionsListMaxHeight: Dimensions.get('window').height * 0.4
+            }}
+          />
 
           <Text style={styles.label}>Horario</Text>
           <TextInput
@@ -304,45 +256,45 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   dropdownButtonStyle: {
-      height: 50,
-      width: "100%",
-      borderRadius: 12,
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingHorizontal: 12,
-    },
-    dropdownButtonTxtStyle: {
-      flex: 1,
-      fontSize: 16, 
-    },
-    dropdownButtonArrowStyle: {
-      fontSize: 28,
-    },
-    dropdownButtonIconStyle: {
-      fontSize: 28,
-      marginRight: 8,
-    },
-    dropdownMenuStyle: {
-      backgroundColor: '#E9ECEF',
-      borderRadius: 8,
-    },
-    dropdownItemStyle: {
-      width: '100%',
-      flexDirection: 'row',
-      paddingHorizontal: 12,
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingVertical: 8,
-    },
-    dropdownItemTxtStyle: {
-      flex: 1,
-      fontSize: 20,
-      fontWeight: '500',
-      color: '#151E26',
-    },
-    dropdownItemIconStyle: {
-      fontSize: 28,
-      marginRight: 8,
-    },
+    height: 50,
+    width: "100%",
+    borderRadius: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+  },
+  dropdownButtonTxtStyle: {
+    flex: 1,
+    fontSize: 16,
+  },
+  dropdownButtonArrowStyle: {
+    fontSize: 28,
+  },
+  dropdownButtonIconStyle: {
+    fontSize: 28,
+    marginRight: 8,
+  },
+  dropdownMenuStyle: {
+    backgroundColor: '#E9ECEF',
+    borderRadius: 8,
+  },
+  dropdownItemStyle: {
+    width: '100%',
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  dropdownItemTxtStyle: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: '500',
+    color: '#151E26',
+  },
+  dropdownItemIconStyle: {
+    fontSize: 28,
+    marginRight: 8,
+  },
 });

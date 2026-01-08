@@ -8,12 +8,14 @@ import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import SelectCitySheetView from "../home/SelectCitySheetView";
 import { useQueryClient } from "@tanstack/react-query";
 import { clearServicesCache } from "../../lib/hooks/useServices";
+import { useLocationStore } from "../../store/locationStore";
 
 interface LocationChipProps {
   location: LocationData | null;
 }
 
-const LocationChip: React.FC<LocationChipProps> = ({ location }) => {
+const LocationChip = () => {
+  const { isLoading, error, effectiveLocation } = useLocationStore();
   const client = useQueryClient();
   const [locationText, setLocationText] =
     useState<string>("Cargando ubicación");
@@ -25,13 +27,10 @@ const LocationChip: React.FC<LocationChipProps> = ({ location }) => {
   });
 
   useEffect(() => {
-    if (location) {
-      const { city, country } = location;
-      setLocationText(
-        city ? `${city}, ${country}` : country || "Ubicación desconocida",
-      );
+    if (effectiveLocation) {
+      setLocationText(`${effectiveLocation.city}, ${effectiveLocation.country}`)
     }
-  }, [location]);
+  }, [effectiveLocation]);
 
   const handleOnPress = () => {
     present();

@@ -27,3 +27,4 @@ export type Database = MergeDeep<
 >;
 
 export type UserUpdate = Database["public"]["Tables"]["usuarios"]["Update"];
+export type NotificacionRow = Database["public"]["Tables"]["notificaciones"]["Row"];
