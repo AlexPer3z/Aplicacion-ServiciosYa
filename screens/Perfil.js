@@ -3,46 +3,21 @@ import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator, Ale
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../lib/supabase';
 import BotonVolver from '../components/BotonVolver';
+import { useQuery } from '@tanstack/react-query';
+import { perfilQueryOptions } from '../lib/queryOptions';
+import { getUserID } from '../store/authStore';
+
 export default function Perfil() {
-  const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { data: userData, isLoading, refetch } = useQuery({...perfilQueryOptions, staleTime: 200, refetchOnMount: true});
   const [updating, setUpdating] = useState(false);
-
-  useEffect(() => {
-    fetchPerfil();
-  }, []);
-
-  const fetchPerfil = async () => {
-    setLoading(true);
-
-    const { data: sessionData, error: sessionError } = await supabase.auth.getUser();
-    if (sessionError || !sessionData.user) {
-      Alert.alert('Error', 'No se pudo obtener la sesión');
-      setLoading(false);
-      return;
-    }
-
-    const userId = sessionData.user.id;
-    const { data: perfil, error: perfilError } = await supabase
-      .from('usuarios')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (perfilError) {
-      Alert.alert('Error', 'No se pudo obtener el perfil del usuario');
-    } else {
-      setUserData(perfil);
-    }
-
-    setLoading(false);
-  };
 
   const actualizarFotoPerfil = async () => {
     try {
+      const userId = getUserID();
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
+        aspect: [1, 1],
         quality: 0.7,
       });
 
@@ -51,17 +26,20 @@ export default function Perfil() {
       setUpdating(true);
 
       const imagen = result.assets[0];
-      const nombreArchivo = `${userData.id}-perfil-${Date.now()}.jpg`;
+      const response = await fetch(imagen.uri);
+      const fileData = await response.arrayBuffer();
 
-      const file = {
-        uri: imagen.uri,
-        type: 'image/jpeg',
-        name: nombreArchivo,
-      };
+      const fileExt = imagen.uri.split('.').pop()?.toLowerCase() || 'jpg';
+      const fileName = `${userId}-perfil-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+      const contentType = imagen.mimeType || 'image/jpeg';
 
       const { error: uploadError } = await supabase.storage
         .from('imagenes')
-        .upload(nombreArchivo, file);
+        .upload(filePath, fileData, {
+          contentType: contentType,
+          upsert: false
+        });
 
       if (uploadError) {
         Alert.alert('Error al subir imagen', uploadError.message);
@@ -71,19 +49,19 @@ export default function Perfil() {
 
       const { data: urlData } = supabase.storage
         .from('imagenes')
-        .getPublicUrl(nombreArchivo);
+        .getPublicUrl(filePath);
 
       const nuevaUrl = urlData.publicUrl;
 
       const { error: updateError } = await supabase
         .from('usuarios')
         .update({ foto_perfil: nuevaUrl })
-        .eq('id', userData.id);
+        .eq('id', userId);
 
       if (updateError) {
         Alert.alert('Error al actualizar perfil', updateError.message);
       } else {
-        setUserData((prev) => ({ ...prev, foto_perfil: nuevaUrl }));
+        await refetch();
         Alert.alert('Éxito', 'Foto de perfil actualizada');
       }
     } catch (e) {
@@ -93,7 +71,7 @@ export default function Perfil() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <View style={styles.loader}>
         <ActivityIndicator size="large" color="#000" />

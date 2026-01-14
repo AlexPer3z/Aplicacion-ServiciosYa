@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,202 +6,544 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
 import { supabase } from '../lib/supabase';
 import BotonVolver from '../components/BotonVolver';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import { misServicionQueryOptions } from '../lib/queryOptions';
 
 export default function MisServicios() {
-  const [serviciosPublicados, setServiciosPublicados] = useState([]);
   const navigation = useNavigation();
+  const queryClient = useQueryClient();
+  const bottomSheetRef = useRef(null);
+  const [selectedService, setSelectedService] = React.useState(null);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      obtenerServicios();
-    }, [])
+  const snapPoints = useMemo(() => ['30%'], []);
+
+  const {
+    data: serviciosPublicados = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    ...misServicionQueryOptions,
+    staleTime: 200,
+    refetchOnMount: true,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      const { error } = await supabase.from('servicios').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      refetch();
+      Alert.alert('Éxito', 'Servicio eliminado correctamente');
+    },
+    onError: (error) => {
+      Alert.alert('Error', 'No se pudo eliminar el servicio');
+      console.error(error);
+    },
+  });
+
+  const toggleEstadoMutation = useMutation({
+    mutationFn: async ({ id, estadoActual }) => {
+      const nuevoEstado = estadoActual === 'pausado' ? "'activo'" : 'pausado';
+      const { error } = await supabase
+        .from('servicios')
+        .update({ estado: nuevoEstado })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      refetch();
+    },
+    onError: (error) => {
+      Alert.alert('Error', 'No se pudo actualizar el estado');
+      console.error(error);
+    },
+  });
+
+  const handleOpenMenu = (service) => {
+    setSelectedService(service);
+    bottomSheetRef.current?.expand();
+  };
+
+  const handleCloseMenu = () => {
+    bottomSheetRef.current?.close();
+  };
+
+  const eliminarServicio = () => {
+    handleCloseMenu();
+    setTimeout(() => {
+      Alert.alert(
+        'Confirmar eliminación',
+        '¿Estás seguro de que deseas eliminar este servicio?',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { 
+            text: 'Eliminar', 
+            onPress: () => deleteMutation.mutate(selectedService.id), 
+            style: 'destructive' 
+          },
+        ]
+      );
+    }, 300);
+  };
+
+  const pausarServicio = () => {
+    handleCloseMenu();
+    setTimeout(() => {
+      toggleEstadoMutation.mutate({ 
+        id: selectedService.id, 
+        estadoActual: selectedService.estado 
+      });
+    }, 300);
+  };
+
+  const editarServicio = () => {
+    handleCloseMenu();
+    setTimeout(() => {
+      navigation.navigate('EditarServicio', { servicio: selectedService });
+    }, 300);
+  };
+
+  const renderBackdrop = useCallback(
+    (props) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+      />
+    ),
+    []
   );
 
-  const obtenerServicios = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      Alert.alert('Error', 'Usuario no autenticado');
-      return;
-    }
-
-    // Obtener servicios publicados por el usuario
-    const { data: publicados, error: errorPublicados } = await supabase
-      .from('servicios_with_coords')
-      .select('*')
-      .eq('user_id', user.id);
-
-    if (errorPublicados) {
-      console.error(errorPublicados);
-    } else {
-      setServiciosPublicados(publicados);
+  const getEstadoColor = (estado) => {
+    switch (estado) {
+      case "'activo'":
+        return '#10B981';
+      case 'pausado':
+        return '#F59E0B';
+      default:
+        return '#6B7280';
     }
   };
 
-  const eliminarServicio = async (id) => {
-    await supabase.from('servicios').delete().eq('id', id);
-    obtenerServicios();
-  };
-
-  const pausarServicio = async (id, estadoActual) => {
-    await supabase
-      .from('servicios')
-      .update({ estado: estadoActual === 'pausado' ? 'activo' : 'pausado' })
-      .eq('id', id);
-    obtenerServicios();
-  };
-
-  const editarServicio = (servicio) => {
-    navigation.navigate('EditarServicio', { servicio });
-  };
-
-  const renderEstrellas = (calificacion) => {
-    const estrellas = [];
-    for (let i = 1; i <= 5; i++) {
-      estrellas.push(
-        <Ionicons
-          key={i}
-          name={i <= calificacion ? 'star' : 'star-outline'}
-          size={16}
-          color="#f1c40f"
-        />
-      );
+  const getEstadoIcon = (estado) => {
+    switch (estado) {
+      case "'activo'":
+        return 'checkmark-circle';
+      case 'pausado':
+        return 'pause-circle';
+      default:
+        return 'help-circle';
     }
-    return estrellas;
   };
 
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Text style={styles.titulo}>{item.titulo}</Text>
-        <TouchableOpacity 
-          onPress={() => editarServicio(item)}
-          style={[styles.buttonContainer, styles.editButton]}
-        > 
-           <Icon name="edit" size={20} color="#fff" />
-        </TouchableOpacity>
-      </View>
-      <Text>{item.descripcion}</Text>
-      <Text style={styles.estado}>
-        Estado: {item.estado ? item.estado.replace(/'/g, '') : ''}
-      </Text>
-      <Text>Veces contratado: {item.veces_contratado || 0}</Text>
-      <View style={styles.estrellas}>
-        {renderEstrellas(item.calificacion_promedio || 0)}
+    <TouchableOpacity 
+      style={styles.serviceItem}
+      activeOpacity={0.7}
+      onPress={() => handleOpenMenu(item)}
+    >
+      {/* Category Icon */}
+      <View style={styles.iconContainer}>
+        <Icon name="briefcase" size={22} color="#0e7b78" />
       </View>
 
-      <View style={styles.acciones}>
-        <TouchableOpacity 
-            onPress={() => pausarServicio(item.id, item.estado)}
-            style={styles.buttonContainer}
+      {/* Details */}
+      <View style={styles.detailsContainer}>
+        <View style={styles.headerRow}>
+          <View style={styles.titleRow}>
+            <Text style={styles.serviceTitle} numberOfLines={1}>
+              {item.titulo}
+            </Text>
+            <Ionicons 
+              name={getEstadoIcon(item.estado)} 
+              size={16} 
+              color={getEstadoColor(item.estado)} 
+            />
+          </View>
+          <TouchableOpacity
+            onPress={() => handleOpenMenu(item)}
+            style={styles.moreButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <View style={styles.button}>
-              <Icon 
-                name={item.estado === 'pausado' ? 'play' : 'pause'} 
-                size={16} 
-                color="#fff" 
-              />
-              <Text style={styles.buttonText}>
-                {item.estado === 'pausado' ? ' Reanudar' : ' Pausar'}
+            <Ionicons name="ellipsis-vertical" size={20} color="#9CA3AF" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.contentColumn}>
+          <Text style={styles.serviceDescription} numberOfLines={1}>
+            {item.descripcion}
+          </Text>
+
+          <View style={styles.statsRow}>
+            {/* Rating */}
+            <View style={styles.ratingContainer}>
+              <Ionicons name="star" size={14} color="#F7C56F" />
+              <Text style={styles.ratingText}>
+                {(item.calificacion_promedio || 0).toFixed(1)}
               </Text>
             </View>
-          </TouchableOpacity>
 
-        
-          <TouchableOpacity 
-            onPress={() => eliminarServicio(item.id)}
-            style={styles.buttonContainer}
-          >
-            <View style={[styles.button, { backgroundColor: '#ff4444' }]}>
-              <Icon name="trash" size={16} color="#fff" />
-              <Text style={styles.buttonText}> Eliminar</Text>
+            {/* Contracts */}
+            <View style={styles.contractsContainer}>
+              <Text style={styles.contractsText}>
+                {item.veces_contratado || 0} Contrataciones
+              </Text>
             </View>
-          </TouchableOpacity>
+          </View>
+        </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <BotonVolver />
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color="#0e7b78" />
+          <Text style={styles.loadingText}>Cargando servicios...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.container}>
+        <BotonVolver />
+        <View style={styles.centerContent}>
+          <Icon name="exclamation-circle" size={48} color="#EF4444" />
+          <Text style={styles.errorText}>Error al cargar los servicios</Text>
+          <Text style={styles.errorSubtext}>{error?.message}</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
+    <GestureHandlerRootView style={styles.container}>
       <BotonVolver />
-      <Text style={styles.separador}>Mis Ofertas de Servicios</Text>
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.pageTitle}>Mis servicios</Text>
+      </View>
+
+      {/* Main Content */}
       <FlatList
         data={serviciosPublicados}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
+        contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <Text style={{ textAlign: 'center', marginTop: 20 }}>
-            No has publicado ofertas aún.
-          </Text>
+          <View style={styles.emptyContainer}>
+            <Icon name="inbox" size={64} color="#D1D5DB" />
+            <Text style={styles.emptyText}>No has publicado ofertas aún</Text>
+            <Text style={styles.emptySubtext}>
+              Tus servicios aparecerán aquí una vez que los publiques
+            </Text>
+          </View>
         }
       />
-    </View>
+
+      {/* Floating Action Button */}
+      {/* <TouchableOpacity style={styles.fab}>
+        <Ionicons name="add" size={32} color="#FFFFFF" />
+      </TouchableOpacity> */}
+
+      {/* Bottom Sheet for Actions */}
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={-1}
+        snapPoints={snapPoints}
+        enablePanDownToClose
+        backdropComponent={renderBackdrop}
+        backgroundStyle={styles.bottomSheetBackground}
+        handleIndicatorStyle={styles.bottomSheetIndicator}
+      >
+        <BottomSheetView style={styles.bottomSheetContent}>
+          <Text style={styles.bottomSheetTitle}>
+            {selectedService?.titulo}
+          </Text>
+          
+          <View style={styles.actionsContainer}>
+            {/* Edit Action */}
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={editarServicio}
+            >
+              <View style={[styles.actionIconContainer, { backgroundColor: '#E8FAF7' }]}>
+                <Icon name="edit" size={20} color="#0e7b78" />
+              </View>
+              <Text style={styles.actionText}>Editar servicio</Text>
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+
+            {/* Pause/Resume Action */}
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={pausarServicio}
+              disabled={toggleEstadoMutation.isPending}
+            >
+              <View style={[styles.actionIconContainer, { backgroundColor: '#EFF6FF' }]}>
+                <Icon 
+                  name={selectedService?.estado === 'pausado' ? 'play' : 'pause'} 
+                  size={20} 
+                  color="#3B82F6" 
+                />
+              </View>
+              <Text style={styles.actionText}>
+                {selectedService?.estado === 'pausado' ? 'Reanudar' : 'Pausar'} servicio
+              </Text>
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+
+            {/* Delete Action */}
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={eliminarServicio}
+              disabled={deleteMutation.isPending}
+            >
+              <View style={[styles.actionIconContainer, { backgroundColor: '#FEF2F2' }]}>
+                <Icon name="trash" size={20} color="#EF4444" />
+              </View>
+              <Text style={[styles.actionText, { color: '#EF4444' }]}>
+                Eliminar servicio
+              </Text>
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+          </View>
+        </BottomSheetView>
+      </BottomSheet>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9f9f9', padding: 10, paddingTop:80 },
-  card: {
-    backgroundColor: '#fff',
-    marginBottom: 15,
-    padding: 15,
-    borderRadius: 10,
-    elevation: 2,
+  container: {
+    flex: 1,
+    backgroundColor: '#E8FAF7',
   },
-  titulo: { fontSize: 16, fontWeight: 'bold', marginBottom: 5 },
-  estado: { marginTop: 5, color: '#666' },
-  estrellas: { flexDirection: 'row', marginTop: 5 },
-  acciones: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 25,
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  boton: { color: '#007BFF' },
-  separador: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginVertical: 15,
-    color: '#333',
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 80,
+    paddingBottom: 16,
   },
-  buttonContainer: {
-    marginHorizontal: 5, // Espacio entre botones
+  pageTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#111827',
+    letterSpacing: -0.5,
   },
-  button: {
+  listContainer: {
+    padding: 12,
+    paddingBottom: 100,
+  },
+  serviceItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#007bff', // Azul para el botón de pausa/reanudar
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 10,
-    elevation: 2, // Sombra en Android
-    shadowColor: '#000', // Sombra en iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-  },
-  editButton: {
-    backgroundColor: '#19D4C6',  
-    width: 40,  
-    height: 40,
-    borderRadius: 20,  
-    justifyContent: 'center',  
-    alignItems: 'center',  
-    elevation: 2, 
+    gap: 14,
+    padding: 16,
+    marginBottom: 8,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    marginLeft: 5,
+  iconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#E8FAF7',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  detailsContainer: {
+    flex: 1,
+    minWidth: 0,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+    paddingRight: 8,
+  },
+  serviceTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#111827',
+    flex: 1,
+  },
+  moreButton: {
+    padding: 4,
+  },
+  contentColumn: {
+    gap: 6,
+  },
+  serviceDescription: {
+    fontSize: 13,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 2,
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  ratingText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#92400E',
+  },
+  contractsContainer: {
+    backgroundColor: '#E8FAF7',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  contractsText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#0e7b78',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: '#0e7b78',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#0e7b78',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
+    paddingHorizontal: 32,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#374151',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6B7280',
+    marginTop: 12,
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#374151',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  errorSubtext: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginTop: 8,
+    textAlign: 'center',
+    paddingHorizontal: 32,
+  },
+  bottomSheetBackground: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  bottomSheetIndicator: {
+    backgroundColor: '#D1D5DB',
+    width: 40,
+  },
+  bottomSheetContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  bottomSheetTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  actionsContainer: {
+    gap: 12,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    gap: 12,
+  },
+  actionIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#374151',
   },
 });

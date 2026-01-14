@@ -1,6 +1,7 @@
 // types/navigation.ts (or add to your existing file)
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { UserProfile } from "../components/workers/WorkerProfile";
+import type { ServicioRow } from "./db.overrides.types";
 
 export type MainStackParamList = {
   Home: undefined;
@@ -14,7 +15,10 @@ export type MainStackParamList = {
   ChatIndividual: {
     chatId: string;
     nombre: string;
-    servicioId: string | null;
+    servicio: Partial<ServicioRow>
+    servicioId: string;
+    usuarioId1: string;
+    usuarioId2: string;
   };
   MisServicios: undefined;
   EditarServicio: undefined;

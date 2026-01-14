@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 import BotonVolver from '../components/BotonVolver';
+import { getUserID } from '../store/authStore';
 
 export default function Chat() {
   const navigation = useNavigation();
@@ -114,11 +115,9 @@ export default function Chat() {
     let isMounted = true;
 
     const setupRealtime = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
+      const userId = getUserID();
 
-      await obtenerChatsInicial(user.id);
+      await obtenerChatsInicial(userId);
 
       // Limpiar canales previos
       if (chatChannelRef.current) supabase.removeChannel(chatChannelRef.current);
@@ -134,7 +133,7 @@ export default function Chat() {
             if (isMounted) {
               const chat = payload.new;
               if (!chat) return;
-              if (chat.usuario_1 !== user.id && chat.usuario_2 !== user.id) return;
+              if (chat.usuario_1 !== userId && chat.usuario_2 !== userId) return;
 
               if (payload.eventType === 'INSERT') {
                 // Traer datos del usuario y servicio primero
@@ -192,7 +191,7 @@ export default function Chat() {
                     .select('id')
                     .eq('chat_id', msg.chat_id)
                     .eq('leido_por_receptor', false)
-                    .neq('remitente_id', user.id);
+                    .neq('remitente_id', userId);
 
                   const cantidadNoLeidos = errorMensajes ? 0 : mensajesNoLeidosData.length;
 

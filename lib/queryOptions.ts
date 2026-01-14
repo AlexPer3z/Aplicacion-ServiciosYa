@@ -3,6 +3,7 @@ import { supabase } from "./supabase";
 import type { Session } from "@supabase/supabase-js";
 import type { Coords } from "../types/location";
 import { getUserID } from "../store/authStore";
+import { query } from "./hooks/useUserSettings";
 
 export const sessionQueryKey = ["session"];
 
@@ -34,7 +35,9 @@ export const perfilQueryOptions = queryOptions({
     const userId = getUserID();
     const { data, error } = await supabase
       .from("usuarios")
-      .select("perfil_completo, dni_verificado, foto_perfil, rol, nombre, id, suscriptor, creditos, referral_code")
+      .select(
+        "perfil_completo, dni_verificado, foto_perfil, rol, nombre, id, suscriptor, creditos, referral_code, email, edad",
+      )
       .eq("id", userId)
       .single();
 
@@ -108,13 +111,13 @@ export const workerStatusQueryOptions = queryOptions({
       .select("status")
       .eq("user_id", getUserID())
       .single();
-
+    console.log(`Worker status: ${data?.status}`);
     return data ? data.status : "OFFLINE";
   },
 });
 
 export const locationIpInfoQueryOptions = queryOptions<Coords>({
-  queryKey: ['user', 'location', 'api'],
+  queryKey: ["user", "location", "api"],
   queryFn: async () => {
     const response = await fetch("http://ip-api.com/json/");
     if (!response.ok) {
@@ -126,54 +129,71 @@ export const locationIpInfoQueryOptions = queryOptions<Coords>({
       longitude: data.lon,
       city: data.city || "N/A",
       country: data.countryCode || "N/A",
-    }
+    };
   },
 
   staleTime: 120 * 1000,
 });
 
-export const userServiceCountQueryOptions = (id: string) => queryOptions({
-  queryKey: ['user', 'services', 'count', id],
-  queryFn: async () => {
-    const { count, error } = await supabase
-      .from('servicios')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', id);
+export const userServiceCountQueryOptions = (id: string) =>
+  queryOptions({
+    queryKey: ["user", "services", "count", id],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("servicios")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", id);
 
-    if (error) {
-      throw error;
-    }
-    return count ?? 0;
+      if (error) {
+        throw error;
+      }
+      return count ?? 0;
+    },
+  });
+
+export const userServiceListQueryOptions = (id: string) =>
+  queryOptions({
+    queryKey: ["user", "services", "list", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("servicios")
+        .select("*")
+        .eq("user_id", id);
+
+      if (error) {
+        throw error;
+      }
+      return data ?? [];
+    },
+  });
+
+export const userCreditQueryOptions = (id: string) =>
+  queryOptions({
+    queryKey: ["user", "credit", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("usuarios")
+        .select("creditos")
+        .eq("id", id)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+      return data?.creditos ?? 0;
+    },
+  });
+
+export const misServicionQueryOptions = queryOptions({
+  queryKey: ["user", "mis_servicios"],
+  queryFn: async () => {
+    const userId = getUserID();
+    const { data } = await supabase
+      .from("servicios_with_coords")
+      .select("*")
+      .eq("user_id", userId)
+      .order("id", { ascending: false })
+      .throwOnError();
+    return data;
   },
 });
-
-export const userServiceListQueryOptions = (id: string) => queryOptions({
-  queryKey: ['user', 'services', 'list', id],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from('servicios')
-      .select('*')
-      .eq('user_id', id);
-
-    if (error) {
-      throw error;
-    }
-    return data ?? [];
-  },
-});
-
-export const userCreditQueryOptions = (id: string) => queryOptions({
-  queryKey: ['user', 'credit', id],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from('usuarios')
-      .select('creditos')
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      throw error;
-    }
-    return data?.creditos ?? 0;
-  },
-}); 

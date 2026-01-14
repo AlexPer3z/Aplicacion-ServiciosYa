@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../lib/supabase'; // ajustá el path si es necesario
+import { getUserID } from '../store/authStore';
 
 export default function InicioRouter() {
   const navigation = useNavigation();
@@ -9,20 +10,12 @@ export default function InicioRouter() {
 
   useEffect(() => {
     const verificarRuta = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Login' }],
-        });
-        return;
-      }
+      const userId = getUserID();
 
       const { data, error } = await supabase
         .from('usuarios')
         .select('perfil_completo')
-        .eq('id', user.id)
+        .eq('id', userId)
         .single();
 
       if (error || !data) {

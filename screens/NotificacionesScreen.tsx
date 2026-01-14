@@ -15,65 +15,22 @@ import { AuthContext } from "../lib/context/AppContext";
 import BotonVolver from "../components/BotonVolver";
 import type { NotificacionRow } from "../types/db.overrides.types";
 import vexo from "../lib/vexo";
+import { getUserID } from "../store/authStore";
+import { useQuery } from "@tanstack/react-query";
+import { userNotificationsQueryOptions } from "../lib/utils/notificationes";
 
 export default function Notificaciones() {
   const [notificaciones, setNotificaciones] = useState<NotificacionRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading, refetch, isFetched } = useQuery({ ...userNotificationsQueryOptions, staleTime: 200, refetchOnMount: true })
   const navigation = useNavigation();
 
   const { loadUnreadMessages } = useContext(AuthContext);
 
-  const obtenerUsuarioActual = async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data?.user) return null;
-    return data.user.id;
-  };
-
-  const cargarNotificaciones = async () => {
-    setLoading(true);
-    const userId = await obtenerUsuarioActual();
-
-    if (!userId) {
-      console.error("No se encontró un usuario autenticado.");
-      setLoading(false);
-      return;
+  useEffect(() => {
+    if (data && isFetched) {
+      setNotificaciones(data);
     }
-
-    const { data: notis, error } = await supabase
-      .from("notificaciones")
-      .select("*")
-      .eq("receptor_id", userId)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Error al obtener notificaciones:", error.message);
-      setLoading(false);
-      return;
-    }
-
-    const emisorIds = [...new Set(notis.map((n) => n.emisor_id))];
-    const { data: usuarios, error: errorUsuarios } = await supabase
-      .from("usuarios")
-      .select("id, foto_perfil")
-      .in("id", emisorIds);
-
-    if (errorUsuarios) {
-      console.error("Error al obtener usuarios:", errorUsuarios.message);
-      setLoading(false);
-      return;
-    }
-
-    const notisConFoto = notis.map((n) => {
-      const usuario = usuarios?.find((u) => u.id === n.emisor_id);
-      return {
-        ...n,
-        foto_perfil: usuario?.foto_perfil || null,
-      };
-    });
-
-    setNotificaciones(notisConFoto);
-    setLoading(false);
-  };
+  }, [data, isFetched])
 
   const marcarComoLeida = async (id) => {
     const { error } = await supabase
@@ -99,7 +56,7 @@ export default function Notificaciones() {
   };
 
   const eliminarTodasNotificaciones = async () => {
-    const userId = await obtenerUsuarioActual();
+    const userId = getUserID();
     const { error } = await supabase
       .from("notificaciones")
       .delete()
@@ -111,11 +68,7 @@ export default function Notificaciones() {
   };
 
   const aceptarNotificacion = async (notificacion: NotificacionRow) => {
-    const userId = await obtenerUsuarioActual();
-    if (!userId) {
-      Alert.alert("Error", "No se pudo identificar al usuario.");
-      return;
-    }
+    const userId = getUserID();
 
     if (!notificacion?.emisor_id || !notificacion?.id) {
       Alert.alert("Error", "Faltan datos de la notificación.");
@@ -363,10 +316,6 @@ Este chat ha sido creado exclusivamente para que puedas coordinar y acordar los 
     }
   };
 
-  useEffect(() => {
-    cargarNotificaciones();
-  }, []);
-
   const renderItem = ({ item }) => (
     <View style={[styles.item, !item.leido && styles.noLeido]}>
       {item.foto_perfil && (
@@ -415,7 +364,7 @@ Este chat ha sido creado exclusivamente para que puedas coordinar y acordar los 
     </View>
   );
 
-  if (loading) {
+  if (!isFetched) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#000" />

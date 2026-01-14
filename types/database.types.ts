@@ -143,6 +143,36 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_notifications_log: {
+        Row: {
+          campaign_id: string | null
+          id: string
+          message_id: number
+          notification_type: string
+          sent_at: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          id?: string
+          message_id: number
+          notification_type?: string
+          sent_at?: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string | null
+          id?: string
+          message_id?: number
+          notification_type?: string
+          sent_at?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       mensajes: {
         Row: {
           chat_id: string | null
@@ -534,6 +564,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_reminder_logs: {
+        Row: {
+          payload: Json | null
+          reminder_number: number
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          payload?: Json | null
+          reminder_number: number
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          payload?: Json | null
+          reminder_number?: number
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       usuarios: {
         Row: {
           actualizado_en: string | null
@@ -801,18 +852,6 @@ export type Database = {
       count_services_by_status_in_radius:
         | {
             Args: {
-              search_lat: number
-              search_lon: number
-              search_radius_meters: number
-              status_filter?: string
-            }
-            Returns: {
-              categoria: string
-              count: number
-            }[]
-          }
-        | {
-            Args: {
               p_categoria?: string
               search_lat?: number
               search_lon?: number
@@ -825,7 +864,139 @@ export type Database = {
               count: number
             }[]
           }
+        | {
+            Args: {
+              search_lat: number
+              search_lon: number
+              search_radius_meters: number
+              status_filter?: string
+            }
+            Returns: {
+              categoria: string
+              count: number
+            }[]
+          }
       delete_user: { Args: { uid: string }; Returns: undefined }
+      get_inactive_users_for_reminders: {
+        Args: { p_page_number?: number; p_page_size?: number }
+        Returns: {
+          days_inactive: number
+          expo_token: string
+          reminder_number: number
+          user_id: string
+        }[]
+      }
+      get_marketing_candidate_users:
+        | {
+            Args: { limit_count: number }
+            Returns: {
+              actualizado_en: string | null
+              apellido: string | null
+              calle: string | null
+              categoria: string | null
+              celular: number | null
+              ci: string | null
+              ciudad: string | null
+              codigo: string | null
+              codigo_postal: string | null
+              creado_en: string | null
+              created_at: string | null
+              creditos: number | null
+              descripcion: string | null
+              dni: string | null
+              dni_dorso: string | null
+              dni_frente: string | null
+              dni_verificado: boolean
+              domicilio: string | null
+              edad: number | null
+              email: string
+              experiencia: string | null
+              experiencia_academica: string | null
+              expo_token: string | null
+              fecha_nacimiento: string | null
+              foto_dni_perfil: string | null
+              foto_perfil: string | null
+              horarios: string | null
+              huella_digital: boolean | null
+              id: string
+              nombre: string | null
+              pago: boolean | null
+              perfil_completo: boolean
+              precio: string | null
+              provincia: string | null
+              referencias: string | null
+              referral_code: string | null
+              referred_by: string | null
+              registropagado: boolean | null
+              rol: Database["public"]["Enums"]["user_role"]
+              selfie: string | null
+              sexo: string | null
+              suscripcion_activa_hasta: string | null
+              suscriptor: boolean | null
+              usuario_id: string
+            }[]
+            SetofOptions: {
+              from: "*"
+              to: "usuarios"
+              isOneToOne: false
+              isSetofReturn: true
+            }
+          }
+        | {
+            Args: { days_ago?: number; limit_count: number }
+            Returns: {
+              actualizado_en: string | null
+              apellido: string | null
+              calle: string | null
+              categoria: string | null
+              celular: number | null
+              ci: string | null
+              ciudad: string | null
+              codigo: string | null
+              codigo_postal: string | null
+              creado_en: string | null
+              created_at: string | null
+              creditos: number | null
+              descripcion: string | null
+              dni: string | null
+              dni_dorso: string | null
+              dni_frente: string | null
+              dni_verificado: boolean
+              domicilio: string | null
+              edad: number | null
+              email: string
+              experiencia: string | null
+              experiencia_academica: string | null
+              expo_token: string | null
+              fecha_nacimiento: string | null
+              foto_dni_perfil: string | null
+              foto_perfil: string | null
+              horarios: string | null
+              huella_digital: boolean | null
+              id: string
+              nombre: string | null
+              pago: boolean | null
+              perfil_completo: boolean
+              precio: string | null
+              provincia: string | null
+              referencias: string | null
+              referral_code: string | null
+              referred_by: string | null
+              registropagado: boolean | null
+              rol: Database["public"]["Enums"]["user_role"]
+              selfie: string | null
+              sexo: string | null
+              suscripcion_activa_hasta: string | null
+              suscriptor: boolean | null
+              usuario_id: string
+            }[]
+            SetofOptions: {
+              from: "*"
+              to: "usuarios"
+              isOneToOne: false
+              isSetofReturn: true
+            }
+          }
       get_services_by_category_in_radius: {
         Args: {
           categoria_filter?: string

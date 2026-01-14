@@ -110,10 +110,12 @@ export const useLocationStore = create<LocationState>()(
                         return;
                     }
 
-                    // ✅ GPS allowed
-                    const position = await Location.getCurrentPositionAsync({
-                        accuracy: Location.Accuracy.Balanced,
-                    });
+                    let position = await Location.getLastKnownPositionAsync();
+
+                    if (!position) {
+                        position = await Location.getCurrentPositionAsync({
+                        accuracy: Location.Accuracy.Balanced});
+                    }
 
                     const resolved = await resolveLocationFromCoords({
                         latitude: position.coords.latitude,

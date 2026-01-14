@@ -7,8 +7,7 @@ import React, {
 } from "react";
 import {
   View,
-  StyleSheet,
-  ImageBackground} from "react-native";
+  StyleSheet} from "react-native";
 import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -35,10 +34,12 @@ import { withDropDownProvider } from "../components/forms/withDropDownProvider";
 import { getUserID, useIsGuest } from "../store/authStore";
 import { HomeEventRenderer } from "../components/home/HomeEventRenderer";
 import { useHomeEventsStore } from "../store/homeEventsStore";
+import usePrefetchData from "../lib/hooks/usePrefetchData";
 
 type Props = NativeStackScreenProps<MainStackParamList, "Home">;
 
 function Home({ navigation }: Props) {
+  usePrefetchData();
   const [authUser, setAuthUser] = useState(null);
   const [busqueda, setBusqueda] = useState("");
   const [showCountsOnly, setShowCountsOnly] = useState(false);
@@ -158,79 +159,6 @@ function Home({ navigation }: Props) {
             visible={chatVisible}
             onClose={() => setChatVisible(false)}
           />
-
-          {modalPrimeraVezVisible && (
-  <View
-    style={{
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: "rgba(0,0,0,0.5)",
-      justifyContent: "center",
-      alignItems: "center",
-      padding: 20
-    }}
-  >
-    <View
-      style={{
-        backgroundColor: "#fff",
-        borderRadius: 20,
-        padding: 25,
-        width: "90%",
-        shadowColor: "#000",
-        shadowOpacity: 0.3,
-        shadowRadius: 10,
-      }}
-    >
-      <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 12, color: "#333", textAlign: "center" }}>
-        ¡Bienvenido a ServiciosYa! 👋
-      </Text>
-
-      <Text style={{ fontSize: 16, color: "#444", marginBottom: 25, textAlign: "center" }}>
-        ¿Qué querés hacer hoy?
-      </Text>
-
-      {/* Botón Contratar */}
-      <TouchableOpacity
-        onPress={() => setModalPrimeraVezVisible(false)}
-        style={{
-          backgroundColor: "#00B8A9",
-          paddingVertical: 12,
-          borderRadius: 12,
-          alignItems: "center",
-          marginBottom: 12
-        }}
-      >
-        <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
-          Contratar
-        </Text>
-      </TouchableOpacity>
-
-      {/* Botón Ofrecer Servicio */}
-      <TouchableOpacity
-  onPress={() => {
-    setModalPrimeraVezVisible(false);
-    navigation.navigate("OfrecerServicio");
-  }}
-  style={{
-    backgroundColor: "#007BFF",
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: "center"
-  }}
->
-  <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
-    Ofrecer un servicio
-  </Text>
-</TouchableOpacity>
-
-    </View>
-  </View>
-)}
-
-
         </View>
 
       <BottomNavBar unreadMessagesCount={unreadMessagesCount} />

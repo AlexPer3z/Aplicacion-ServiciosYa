@@ -30,10 +30,8 @@ const statusColors: Record<WorkerStatus, string> = {
 
 function WorkState({ style }: { style?: StyleProp<ViewStyle> }) {
   const queryClient = useQueryClient();
-  const { data: status } = useQuery({
-    ...workerStatusQueryOptions,
-    initialData: "OFFLINE",
-  });
+  const { data } = useQuery(workerStatusQueryOptions);
+  const status = data ?? "OFFLINE";
   const color = statusColors[status];
 
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
