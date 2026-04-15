@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "90283557177",
+    "project_id": "serviciosya-c3239",
+    "storage_bucket": "serviciosya-c3239.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:90283557177:android:d80237636eee4ed7cae8e8",
+        "android_client_info": {
+          "package_name": "com.alex_6775.appTrabajo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDuYnA8UwMEORPvqnESVZDwoYHTOkrCdEM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "67"
+}

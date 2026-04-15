@@ -1,0 +1,54 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "gradle:assembleRelease",
+      "type": "shell",
+      "command": "./gradlew assembleRelease",
+      "options": {
+        "cwd": "${workspaceFolder}/android"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "expo:prebuild",
+      "type": "shell",
+      "command": "npx expo prebuild --clean",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Generate Supabase Types",
+      "type": "shell",
+      "command": "npx supabase gen types typescript --project-id ${input:projectRef} --schema public > types/database.types.ts",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "projectRef",
+      "type": "promptString",
+      "description": "Enter your Supabase project reference ID",
+      "default": ""
+    }
+  ]
+}
