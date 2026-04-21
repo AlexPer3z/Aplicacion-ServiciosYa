@@ -304,11 +304,11 @@ export default function RegistroCliente() {
               <>
                 <Text style={styles.subtitulo}>Links legales:</Text>
                 <LinkTexto
-                  url="https://inicio.serviciosya.info/politicas-de-privacidad.html"
+                  url="https://inicio.tooriserviciosya.info/politicas-de-privacidad.html"
                   texto="Políticas de Privacidad"
                 />
                 <LinkTexto
-                  url="https://inicio.serviciosya.info/Terminos-y-condiciones.html"
+                  url="https://inicio.tooriserviciosya.info/Terminos-y-condiciones.html"
                   texto="Términos y Condiciones"
                 />
 
@@ -318,7 +318,7 @@ export default function RegistroCliente() {
                 </View>
 
                 <Text style={styles.leyenda}>
-                  ServiciosYa es una plataforma de conexión entre trabajadores y clientes, y no asume responsabilidad alguna por las tareas o el desempeño de los trabajadores.
+                  TOORI Servicios Ya es una plataforma de conexión entre trabajadores y clientes, y no asume responsabilidad alguna por las tareas o el desempeño de los trabajadores.
                 </Text>
               </>
             )}

@@ -1,0 +1,814 @@
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Animated,
+  Linking,
+  FlatList,
+  ActivityIndicator,
+  Image,
+  RefreshControl,
+  Modal,
+  TextInput,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import CategoryList from "./CategoryList";
+import { supabase } from "../../lib/supabase";
+
+type Tab = "calendario" | "ofertas" | "contratar";
+
+export default function WorkerHomeView({ navigation, onCategoryPress }: { navigation: any; onCategoryPress: (cat: string) => void }) {
+  const [activeTab, setActiveTab] = useState<Tab>("calendario");
+
+  const tabs: { id: Tab; label: string; icon: string }[] = [
+    { id: "calendario", label: "Calendario", icon: "calendar-today" },
+    { id: "ofertas", label: "Ofertas", icon: "work-outline" },
+    { id: "contratar", label: "Contratar", icon: "person-add-alt" },
+  ];
+
+  return (
+    <View style={styles.container}>
+      {/* Tab buttons */}
+      <View style={styles.tabBar}>
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <TouchableOpacity
+              key={tab.id}
+              style={[styles.tabButton, isActive && styles.tabButtonActive]}
+              onPress={() => setActiveTab(tab.id)}
+              activeOpacity={0.8}
+            >
+              <MaterialIcons
+                name={tab.icon as any}
+                size={20}
+                color={isActive ? "#fff" : "#069eb3"}
+              />
+              <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* Content */}
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} bounces={true}>
+        {activeTab === "calendario" && <CalendarioView />}
+        {activeTab === "ofertas" && <OfertasView />}
+        {activeTab === "contratar" && <ContratarView navigation={navigation} onCategoryPress={onCategoryPress} />}
+      </ScrollView>
+    </View>
+  );
+}
+
+function CalendarioView() {
+  const today = new Date();
+  const month = today.toLocaleString("es", { month: "long", year: "numeric" });
+  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).getDay();
+
+  const dayLabels = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+  const cells: (number | null)[] = [
+    ...Array(firstDay).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+
+  return (
+    <View style={styles.calendarCard}>
+      <LinearGradient
+        colors={["#069eb3", "#047a8f"]}
+        style={styles.calendarHeader}
+      >
+        <MaterialIcons name="calendar-today" size={28} color="#fff" />
+        <Text style={styles.calendarMonthTitle}>{month.charAt(0).toUpperCase() + month.slice(1)}</Text>
+      </LinearGradient>
+
+      <View style={styles.dayLabelsRow}>
+        {dayLabels.map((d) => (
+          <Text key={d} style={styles.dayLabel}>{d}</Text>
+        ))}
+      </View>
+
+      <View style={styles.daysGrid}>
+        {cells.map((day, idx) => {
+          const isToday = day === today.getDate();
+          return (
+            <View
+              key={idx}
+              style={[styles.dayCell, isToday && styles.dayCellToday]}
+            >
+              {day !== null && (
+                <Text style={[styles.dayNumber, isToday && styles.dayNumberToday]}>
+                  {day}
+                </Text>
+              )}
+            </View>
+          );
+        })}
+      </View>
+
+      <View style={styles.emptyCalendarMsg}>
+        <MaterialIcons name="info-outline" size={22} color="#a8dfe8" />
+        <Text style={styles.emptyCalendarText}>
+          Aquí se van a mostrar tus servicios programados en el calendario.{"\n"}
+          ¡Próximamente disponible!
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function OfertasView() {
+  const [ofertas, setOfertas] = useState<any[]>([]);
+  const [presupuestos, setPresupuestos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const pulse = useRef(new Animated.Value(0.4)).current;
+
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 900, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0.4, duration: 900, useNativeDriver: true }),
+      ])
+    );
+    if (loading) anim.start();
+    else anim.stop();
+    return () => anim.stop();
+  }, [loading]);
+
+  const cargarOfertas = useCallback(async () => {
+    try {
+      setError(null);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Obtener datos del usuario (categorias)
+      const { data: userData } = await supabase
+        .from("usuarios")
+        .select("categoria, id")
+        .eq("id", user.id)
+        .single();
+
+      const categoriasUsuario: string[] = Array.isArray(userData?.categoria)
+        ? userData.categoria.map((c: string) => c.trim().toLowerCase())
+        : userData?.categoria
+        ? [userData.categoria.trim().toLowerCase()]
+        : [];
+
+      const userId = userData?.id || user.id;
+
+      // Presupuestos enviados (últimas 48h, no pagados)
+      const { data: presData } = await supabase
+        .from("presupuestos")
+        .select("*, nuevaOferta:oferta_id(id, estado)")
+        .eq("trabajador_uuid", userId)
+        .order("created_at", { ascending: false });
+
+      const ahora = new Date();
+      const presFiltrados = (presData || []).filter((p: any) => {
+        if (p.nuevaOferta?.estado?.toLowerCase() === "pagado") return false;
+        if (!p.created_at) return false;
+        return (ahora.getTime() - new Date(p.created_at).getTime()) / 3600000 <= 48;
+      });
+      setPresupuestos(presFiltrados);
+
+      // Ofertas disponibles
+      const { data, error: err } = await supabase
+        .from("nuevaOferta")
+        .select("*, presupuestos(count)")
+        .order("created_at", { ascending: false });
+
+      if (err) throw err;
+
+      const filtradas = (data || []).filter((o: any) => {
+        if (!o.created_at) return false;
+        if ((ahora.getTime() - new Date(o.created_at).getTime()) / 3600000 > 48) return false;
+        const estado = o.estado?.toLowerCase() || "";
+        if (estado !== "completa" && estado !== "completo") return false;
+        const cantPres = o.presupuestos?.[0]?.count ?? 0;
+        if (cantPres >= 3) return false;
+        if (categoriasUsuario.length === 0) return true;
+        if (!o.categoria) return false;
+        const catOferta = o.categoria.trim().toLowerCase();
+        return categoriasUsuario.some(
+          (c) => catOferta.includes(c) || c.includes(catOferta)
+        );
+      });
+
+      setOfertas(filtradas);
+    } catch (e: any) {
+      setError("Error al cargar ofertas. Intenta nuevamente.");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => { cargarOfertas(); }, []);
+
+  const onRefresh = () => { setRefreshing(true); cargarOfertas(); };
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [ofertaSeleccionada, setOfertaSeleccionada] = useState<any>(null);
+  const [monto, setMonto] = useState("");
+  const [descripcion, setDescripcion] = useState("");
+  const [horarios, setHorarios] = useState("");
+  const [enviando, setEnviando] = useState(false);
+
+  const enviarPresupuesto = (oferta: any) => {
+    setOfertaSeleccionada(oferta);
+    setMonto("");
+    setDescripcion("");
+    setHorarios("");
+    setModalVisible(true);
+  };
+
+  const confirmarPresupuesto = async () => {
+    if (!monto.trim() || !descripcion.trim() || !horarios.trim()) {
+      Alert.alert("Campos incompletos", "Completá todos los campos antes de enviar.");
+      return;
+    }
+    setEnviando(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No autenticado");
+      const { data: userData } = await supabase
+        .from("usuarios")
+        .select("id")
+        .eq("id", user.id)
+        .single();
+      const trabajadorId = userData?.id || user.id;
+
+      const { error } = await (supabase as any).from("presupuestos").insert({
+        oferta_id: ofertaSeleccionada.id,
+        trabajador_uuid: trabajadorId,
+        monto: parseFloat(monto.replace(",", ".")),
+        descripcion: descripcion.trim(),
+        horarios_disponibles: horarios.trim(),
+      });
+
+      if (error) throw error;
+
+      setModalVisible(false);
+      Alert.alert("¡Presupuesto enviado!", "Tu presupuesto fue enviado correctamente.", [
+        { text: "OK", onPress: () => cargarOfertas() },
+      ]);
+    } catch (e: any) {
+      Alert.alert("Error", e.message || "No se pudo enviar el presupuesto.");
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  const SkeletonCard = () => (
+    <View style={styles.ofertaCard}>
+      <Animated.View style={[styles.skeletonBadge, { opacity: pulse }]} />
+      <Animated.View style={[styles.skeletonBadge, { width: "75%", height: 14, borderRadius: 8, opacity: pulse }]} />
+      <Animated.View style={[styles.skeletonBadge, { width: "55%", height: 14, borderRadius: 8, opacity: pulse }]} />
+      <Animated.View style={[styles.skeletonBlock, { opacity: pulse }]} />
+    </View>
+  );
+
+  return (
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#069eb3"]} />}
+    >
+      {/* Presupuestos enviados */}
+      {presupuestos.length > 0 && (
+        <View style={{ marginBottom: 20 }}>
+          <Text style={styles.seccionTitle}>
+            <MaterialIcons name="send" size={16} color="#069eb3" /> Tus presupuestos enviados
+          </Text>
+          {presupuestos.map((p) => (
+            <View key={p.id} style={[styles.ofertaCard, { borderLeftWidth: 3, borderLeftColor: "#069eb3" }]}>
+              <View style={styles.ofertaBadge}>
+                <Text style={styles.ofertaBadgeText}>Presupuesto #{p.id}</Text>
+              </View>
+              <Text style={styles.ofertaTitulo}>Monto: ${p.monto}</Text>
+              {!!p.descripcion && <Text style={styles.ofertaDesc}>{p.descripcion}</Text>}
+              {!!p.horarios_disponibles && (
+                <Text style={styles.ofertaMeta}>📅 {p.horarios_disponibles}</Text>
+              )}
+              <Text style={styles.ofertaMeta}>Estado: {p.estado || "activo"}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* Ofertas disponibles */}
+      <Text style={styles.seccionTitle}>
+        <MaterialIcons name="bolt" size={16} color="#069eb3" /> Ofertas disponibles para vos
+      </Text>
+      <Text style={styles.seccionSubtitle}>
+        Ofertas que coinciden con tu categoría profesional (últimas 48h)
+      </Text>
+
+      {loading ? (
+        <>
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </>
+      ) : error ? (
+        <View style={styles.ofertasInfoBox}>
+          <MaterialIcons name="error-outline" size={20} color="#d32f2f" />
+          <Text style={[styles.ofertasInfoText, { color: "#d32f2f" }]}>{error}</Text>
+        </View>
+      ) : ofertas.length === 0 ? (
+        <>
+          <View style={styles.ofertasInfoBox}>
+            <MaterialIcons name="info-outline" size={20} color="#047a8f" />
+            <Text style={styles.ofertasInfoText}>
+              Estamos buscando ofertas para tus profesiones. Si no ves ninguna, no te desesperes, es normal que no hayan tantas ofertas disponibles en tu zona.
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.soporteButton}
+            activeOpacity={0.8}
+            onPress={() => Linking.openURL("https://wa.me/543512139046?text=Hola%2C%20necesito%20ayuda%20con%20las%20ofertas")}
+          >
+            <MaterialIcons name="support-agent" size={20} color="#fff" />
+            <Text style={styles.soporteButtonText}>Contactar soporte</Text>
+          </TouchableOpacity>
+        </>
+      ) : (
+        ofertas.map((oferta) => (
+          <TouchableOpacity
+            key={oferta.id}
+            style={styles.ofertaCard}
+            activeOpacity={0.85}
+            onPress={() => enviarPresupuesto(oferta)}
+          >
+            <View style={styles.ofertaBadge}>
+              <Text style={styles.ofertaBadgeText}>{oferta.categoria || "Sin categoría"}</Text>
+            </View>
+            <Text style={styles.ofertaTitulo}>{oferta.descripcion || "Sin descripción"}</Text>
+            {!!oferta.nombre_cliente && (
+              <Text style={styles.ofertaMeta}>👤 {oferta.nombre_cliente}</Text>
+            )}
+            {!!oferta.zona && (
+              <Text style={styles.ofertaMeta}>📍 {oferta.zona}</Text>
+            )}
+            <View style={styles.ofertaFooter}>
+              <Text style={styles.ofertaFooterText}>
+                🕐 {(() => { const d = new Date(oferta.created_at); return d.toLocaleString("es-AR"); })()}
+              </Text>
+              <View style={styles.presupuestosBadge}>
+                <MaterialIcons name="send" size={12} color="#fff" />
+                <Text style={styles.presupuestosBadgeText}>
+                  {oferta.presupuestos?.[0]?.count ?? 0}/3 presupuestos
+                </Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))
+      )}
+
+      <View style={{ height: 20 }} />
+
+      {/* Modal presupuesto */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Enviar presupuesto</Text>
+            {ofertaSeleccionada && (
+              <View style={[styles.ofertasInfoBox, { marginBottom: 16 }]}>
+                <MaterialIcons name="work-outline" size={18} color="#047a8f" />
+                <Text style={styles.ofertasInfoText} numberOfLines={3}>
+                  {ofertaSeleccionada.descripcion}
+                </Text>
+              </View>
+            )}
+
+            <Text style={styles.modalLabel}>Monto ($)</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Ej: 5000"
+              placeholderTextColor="#aaa"
+              keyboardType="numeric"
+              value={monto}
+              onChangeText={setMonto}
+            />
+
+            <Text style={styles.modalLabel}>Descripción de tu propuesta</Text>
+            <TextInput
+              style={[styles.modalInput, { height: 80, textAlignVertical: "top" }]}
+              placeholder="Contá brevemente qué harías..."
+              placeholderTextColor="#aaa"
+              multiline
+              value={descripcion}
+              onChangeText={setDescripcion}
+            />
+
+            <Text style={styles.modalLabel}>Horarios disponibles</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Ej: Lunes a viernes de 9 a 18hs"
+              placeholderTextColor="#aaa"
+              value={horarios}
+              onChangeText={setHorarios}
+            />
+
+            <TouchableOpacity
+              style={[styles.soporteButton, { marginTop: 8 }]}
+              activeOpacity={0.85}
+              onPress={confirmarPresupuesto}
+              disabled={enviando}
+            >
+              {enviando ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <>
+                  <MaterialIcons name="send" size={18} color="#fff" />
+                  <Text style={styles.soporteButtonText}>Enviar presupuesto</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modalCancelBtn}
+              onPress={() => setModalVisible(false)}
+              disabled={enviando}
+            >
+              <Text style={styles.modalCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+    </ScrollView>
+  );
+}
+
+function ContratarView({ navigation, onCategoryPress }: { navigation: any; onCategoryPress: (cat: string) => void }) {
+  return (
+    <CategoryList
+      busqueda=""
+      onCategoryPress={onCategoryPress}
+      isUserRestricted={false}
+    />
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  tabBar: {
+    flexDirection: "row",
+    marginHorizontal: 16,
+    marginVertical: 12,
+    backgroundColor: "#e8f7fa",
+    borderRadius: 16,
+    padding: 4,
+    gap: 4,
+  },
+  tabButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    borderRadius: 12,
+    gap: 5,
+  },
+  tabButtonActive: {
+    backgroundColor: "#069eb3",
+    shadowColor: "#069eb3",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  tabLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#069eb3",
+  },
+  tabLabelActive: {
+    color: "#fff",
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingBottom: 100,
+  },
+  // Calendar
+  calendarCard: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#069eb3",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  calendarHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 18,
+    gap: 10,
+  },
+  calendarMonthTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#fff",
+  },
+  dayLabelsRow: {
+    flexDirection: "row",
+    paddingHorizontal: 8,
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+  dayLabel: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#069eb3",
+  },
+  daysGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    paddingHorizontal: 8,
+    paddingBottom: 8,
+  },
+  dayCell: {
+    width: `${100 / 7}%`,
+    aspectRatio: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 8,
+  },
+  dayCellToday: {
+    backgroundColor: "#069eb3",
+    borderRadius: 50,
+  },
+  dayNumber: {
+    fontSize: 14,
+    color: "#333",
+  },
+  dayNumberToday: {
+    color: "#fff",
+    fontWeight: "700",
+  },
+  emptyCalendarMsg: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    margin: 16,
+    backgroundColor: "#f0f8fa",
+    padding: 14,
+    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: "#069eb3",
+  },
+  emptyCalendarText: {
+    flex: 1,
+    color: "#047a8f",
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  // Placeholder views
+  placeholderCard: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 40,
+    shadowColor: "#069eb3",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 5,
+    gap: 14,
+  },
+  placeholderTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#047a8f",
+  },
+  placeholderText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  // Ofertas
+  ofertasCard: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: "#069eb3",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 5,
+    gap: 16,
+  },
+  ofertasHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  ofertasTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#047a8f",
+  },
+  skeletonContainer: {
+    gap: 12,
+    paddingVertical: 4,
+  },
+  skeletonBadge: {
+    width: 110,
+    height: 28,
+    backgroundColor: "#a8dfe8",
+    borderRadius: 20,
+    marginBottom: 10,
+  },
+  skeletonBlock: {
+    height: 50,
+    backgroundColor: "#a8dfe8",
+    borderRadius: 10,
+    marginTop: 4,
+  },
+  seccionTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#047a8f",
+    marginBottom: 4,
+    marginTop: 4,
+  },
+  seccionSubtitle: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 14,
+  },
+  ofertaCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: "#069eb3",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  ofertaBadge: {
+    backgroundColor: "#069eb3",
+    alignSelf: "flex-start",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+    marginBottom: 10,
+  },
+  ofertaBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  ofertaTitulo: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#222",
+    marginBottom: 6,
+  },
+  ofertaDesc: {
+    fontSize: 13,
+    color: "#555",
+    marginBottom: 4,
+  },
+  ofertaMeta: {
+    fontSize: 13,
+    color: "#666",
+    marginBottom: 3,
+  },
+  ofertaFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  ofertaFooterText: {
+    fontSize: 12,
+    color: "#888",
+  },
+  presupuestosBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#047a8f",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  presupuestosBadgeText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  ofertasInfoBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    backgroundColor: "#f0f8fa",
+    padding: 14,
+    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: "#069eb3",
+  },
+  ofertasInfoText: {
+    flex: 1,
+    color: "#047a8f",
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  soporteButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#069eb3",
+    paddingVertical: 13,
+    borderRadius: 30,
+    gap: 8,
+    shadowColor: "#069eb3",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  soporteButtonText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 15,
+  },
+  // Modal presupuesto
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalBox: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: 24,
+    paddingBottom: 36,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#047a8f",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  modalLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#047a8f",
+    marginBottom: 6,
+    marginTop: 10,
+  },
+  modalInput: {
+    backgroundColor: "#f0f8fa",
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: "#a8dfe8",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: "#222",
+  },
+  modalCancelBtn: {
+    alignItems: "center",
+    marginTop: 14,
+    paddingVertical: 10,
+  },
+  modalCancelText: {
+    color: "#888",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+});

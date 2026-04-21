@@ -8,7 +8,7 @@ import { supabase } from '../lib/supabase';
 import * as WebBrowser from 'expo-web-browser';
 import fondo from '../assets/fondo.png';
 import logo from '../assets/logo.png';
-import useAuthSession from '../lib/hooks/useAuthSession';
+// import useAuthSession from '../lib/hooks/useAuthSession';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
@@ -44,10 +44,10 @@ export default function LoginSelect({ navigation }) {
 
   const { signInWithGoogle } = useGoogleAuth();
 
-  const { biometricLogin } = useAuthSession({
-    onAuthSuccess: () => navigation.replace('Home'),
-    onError: (error) => ToastAndroid.show(error.message, ToastAndroid.SHORT)
-  });
+  // const { biometricLogin } = useAuthSession({
+  //   onAuthSuccess: () => navigation.replace('Home'),
+  //   onError: (error) => ToastAndroid.show(error.message, ToastAndroid.SHORT)
+  // });
 
   useEffect(() => {
     Animated.parallel([
@@ -70,13 +70,13 @@ export default function LoginSelect({ navigation }) {
     navigation.navigate('Login')
   };
 
-  const handleHuellaLogin = async () => {
-    try {
-      await biometricLogin();
-    } catch (e) {
-      setErrorMessage('No se pudo iniciar sesión con huella.');
-    }
-  };
+  // const handleHuellaLogin = async () => {
+  //   try {
+  //     await biometricLogin();
+  //   } catch (e) {
+  //     setErrorMessage('No se pudo iniciar sesión con huella.');
+  //   }
+  // };
   
   const handleLoginGoogle = async (errorResponse, response) => {
     if (errorResponse) {
@@ -171,7 +171,7 @@ export default function LoginSelect({ navigation }) {
 
 
 
-        <Text style={styles.appTitle}>SERVICIOS YA</Text>
+        <Text style={styles.appTitle}>TOORI SERVICIOS YA</Text>
         <Text style={styles.title}>
           Seleccione su <Text style={styles.bold}>método de inicio de sesión</Text> preferido
         </Text>
@@ -195,20 +195,22 @@ export default function LoginSelect({ navigation }) {
             </Text>
           </TouchableOpacity>
 
+          {/* HUELLA DIGITAL - DESHABILITADO TEMPORALMENTE
           <TouchableOpacity
-  style={styles.loginButton}
-  onPress={handleHuellaLogin}
-  activeOpacity={0.85}
->
-  <MaterialCommunityIcons
-    name="fingerprint"
-    size={24}
-    style={styles.fingerprintIcon}
-  />
-  <Text style={styles.loginButtonText}>
-    Inicia con tu <Text style={styles.orange}>huella</Text>
-  </Text>
-</TouchableOpacity>
+            style={styles.loginButton}
+            onPress={handleHuellaLogin}
+            activeOpacity={0.85}
+          >
+            <MaterialCommunityIcons
+              name="fingerprint"
+              size={24}
+              style={styles.fingerprintIcon}
+            />
+            <Text style={styles.loginButtonText}>
+              Inicia con tu <Text style={styles.orange}>huella</Text>
+            </Text>
+          </TouchableOpacity>
+          */}
  
         <TouchableOpacity
           style={styles.loginButton}
@@ -268,30 +270,25 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#E6F4F1',
+    backgroundColor: '#d6f0f5',
   },
-
   container: {
     width: '88%',
     paddingVertical: 36,
     paddingHorizontal: 22,
     borderRadius: 40,
-
-    backgroundColor: 'rgba(255, 255, 255, 0.76)',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
-
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 20 },
+    borderColor: 'rgba(6, 158, 179, 0.2)',
+    shadowColor: '#069eb3',
+    shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.18,
-    shadowRadius: 30,
+    shadowRadius: 24,
     elevation: 15,
-
     alignItems: 'center',
-    backdropFilter: 'blur(12px)',
   },
   orange: {
-    color: '#F5A623', // 🔥 naranja exacto de la imagen
+    color: '#069eb3',
   },
   googleIcon: {
     width: 22,
@@ -299,61 +296,47 @@ const styles = StyleSheet.create({
     marginRight: 12,
     resizeMode: 'contain',
   },
-
   logoLightWrapper: {
     marginBottom: 16,
     alignItems: 'center',
     justifyContent: 'center',
-
-    shadowColor: '#FFE27A',
+    shadowColor: '#069eb3',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.9,
-    shadowRadius: 30,
-    elevation: 25,
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 20,
   },
   fingerprintIcon: {
     marginRight: 12,
-    color: '#8E44AD', // 🟣 morado biométrico (como la imagen)
+    color: '#047a8f',
   },
-
   logo: {
     width: 88,
     height: 88,
     resizeMode: 'contain',
   },
-
   appTitle: {
     fontSize: 22,
-    fontWeight: '900',
-    fontStyle: 'italic',
-    color: '#2D2A6E',
-    letterSpacing: 1.3,
-    marginBottom: 6,
-    textShadowColor: 'rgba(0,0,0,0.15)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 1,
+    fontWeight: '800',
+    color: '#047a8f',
+    letterSpacing: 0.8,
+    marginBottom: 8,
   },
-
-
-
   title: {
     fontSize: 15,
     color: '#444',
     textAlign: 'center',
     marginBottom: 26,
   },
-
   bold: {
     fontWeight: '800',
-    color: '#2D2A6E',
+    color: '#047a8f',
   },
-
   buttonsWrapper: {
     width: '100%',
     gap: 14,
     marginTop: 10,
   },
-
   loginButton: {
     backgroundColor: '#FFFFFF',
     paddingVertical: 15,
@@ -362,39 +345,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
-    elevation: 6,
+    shadowColor: '#069eb3',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(6,158,179,0.15)',
   },
-
   loginButtonIcon: {
     marginRight: 12,
-    color: '#F5A623', // 🔥 naranja exacto de la imagen
+    color: '#069eb3',
   },
-
   loginButtonText: {
-    color: '#111111', // 🔥 negro real, no gris
-    fontWeight: '600', // en la imagen no es ultra bold
+    color: '#111111',
+    fontWeight: '600',
     fontSize: 16,
   },
-
-
   text: {
-    marginTop: 24,
+    marginTop: 25,
     fontSize: 13,
     textAlign: 'center',
-    color: '#666',
+    color: '#4A4A4A',
     lineHeight: 18,
   },
-
   link: {
-    color: '#C0392B',
+    color: '#047a8f',
     fontWeight: '900',
   },
-
   errorBox: {
     backgroundColor: '#FFEDEC',
     padding: 12,
@@ -404,7 +382,6 @@ const styles = StyleSheet.create({
     borderColor: '#FF7A5C',
     borderWidth: 1,
   },
-
   errorText: {
     color: '#D84315',
     textAlign: 'center',
@@ -414,27 +391,10 @@ const styles = StyleSheet.create({
     marginTop: 18,
     fontSize: 15,
     fontWeight: '900',
-    color: '#fd9c00ff', // naranja claro
+    color: '#069eb3',
   },
-
   registerLink: {
-    color: '#E67E22', // naranja más fuerte (como la imagen)
+    color: '#047a8f',
     fontWeight: '700',
   },
-  text: {
-    marginTop: 25,
-    fontSize: 13,
-    textAlign: 'center',
-    color: '#4A4A4A', // gris oscuro real
-    lineHeight: 18,
-  },
-
-  appTitle: {
-    fontSize: 22,
-    fontWeight: '800', // antes 900
-    color: '#2D2A6E',
-    letterSpacing: 0.8,
-    marginBottom: 8,
-  },
-
 });

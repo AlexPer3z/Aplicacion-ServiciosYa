@@ -3,6 +3,15 @@ import * as Notifications from "expo-notifications";
 import type { NavigationContainerRef } from "@react-navigation/native";
 import type { MainStackParamList } from "../../types/navigation";
 
+// Mostrar notificaciones incluso con la app en primer plano
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+
 export const useNotificationHandler = () => {
   const navigationRef =
     useRef<NavigationContainerRef<MainStackParamList>>(null);

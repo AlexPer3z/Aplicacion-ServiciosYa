@@ -18,6 +18,7 @@ import { useServicesCount } from "../../lib/hooks/useServices";
 import { useUserSettings } from "../../lib/hooks/useUserSettings";
 import { withSuspense } from "../withSuspense";
 import { useHomeEventsStore } from "../../store/homeEventsStore";
+import { supabase } from "../../lib/supabase";
 
 interface CategoryListProps {
   busqueda: string;
@@ -39,6 +40,28 @@ const CategoryList = ({
   const { settings } = useUserSettings();
   const [isPullingToRefresh, setIsPullingToRefresh] = useState(false);
   const setHomeDataReady = useHomeEventsStore(s => s.setHomeDataReady);
+  const [workerCounts, setWorkerCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    supabase
+      .from("usuarios")
+      .select("categoria")
+      .eq("rol", "worker")
+      .eq("perfilPublico", true)
+      .then(({ data }) => {
+        if (!data) return;
+        const counts: Record<string, number> = {};
+        for (const u of data) {
+          let cat = u.categoria;
+          if (typeof cat === "string") { try { cat = JSON.parse(cat); } catch {} }
+          const cats: string[] = Array.isArray(cat) ? cat.filter(Boolean) : cat ? [cat] : [];
+          for (const c of cats) {
+            counts[c] = (counts[c] || 0) + 1;
+          }
+        }
+        setWorkerCounts(counts);
+      });
+  }, []);
 
   // 2. Data Destructuring
   const {
@@ -55,15 +78,7 @@ const CategoryList = ({
   // 3. Derived State (Memoization)
 
   // Create a map for O(1) access to counts
-  const conteosMap = useMemo(() => {
-    if (!conteosData) return {};
-    return conteosData.reduce((acc: Record<string, number>, item: any) => {
-      acc[item.categoria] = item.count;
-      return acc;
-    }, {});
-  }, [conteosData]);
-
-  // Filter categories based on search and settings
+  const conteosMap = workerCounts;
   const filteredSections = useMemo(() => {
     const searchLower = busqueda.toLowerCase();
 

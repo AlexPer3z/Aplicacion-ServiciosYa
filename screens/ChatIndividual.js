@@ -8,10 +8,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  AppState,
   ActivityIndicator,
   Modal,
   SafeAreaView,
-  ScrollView
+  ScrollView,
+  Linking,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../lib/supabase";
@@ -26,10 +28,63 @@ function ChatIndividual({ route }) {
   const [usuarioId, setUsuarioId] = useState(null);
   const [loadingMsg, setLoadingMsg] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalInfoVisible, setModalInfoVisible] = useState(false);
   const [estrellas, setEstrellas] = useState(0);
+  const [pagando, setPagando] = React.useState(false);
+  const [servicioData, setServicioData] = useState(servicio || {});
+  const pendingWspUnlock = useRef(false); // flag: usuario fue a pagar y vuelve
   const flatListRef = useRef(null);
   const messageChannelRef = useRef(null);
+
+  // Detectar retorno desde MercadoPago con pago aprobado
+  useEffect(() => {
+    // Escuchar deep links cuando la app vuelve al frente
+    const linkSub = Linking.addEventListener('url', ({ url }) => {
+      if (url && url.includes('status=approved') && pendingWspUnlock.current) {
+        pendingWspUnlock.current = false;
+        desbloquearWhatsApp();
+      }
+    });
+    // Escuchar cuando la app vuelve al frente (usuario volvió del browser)
+    const appStateSub = AppState.addEventListener('change', (state) => {
+      if (state === 'active' && pendingWspUnlock.current) {
+        // Revisar si hay un URL pendiente con pago aprobado
+        Linking.getInitialURL().then(url => {
+          if (url && url.includes('status=approved')) {
+            pendingWspUnlock.current = false;
+            desbloquearWhatsApp();
+          }
+        });
+      }
+    });
+    return () => {
+      linkSub.remove();
+      appStateSub.remove();
+    };
+  }, []);
+
+  // Si el servicio llegó vacío, buscarlo desde la BD usando el usuario partner
+  useEffect(() => {
+    if (servicio && servicio.titulo) return; // ya tiene datos
+    const partnerId = usuarioId1 && usuarioId2
+      ? (usuarioId1 !== usuarioId2 ? null : null) // se resuelve abajo
+      : null;
+    // Buscar el primer servicio del otro usuario del chat
+    const fetchServicio = async () => {
+      // Determinar quién es el partner (no el usuario actual)
+      const { data: { user } } = await supabase.auth.getUser();
+      const myId = user?.id;
+      const workerId = usuarioId1 === myId ? usuarioId2 : usuarioId1;
+      if (!workerId) return;
+      const { data } = await supabase
+        .from('servicios')
+        .select('id, titulo, descripcion, categoria, horario, precio')
+        .eq('usuario_id', workerId)
+        .limit(1)
+        .maybeSingle();
+      if (data) setServicioData(data);
+    };
+    fetchServicio();
+  }, []);
 
   // --- Cargar usuario y mensajes iniciales
   useEffect(() => {
@@ -189,17 +244,17 @@ function ChatIndividual({ route }) {
           sound: "default",
           title: "Nuevo mensaje",
           body: mensaje,
-          data: JSON.stringify({
+          data: {
             screen: "ChatIndividual",
             params: { 
-              "chatId": chatId,
-              "nombre": nombre,
-              "servicio": servicio,
-              "usuarioId1": usuarioId1,
-              "usuarioId2": usuarioId2,
-              "servicioId": servicioId,
+              chatId: chatId,
+              nombre: nombre,
+              servicio: servicio,
+              usuarioId1: usuarioId1,
+              usuarioId2: usuarioId2,
+              servicioId: servicioId,
             }
-          }),
+          },
         }),
       });
     } catch (e) {
@@ -257,6 +312,10 @@ function ChatIndividual({ route }) {
     }
 
     const esMio = item.remitente_id === usuarioId;
+    const esPresupuesto = typeof item.contenido === 'string' && item.contenido.startsWith('💰 Presupuesto:');
+    const montoMatch = esPresupuesto && item.contenido.match(/\$([\d.,]+)/);
+    const montoNumerico = montoMatch ? parseFloat(montoMatch[1].replace(/\./g, '').replace(',', '.')) : 0;
+
     return (
       <View
         style={[
@@ -265,6 +324,19 @@ function ChatIndividual({ route }) {
         ]}
       >
         <Text style={styles.textoMensaje}>{item.contenido}</Text>
+        {esPresupuesto && !esMio && (
+          <TouchableOpacity
+            style={styles.pagarBtn}
+            onPress={() => pagarPresupuesto(montoNumerico)}
+            disabled={pagando}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="card-outline" size={15} color="#fff" />
+            <Text style={styles.pagarBtnText}>
+              {pagando ? 'Procesando...' : `Pagar 15% para habilitar WhatsApp ($${Math.round(montoNumerico * 0.15).toLocaleString('es-AR')})`}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   };
@@ -286,6 +358,75 @@ function ChatIndividual({ route }) {
     );
   };
 
+  const desbloquearWhatsApp = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const myId = user?.id;
+      const workerId = usuarioId1 === myId ? usuarioId2 : usuarioId1;
+      const { data: workerData } = await supabase
+        .from('usuarios')
+        .select('celular, nombre')
+        .eq('id', workerId)
+        .single();
+      const celular = workerData?.celular;
+      if (celular) {
+        const receptorId = myId === usuarioId1 ? usuarioId2 : usuarioId1;
+        await supabase.from('mensajes').insert({
+          chat_id: chatId,
+          remitente_id: myId,
+          receptor_id: receptorId,
+          contenido: `✅ Pago aprobado. WhatsApp del profesional: 📱 ${celular}`,
+          leido_por_emisor: true,
+          leido_por_receptor: false,
+        });
+      } else {
+        Alert.alert('Pago recibido', 'Tu pago fue aprobado. El profesional se comunicará contigo pronto.');
+      }
+    } catch (e) {
+      Alert.alert('Pago aprobado', 'Tu pago fue aprobado. Contactá al profesional por el chat.');
+    }
+  }, [chatId, usuarioId1, usuarioId2]);
+
+  const pagarPresupuesto = async (montoTotal) => {
+    setPagando(true);
+    try {
+      const comision = Math.round(montoTotal * 0.15 * 100) / 100;
+      const res = await fetch('https://api.mercadopago.com/checkout/preferences', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer APP_USR-2906464672020891-031112-22f4fa494707febbc20d77650b33fa6e-183374120',
+        },
+        body: JSON.stringify({
+          items: [{
+            title: 'Habilitación WhatsApp - 15% del presupuesto',
+            quantity: 1,
+            unit_price: comision,
+            currency_id: 'ARS',
+          }],
+          back_urls: {
+            success: 'solucionesya://wsp-desbloqueado?status=approved',
+            failure: 'solucionesya://wsp-desbloqueado?status=failure',
+            pending: 'solucionesya://wsp-desbloqueado?status=pending',
+          },
+          auto_return: 'approved',
+          external_reference: chatId,
+        }),
+      });
+      const data = await res.json();
+      if (data?.init_point) {
+        pendingWspUnlock.current = true;
+        Linking.openURL(data.init_point);
+      } else {
+        Alert.alert('Error', 'No se pudo generar el pago. Intentá de nuevo.');
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Falló la conexión con MercadoPago.');
+    } finally {
+      setPagando(false);
+    }
+  };
+
   return (
     <>
       <BotonVolver />
@@ -295,10 +436,6 @@ function ChatIndividual({ route }) {
       >
         <View style={styles.header}>
           <Text style={styles.titulo}>{nombre}</Text>
-          <TouchableOpacity style={styles.botonInfo} onPress={() => setModalInfoVisible(true)}>
-            <Ionicons name="information-circle-outline" size={20} color="#fff" style={{marginRight: 5}} />
-            <Text style={styles.textoBotonInfo}>Info</Text>
-          </TouchableOpacity>
         </View>
 
         {loadingMsg ? (
@@ -312,6 +449,7 @@ function ChatIndividual({ route }) {
             data={mensajesConFechas()}
             keyExtractor={(item, index) => item.id?.toString() ?? `fecha-${index}`}
             renderItem={renderItem}
+            ListHeaderComponent={<ChatRules />}
             contentContainerStyle={{ paddingVertical: 10, paddingHorizontal: 10 }}
             //onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
             //onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
@@ -338,56 +476,63 @@ function ChatIndividual({ route }) {
           </View>
         </Modal>
 
-        <Modal animationType="fade" transparent visible={modalInfoVisible} onRequestClose={() => setModalInfoVisible(false)}>
-            <SafeAreaView style={styles.modalOverlay}>
-              <View style={styles.modalContainerM}>
-                <View style={styles.headerM}>
-                  <Text style={styles.title}>Información del Servicio</Text>
-                  <TouchableOpacity onPress={() => setModalInfoVisible(false)} style={styles.cerrarBtn}>
-                    <Text style={styles.cerrarTexto}>Cerrar</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <ScrollView contentContainerStyle={styles.contentContainer}>
-                  <View style={styles.infoRow}>
-                    <Text style={styles.label}>Título:</Text>
-                    <Text style={styles.value}>{servicio?.titulo || 'No disponible'}</Text>
-                  </View>
-                  <View style={styles.infoRow}>
-                    <Text style={styles.label}>Categoría:</Text>
-                    <Text style={styles.value}>{servicio?.categoria || 'No disponible'}</Text>
-                  </View>
-                  <View style={styles.infoRow}>
-                    <Text style={styles.label}>Horario:</Text>
-                    <Text style={styles.value}>{servicio?.horario || 'No disponible'}</Text>
-                  </View>
-                  <View style={styles.infoRow}>
-                    <Text style={styles.label}>Descripción:</Text>
-                    <Text style={[styles.value, styles.descriptionText]}>{servicio?.descripcion || 'No disponible'}</Text>
-                  </View>
-                </ScrollView>
-
-                 {/* Botón Calificar servicio */}
-                <TouchableOpacity
-                  style={styles.botonCalificar}
-                  onPress={() => {
-                    setModalInfoVisible(false);
-                    setModalVisible(true);
-                  }}
-                >
-                  <Ionicons name="star-outline" size={20} color="#fff" style={{ marginRight: 6 }} />
-                  <Text style={styles.textoBotonCalificar}>Calificar servicio</Text>
-                </TouchableOpacity>
-              </View>
-            </SafeAreaView>
-          </Modal>
-
       </KeyboardAvoidingView>
     </>
   );
 }
 
 export default withModalProvider(ChatIndividual);
+
+function ChatRules() {
+  const rules = [
+    { icon: "🔢", text: "Está prohibido compartir números de teléfono, WhatsApp o cualquier dato de contacto en el chat." },
+    { icon: "💰", text: "Para acordar un precio, usá el botón \"Enviar presupuesto\". El pago se gestiona dentro de la app." },
+    { icon: "🤝", text: "Tratá con respeto a todos los usuarios. El lenguaje ofensivo puede resultar en una suspensión." },
+    { icon: "🔒", text: "No compartas contraseñas, datos bancarios ni información personal sensible." },
+    { icon: "⚠️", text: "Los acuerdos fuera de la plataforma no tienen cobertura ni garantía de TOORI ServiciosYa." },
+  ];
+  return (
+    <View style={rulesStyles.container}>
+      <View style={rulesStyles.header}>
+        <Text style={rulesStyles.headerIcon}>🛡️</Text>
+        <Text style={rulesStyles.headerTitle}>Reglas del chat</Text>
+      </View>
+      {rules.map((r, i) => (
+        <View key={i} style={rulesStyles.row}>
+          <Text style={rulesStyles.ruleIcon}>{r.icon}</Text>
+          <Text style={rulesStyles.ruleText}>{r.text}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const rulesStyles = StyleSheet.create({
+  container: {
+    backgroundColor: "#f0fbfd",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#b2e4ee",
+    padding: 14,
+    marginBottom: 16,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 10,
+  },
+  headerIcon: { fontSize: 17 },
+  headerTitle: { fontSize: 14, fontWeight: "800", color: "#047a8f" },
+  row: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    marginBottom: 7,
+  },
+  ruleIcon: { fontSize: 14, marginTop: 1 },
+  ruleText: { flex: 1, fontSize: 12.5, color: "#445", lineHeight: 18 },
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -464,7 +609,23 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "500",
     letterSpacing: 0.1,
-  }, 
+  },
+  pagarBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 8,
+    backgroundColor: "#25D366",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  pagarBtnText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "700",
+    flexShrink: 1,
+  },
   // MODAL
   modalFondo: {
     flex: 1,
@@ -530,82 +691,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-  },
-  modalContainerM: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    width: '90%',
-    maxWidth: 600,
-    paddingBottom: 20,
-  },
-  headerM: {
-    flexDirection: 'row',
-    padding: 15,
-    backgroundColor: '#00B8A9',
-    alignItems: 'center',
-    borderRadius: 12,
-    justifyContent: 'space-between',
-  },
-  title: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
-  cerrarBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  cerrarTexto: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
- 
-  contentContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 10, 
-  },
-  infoRow: {
-    marginBottom: 10,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 4,
-  },
-  value: {
-    fontSize: 16,
-    color: '#333',
-  },
-  descriptionText: {
-    lineHeight: 22,
-  },
-  calificarBtn: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  calificarTexto: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  botonCalificar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFA13C',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-    alignSelf: 'center', 
-  },
-
-  textoBotonCalificar: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   fechaChipContainer: {
     alignSelf: 'center',

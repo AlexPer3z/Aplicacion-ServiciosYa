@@ -297,7 +297,7 @@ export default function RegistroTrabajadorSimplificado() {
       }).eq("id", user.id);
       if (error) { Alert.alert("Error", "No se pudo actualizar el perfil."); return; }
       setMostrarModal(false);
-      navigation.reset({ index: 0, routes: [{ name: "HomeCliente" as any }] });
+      navigation.reset({ index: 0, routes: [{ name: "Home" as any }] });
     } catch (e) {
       Alert.alert("Error", "Ocurrió un problema.");
     } finally {
@@ -429,7 +429,7 @@ export default function RegistroTrabajadorSimplificado() {
               {/* Términos */}
               <View style={styles.switchContainer}>
                 <Switch value={aceptaTerminos} onValueChange={setAceptaTerminos} trackColor={{ false: "#767577", true: "#E8C547" }} thumbColor={aceptaTerminos ? "#A4D4AE" : "#f4f3f4"} />
-                <TouchableOpacity onPress={() => Linking.openURL("https://inicio.serviciosya.info/Terminos-y-condiciones.html")}>
+                <TouchableOpacity onPress={() => Linking.openURL("https://inicio.tooriserviciosya.info/Terminos-y-condiciones.html")}>
                   <Text style={[styles.switchLabel, { textDecorationLine: "underline" }]}>Acepto los términos y condiciones</Text>
                 </TouchableOpacity>
               </View>

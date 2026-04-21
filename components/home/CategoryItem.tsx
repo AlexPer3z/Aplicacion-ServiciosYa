@@ -8,10 +8,11 @@ interface CategoryIconProps {
 
 export const CategoryIcon = ({ categoria }: CategoryIconProps) => {
   const icono = iconosCategoria[categoria];
-  return icono ? <View renderToHardwareTextureAndroid={false}>
-  <Image source={icono} style={styles.iconImage} />
-</View>
- : null;
+  return icono ? (
+    <View renderToHardwareTextureAndroid>
+      <Image source={icono} style={styles.iconImage} fadeDuration={0} />
+    </View>
+  ) : null;
 };
 
 interface CategoryItemProps {
@@ -36,7 +37,10 @@ export const CategoryItem = ({
       <CategoryIcon categoria={categoria} />
     </View>
     <Text style={styles.name}>{categoria}</Text>
-    {count > 0 && <Text style={styles.count}>{count} ofertas</Text>}
+    {count > 0
+      ? <Text style={styles.count}>{count} profesional{count !== 1 ? "es" : ""}</Text>
+      : <Text style={styles.countEmpty}>Aún no hay{"\n"}profesionales</Text>
+    }
   </TouchableOpacity>
 );
 
@@ -67,7 +71,8 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     marginBottom: 4,
   },
-  count: { fontSize: 12, color: "#FF6B35", fontWeight: "900", marginTop: 4, marginBottom:8  },
+  count: { fontSize: 12, color: "#FF6B35", fontWeight: "900", marginTop: 4, marginBottom: 8 },
+  countEmpty: { fontSize: 10, color: "#aaa", fontWeight: "500", marginTop: 4, marginBottom: 8, textAlign: "center" },
   iconContainer: {
   marginBottom: 8,
   width: 155,

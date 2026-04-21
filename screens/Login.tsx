@@ -358,65 +358,55 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#E6F4F1',
+    backgroundColor: '#d6f0f5',
   },
-
   container: {
     width: '88%',
     paddingVertical: 36,
     paddingHorizontal: 22,
     borderRadius: 40,
-
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
-
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 20 },
+    borderColor: 'rgba(6, 158, 179, 0.2)',
+    shadowColor: '#069eb3',
+    shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.18,
-    shadowRadius: 30,
+    shadowRadius: 24,
     elevation: 15,
-
     alignItems: 'center',
-    backdropFilter: 'blur(12px)',
   },
   orange: {
-    color: '#F5A623', // 🔥 naranja exacto de la imagen
+    color: '#069eb3',
   },
-googleIcon: {
-  width: 22,
-  height: 22,
-  marginRight: 12,
-  resizeMode: 'contain',
-},
-
+  googleIcon: {
+    width: 22,
+    height: 22,
+    marginRight: 12,
+    resizeMode: 'contain',
+  },
   logoLightWrapper: {
     marginBottom: 16,
     alignItems: 'center',
     justifyContent: 'center',
-
-    shadowColor: '#FFE27A',
+    shadowColor: '#069eb3',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.9,
-    shadowRadius: 30,
-    elevation: 25,
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 20,
   },
-fingerprintIcon: {
-  marginRight: 12,
-  color: '#8E44AD', // 🟣 morado biométrico (como la imagen)
-},
-
+  fingerprintIcon: {
+    marginRight: 12,
+    color: '#047a8f',
+  },
   logo: {
     width: 88,
     height: 88,
     resizeMode: 'contain',
   },
-
-
   title: {
     fontSize: 28,
     fontWeight: "900",
-    color: "#2D2A6E",
+    color: "#047a8f",
     marginBottom: 28,
     textAlign: "center",
     letterSpacing: 1,
@@ -426,24 +416,24 @@ fingerprintIcon: {
     marginBottom: 20,
   },
   input: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#a8dfe8',
     paddingVertical: 10,
     marginBottom: 20,
     fontSize: 16,
     color: "#333",
   },
   helpTextContainer: {
-    backgroundColor: "#E3F2FD",
+    backgroundColor: "#e8f7fa",
     padding: 8,
-    borderRadius: 6,
+    borderRadius: 8,
     marginTop: -15,
     marginBottom: 15,
     borderLeftWidth: 3,
-    borderLeftColor: "#2196F3",
+    borderLeftColor: "#069eb3",
   },
   helpText: {
-    color: "#1976D2",
+    color: "#047a8f",
     fontSize: 12,
     fontStyle: "italic",
     textAlign: "left",
@@ -454,8 +444,8 @@ fingerprintIcon: {
     marginBottom: 20,
   },
   passwordInput: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#a8dfe8',
     paddingVertical: 10,
     fontSize: 16,
     color: "#333",
@@ -471,13 +461,17 @@ fingerprintIcon: {
     alignItems: "center",
   },
   loginButton: {
-    backgroundColor: "#FF7043",
+    backgroundColor: "#069eb3",
     paddingVertical: 15,
     borderRadius: 30,
     marginBottom: 20,
     alignItems: "center",
     width: "100%",
     elevation: 5,
+    shadowColor: '#069eb3',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   loginButtonDisabled: {
     backgroundColor: "#ccc",

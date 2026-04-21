@@ -15,6 +15,7 @@ import { useUserSettings } from "../lib/hooks/useUserSettings";
 import BotonVolver from "../components/BotonVolver";
 import { FontAwesome } from "@expo/vector-icons";
 import { withModalProvider } from "../components/sheet/withModalProvider";
+import { LinearGradient } from "expo-linear-gradient";
 import { useBottomSheetModal } from "../lib/hooks/useBottomSheetModal";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { MainStackParamList } from "../types/navigation";
@@ -175,6 +176,7 @@ function Configuracion({ navigation }: Props) {
   return (
     <>
       <BotonVolver />
+      <LinearGradient colors={["#e8f8fb", "#f0f2f5"]} style={{ flex: 1 }}>
       <ScrollView style={styles.background}>
         <View style={styles.container}>
           <Text style={styles.title}>Configuración</Text>
@@ -319,6 +321,7 @@ function Configuracion({ navigation }: Props) {
           <InviteSheetView />
         </BottomSheetModal>
       </ScrollView>
+      </LinearGradient>
     </>
   );
 }
@@ -328,7 +331,7 @@ export default withModalProvider(Configuracion);
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    backgroundColor: "#E8FAF7", // turquesa clarito
+    backgroundColor: "transparent",
   },
   container: {
     margin: 18,
@@ -336,18 +339,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 26,
     padding: 24,
-    shadowColor: "#19D4C6",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 7,
+    shadowColor: "#069eb3",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 6,
   },
   title: {
     fontSize: 28,
     fontWeight: "900",
     textAlign: "center",
     marginBottom: 30,
-    color: "#19D4C6",
+    color: "#047a8f",
     letterSpacing: 1,
   },
   section: {
@@ -355,13 +358,13 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: 17,
-    fontWeight: "600",
+    fontWeight: "700",
     marginBottom: 12,
     color: "#202B3A",
     marginTop: 4,
   },
   input: {
-    backgroundColor: "#fff",
+    backgroundColor: "#f5feff",
     borderRadius: 18,
     paddingVertical: 13,
     paddingHorizontal: 16,
@@ -369,18 +372,18 @@ const styles = StyleSheet.create({
     color: "#222",
     marginBottom: 13,
     borderWidth: 1.3,
-    borderColor: "#b6e1ea",
+    borderColor: "#a8dfe8",
   },
   buttonTurquoise: {
-    backgroundColor: "#19D4C6",
+    backgroundColor: "#069eb3",
     paddingVertical: 14,
     borderRadius: 24,
     alignItems: "center",
     marginBottom: 10,
     elevation: 3,
-    shadowColor: "#19D4C6",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.13,
+    shadowColor: "#069eb3",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
     shadowRadius: 7,
   },
   buttonWhatsapp: {
@@ -390,24 +393,23 @@ const styles = StyleSheet.create({
     backgroundColor: "#25D366",
     paddingVertical: 14,
     borderRadius: 24,
-    alignItems: "center",
     marginBottom: 10,
     elevation: 3,
     shadowColor: "#25D366",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.13,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
     shadowRadius: 7,
   },
   buttonOrange: {
-    backgroundColor: "#FFA13C",
+    backgroundColor: "#047a8f",
     paddingVertical: 14,
     borderRadius: 24,
     alignItems: "center",
     marginBottom: 10,
     elevation: 3,
-    shadowColor: "#FFA13C",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.13,
+    shadowColor: "#047a8f",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
     shadowRadius: 7,
   },
   buttonText: {
@@ -420,13 +422,16 @@ const styles = StyleSheet.create({
   },
   requisito: {
     fontSize: 14,
-    marginVertical: 1,
+    marginVertical: 2,
   },
   valid: {
-    color: "#19D4C6",
+    color: "#069eb3",
     fontWeight: "700",
   },
   invalid: {
     color: "#A1A1A1",
+  },
+  icon: {
+    marginRight: 6,
   },
 });

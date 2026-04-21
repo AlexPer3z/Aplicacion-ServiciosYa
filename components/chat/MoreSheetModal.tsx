@@ -78,7 +78,7 @@ function MoreSheetModal() {
     console.log(isInstalled);
     await openWhatsApp(
       data.toString(),
-      `Hola, Soy ${nombre} tu cliente de Servicios Ya, antes de continuar me gustaría hacer una breve videollamada para confirmar tu identidad y coordinar el servicio. ¿Es posible? Saludos.`,
+      `Hola, Soy ${nombre} tu cliente de TOORI Servicios Ya, antes de continuar me gustaría hacer una breve videollamada para confirmar tu identidad y coordinar el servicio. ¿Es posible? Saludos.`,
     );
   };
 

@@ -1,6 +1,7 @@
-import React, { useCallback, useRef , memo } from "react";
+import React, { useCallback, useRef, useEffect, memo } from "react";
 import CustomTextInput from "../inputs/CustomTextInput";
-import { TouchableOpacity, View, StyleSheet, Pressable } from "react-native";
+import { TouchableOpacity, View, StyleSheet, Pressable, Text, Modal, TextInput, KeyboardAvoidingView, Platform, Animated } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
@@ -14,11 +15,34 @@ interface ChatInputBarProps {
 function ChatInputBar({ onSend }: ChatInputBarProps) {
   const [message, setMessage] = React.useState("");
   const [sending, setSending] = React.useState(false);
+  const [presupuestoVisible, setPresupuestoVisible] = React.useState(false);
+  const [monto, setMonto] = React.useState("");
+  const [enviandoPresupuesto, setEnviandoPresupuesto] = React.useState(false);
 
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const shimmerAnim = useRef(new Animated.Value(-1)).current;
+
+  useEffect(() => {
+    // Pulso suave de escala
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1.025, duration: 900, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 900, useNativeDriver: true }),
+      ])
+    ).start();
+    // Efecto shimmer de izquierda a derecha
+    Animated.loop(
+      Animated.timing(shimmerAnim, { toValue: 2, duration: 2000, delay: 600, useNativeDriver: true })
+    ).start();
+  }, []);
 
   const handleSend = async () => {
     if (!message.trim() || sending) return;
+    if (/\d/.test(message)) {
+      alert("No podés enviar números en el chat. Usá el botón \"Enviar presupuesto\" para eso.");
+      return;
+    }
 
     setSending(true);
 
@@ -37,6 +61,46 @@ function ChatInputBar({ onSend }: ChatInputBarProps) {
 
   return (
     <>
+      {/* Botón enviar presupuesto */}
+      <Animated.View style={[styles.presupuestoBtnWrapper, { transform: [{ scale: pulseAnim }] }]}>
+        <TouchableOpacity onPress={() => setPresupuestoVisible(true)} activeOpacity={0.82}>
+          <LinearGradient
+            colors={["#00c2d4", "#007fa8"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.presupuestoBtn}
+          >
+            <MaterialIcons name="attach-money" size={22} color="#fff" />
+            <Text style={styles.presupuestoBtnText}>Enviar presupuesto</Text>
+            <MaterialIcons name="chevron-right" size={20} color="rgba(255,255,255,0.7)" style={{ marginLeft: "auto" }} />
+            {/* Shimmer sweep */}
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                StyleSheet.absoluteFillObject,
+                {
+                  borderRadius: 16,
+                  overflow: "hidden",
+                  transform: [{
+                    translateX: shimmerAnim.interpolate({
+                      inputRange: [-1, 2],
+                      outputRange: [-220, 440],
+                    }),
+                  }],
+                },
+              ]}
+            >
+              <LinearGradient
+                colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.22)", "rgba(255,255,255,0)"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{ width: 80, height: "100%" }}
+              />
+            </Animated.View>
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animated.View>
+
       <View style={styles.inputBarContainer}>
         <CustomTextInput
           containerStyle={{
@@ -73,6 +137,51 @@ function ChatInputBar({ onSend }: ChatInputBarProps) {
       <BottomSheetModal ref={bottomSheetModalRef}>
         <MoreSheetModal />
       </BottomSheetModal>
+
+      {/* Modal presupuesto */}
+      <Modal visible={presupuestoVisible} transparent animationType="fade" onRequestClose={() => setPresupuestoVisible(false)}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Enviar presupuesto</Text>
+            <Text style={styles.modalSubtitle}>Ingresá el monto en pesos</Text>
+            <View style={styles.montoRow}>
+              <Text style={styles.montoPrefix}>$</Text>
+              <TextInput
+                style={styles.montoInput}
+                keyboardType="numeric"
+                placeholder="0"
+                placeholderTextColor="#aaa"
+                value={monto}
+                onChangeText={(t) => setMonto(t.replace(/[^0-9]/g, ""))}
+                autoFocus
+              />
+            </View>
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => { setPresupuestoVisible(false); setMonto(""); }}>
+                <Text style={styles.modalCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalSendBtn, (!monto || enviandoPresupuesto) && { opacity: 0.5 }]}
+                disabled={!monto || enviandoPresupuesto}
+                onPress={async () => {
+                  if (!monto) return;
+                  setEnviandoPresupuesto(true);
+                  try {
+                    await onSend(`💰 Presupuesto: $${Number(monto).toLocaleString("es-AR")}`);
+                    setPresupuestoVisible(false);
+                    setMonto("");
+                  } finally {
+                    setEnviandoPresupuesto(false);
+                  }
+                }}
+              >
+                <Ionicons name="send" size={16} color="#fff" />
+                <Text style={styles.modalSendText}>Enviar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </>
   );
 }
@@ -99,4 +208,37 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 5,
   },
+  presupuestoBtnWrapper: {
+    marginHorizontal: 12,
+    marginTop: 8,
+    marginBottom: 2,
+    borderRadius: 16,
+    overflow: "hidden",
+    elevation: 4,
+    shadowColor: "#007fa8",
+    shadowOpacity: 0.35,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 8,
+  },
+  presupuestoBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 13,
+    borderRadius: 16,
+  },
+  presupuestoBtnText: { fontSize: 15, fontWeight: "800", color: "#fff", letterSpacing: 0.2 },
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", alignItems: "center", padding: 24 },
+  modalBox: { backgroundColor: "#fff", borderRadius: 20, padding: 24, width: "100%", maxWidth: 360, shadowColor: "#000", shadowOpacity: 0.15, shadowOffset: { width: 0, height: 6 }, shadowRadius: 16, elevation: 8 },
+  modalTitle: { fontSize: 18, fontWeight: "800", color: "#222", marginBottom: 4 },
+  modalSubtitle: { fontSize: 13, color: "#888", marginBottom: 20 },
+  montoRow: { flexDirection: "row", alignItems: "center", borderWidth: 1.5, borderColor: "#a8dfe8", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 20, backgroundColor: "#f0f8fa" },
+  montoPrefix: { fontSize: 22, fontWeight: "700", color: "#047a8f", marginRight: 4 },
+  montoInput: { flex: 1, fontSize: 22, fontWeight: "700", color: "#222" },
+  modalActions: { flexDirection: "row", gap: 10 },
+  modalCancelBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1.5, borderColor: "#ddd", alignItems: "center" },
+  modalCancelText: { fontSize: 15, fontWeight: "600", color: "#888" },
+  modalSendBtn: { flex: 1, flexDirection: "row", gap: 6, paddingVertical: 12, borderRadius: 12, backgroundColor: "#069eb3", alignItems: "center", justifyContent: "center" },
+  modalSendText: { fontSize: 15, fontWeight: "700", color: "#fff" },
 });

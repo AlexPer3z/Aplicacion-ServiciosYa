@@ -63,19 +63,21 @@ async function fetchUserChats() {
     .in("id", user_ids)
     .throwOnError();
   // servicios
-  const { data: servicios } = await supabase
-    .from("servicios")
-    .select("id, titulo, descripcion, categoria, horario")
-    .in("id", servicios_ids)
-    .throwOnError();
+  const { data: servicios } = servicios_ids.length > 0
+    ? await supabase
+        .from("servicios")
+        .select("id, titulo, descripcion, categoria, horario")
+        .in("id", servicios_ids)
+        .throwOnError()
+    : { data: [] };
 
   const chats: ChatItem[] = [];
   for (const chat of data) {
     const partnerID = getPartner(chat.usuario_1, chat.usuario_2, userId) ?? "";
     const servicio_id = chat.servicio_id ? Number(chat.servicio_id) : 0;
     const user = usuarios.find((n) => n.id === partnerID);
-    const servicio = servicios.find((s) => s.id === servicio_id);
-    if (!user || !servicio) continue;
+    const servicio = servicios.find((s) => s.id === servicio_id) ?? {};
+    if (!user) continue;
 
     // obtener cantidad de mensajes no leidos
     const fechaBorrado =
@@ -97,7 +99,9 @@ async function fetchUserChats() {
       mensajesFiltrados?.[mensajesFiltrados.length - 1]?.contenido ||
       "Entra para comenzar a chatear";
 
-    const title = `${user?.nombre ?? "Usuario"} - ${servicio?.titulo ?? "Servicio"}`;
+    const title = servicio && 'titulo' in servicio && servicio.titulo
+      ? `${user?.nombre ?? "Usuario"} - ${servicio.titulo}`
+      : (user?.nombre ?? "Usuario");
     const avatar = user?.foto_perfil ?? "https://picsum.photos/id/9/200/300";
 
     chats.push({

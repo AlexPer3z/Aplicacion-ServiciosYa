@@ -126,7 +126,7 @@ export default function PagoInicial() {
             })
             .eq("id", user.id);
 
-          Alert.alert("Registro exitoso", "¡Bienvenido a ServiciosYa!");
+          Alert.alert("Registro exitoso", "¡Bienvenido a TOORI Servicios Ya!");
           navigation.navigate("Home");
         } catch (err) {
           console.error("Error en pago-exitoso:", err);

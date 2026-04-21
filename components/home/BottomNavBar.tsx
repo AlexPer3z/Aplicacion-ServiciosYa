@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useState, useEffect } from "react";
 import {
   View,
   TouchableOpacity,
@@ -8,14 +8,16 @@ import {
   Text,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useMainNavigation } from "../../lib/hooks/useNavigation";
 import type { MainStackParamList } from "../../types/navigation";
-import { useLinkProps, type LinkProps } from "@react-navigation/native";
-import { useIsGuest } from "../../store/authStore";
+import { useLinkProps, type LinkProps, useIsFocused } from "@react-navigation/native";
+import { useIsGuest, getUserID } from "../../store/authStore";
+import { supabase } from "../../lib/supabase";
 
 interface NavButtonProps {
-  name: string;
+  name: React.ComponentProps<typeof Ionicons>["name"];
 }
 
 function NavButton({
@@ -28,7 +30,7 @@ function NavButton({
       {...props}
       style={({ pressed }) => [
         {
-          backgroundColor: pressed ? "#ffd8b0" : "transparent",
+          backgroundColor: pressed ? "rgba(255,255,255,0.2)" : "transparent",
           borderRadius: 20,
           padding: 8,
           marginHorizontal: 2,
@@ -36,7 +38,7 @@ function NavButton({
         },
       ]}
     >
-      <Ionicons name={name} size={28} color="#fff" />
+      <Ionicons name={name} size={30} color="#fff" />
     </Pressable>
   );
 }
@@ -52,7 +54,7 @@ function BadgeNavButton({
       {...props}
       style={({ pressed }) => [
         {
-          backgroundColor: pressed ? "#ffd8b0" : "transparent",
+          backgroundColor: pressed ? "rgba(255,255,255,0.2)" : "transparent",
           borderRadius: 20,
           padding: 8,
           marginHorizontal: 2,
@@ -60,7 +62,7 @@ function BadgeNavButton({
         },
       ]}
     >
-      <Ionicons name={name} size={28} color="#fff" />
+      <Ionicons name={name} size={30} color="#fff" />
       {badgeCount > 0 && (
         <View style={styles.badge}>
           <Text style={styles.badgeText}>
@@ -76,10 +78,50 @@ interface BottomNavBarProps {
   unreadMessagesCount?: number;
 }
 
-const BottomNavBar = ({ unreadMessagesCount = 0 }: BottomNavBarProps) => {
+const BottomNavBar = ({ unreadMessagesCount: unreadProp }: BottomNavBarProps) => {
   const isGuest = useIsGuest();
   const navigation = useMainNavigation();
   const insets = useSafeAreaInsets();
+  const [internalUnread, setInternalUnread] = useState(0);
+
+  useEffect(() => {
+    const userId = getUserID();
+    if (!userId) return;
+
+    const fetchUnread = async () => {
+      const { data } = await supabase
+        .from("mensajes")
+        .select("id", { count: "exact", head: true })
+        .eq("receptor_id", userId)
+        .eq("leido_por_receptor", false);
+      setInternalUnread((data as any)?.length ?? 0);
+    };
+
+    // Initial fetch
+    supabase
+      .from("mensajes")
+      .select("id")
+      .eq("receptor_id", userId)
+      .eq("leido_por_receptor", false)
+      .then(({ data }) => setInternalUnread(data?.length ?? 0));
+
+    // Realtime subscription
+    const channel = supabase
+      .channel(`unread-badge-${userId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "mensajes" }, () => {
+        supabase
+          .from("mensajes")
+          .select("id")
+          .eq("receptor_id", userId)
+          .eq("leido_por_receptor", false)
+          .then(({ data }) => setInternalUnread(data?.length ?? 0));
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  const unreadMessagesCount = unreadProp ?? internalUnread;
 
   const handlePressOfferService = async () => {
     navigation.navigate("OfrecerServicio");
@@ -103,7 +145,12 @@ const BottomNavBar = ({ unreadMessagesCount = 0 }: BottomNavBarProps) => {
 
 
   return (
-    <View style={[styles.navContainer, { marginBottom: insets.bottom }]}>
+    <LinearGradient
+      colors={["#069eb3", "#047a8f"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={[styles.navContainer, { paddingBottom: insets.bottom }]}
+    >
       <NavButton name="home-outline" screen="Home" />
       <NavButton name="list-outline" screen="MisServicios" />
 
@@ -122,7 +169,7 @@ const BottomNavBar = ({ unreadMessagesCount = 0 }: BottomNavBarProps) => {
       />
 
       <NavButton name="settings-outline" screen="Configuracion" />
-    </View>
+    </LinearGradient>
   );
 };
 
@@ -137,9 +184,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    backgroundColor: "#fe971a",
-    borderTopWidth: 1,
-    borderTopColor: "#f26700",
+    backgroundColor: "transparent",
+    borderTopWidth: 0,
+    borderTopColor: "transparent",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 8,
   },
   navButton: {
     position: "relative",
@@ -151,21 +203,27 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     top: -25,
     elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   disabledButton: {
     backgroundColor: "#ccc",
   },
   badge: {
     position: "absolute",
-    top: -5,
-    right: -3,
-    backgroundColor: "#f00",
+    top: 0,
+    right: 0,
+    backgroundColor: "#ff5b5b",
     borderRadius: 10,
     minWidth: 18,
     height: 18,
     paddingHorizontal: 4,
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#fff",
   },
   badgeText: {
     color: "#fff",

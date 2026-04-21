@@ -7,6 +7,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import { supabase } from '../lib/supabase';
+import { LinearGradient } from 'expo-linear-gradient';
 import BotonVolver from '../components/BotonVolver';
 import { useQuery } from '@tanstack/react-query';
 import { perfilQueryOptions } from '../lib/queryOptions';
@@ -364,21 +365,22 @@ export default function Perfil() {
   // ─────────────────────────────────────────────
   if (isLoading) {
     return (
-      <View style={styles.loader}>
+      <LinearGradient colors={['#069eb3', '#047a8f']} style={styles.loader}>
         <ActivityIndicator size="large" color="#fff" />
-      </View>
+      </LinearGradient>
     );
   }
 
   if (!userData) {
     return (
-      <View style={styles.loader}>
+      <LinearGradient colors={['#069eb3', '#047a8f']} style={styles.loader}>
         <Text style={{ color: '#fff' }}>No se encontraron datos de usuario</Text>
-      </View>
+      </LinearGradient>
     );
   }
 
   return (
+    <LinearGradient colors={['#069eb3', '#047a8f']} style={{ flex: 1 }}>
     <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <BotonVolver />
 
@@ -631,6 +633,7 @@ export default function Perfil() {
 
       </View>
     </ScrollView>
+    </LinearGradient>
   );
 }
 
@@ -638,95 +641,102 @@ export default function Perfil() {
 // ─────────────────────────────────────────────
 // Styles
 // ─────────────────────────────────────────────
-const PURPLE = '#4b4e6d';
-const ORANGE = '#FFA13C';
-const LIGHT_BG = '#f5f5f8';
+const BLUE = '#069eb3';
+const BLUE_DARK = '#047a8f';
+const LIGHT_BG = '#f0f8fa';
 
 const styles = StyleSheet.create({
   loader: {
-    flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: PURPLE,
+    flex: 1, justifyContent: 'center', alignItems: 'center',
   },
   container: {
-    flexGrow: 1, backgroundColor: PURPLE, padding: 24, paddingTop: 100, minHeight: '100%',
+    flexGrow: 1, padding: 24, paddingTop: 100, minHeight: '100%',
   },
   hero: {
-    backgroundColor: '#19191a', padding: 20, borderRadius: 16, marginBottom: 20,
+    backgroundColor: 'rgba(0,0,0,0.2)', padding: 20, borderRadius: 20, marginBottom: 20,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
   },
-  heroTitle: { color: '#fff', fontSize: 20, fontWeight: '700' },
-  heroSubtitle: { color: '#ccc', marginTop: 4 },
+  heroTitle: { color: '#fff', fontSize: 22, fontWeight: '800' },
+  heroSubtitle: { color: 'rgba(255,255,255,0.8)', marginTop: 4, fontSize: 14 },
   card: {
-    backgroundColor: '#fff', borderRadius: 16, padding: 20, elevation: 4,
+    backgroundColor: '#fff', borderRadius: 20, padding: 20, elevation: 6,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15, shadowRadius: 10,
   },
   avatarRow: { alignItems: 'center', marginBottom: 16 },
   avatar: {
     width: 120, height: 120, borderRadius: 60,
-    borderWidth: 3, borderColor: PURPLE, backgroundColor: '#eee',
+    borderWidth: 3, borderColor: BLUE, backgroundColor: '#eee',
   },
   photoBtn: {
-    marginTop: 10, backgroundColor: ORANGE,
+    marginTop: 10, backgroundColor: BLUE,
     paddingVertical: 8, paddingHorizontal: 20, borderRadius: 20,
   },
   photoBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   actionRow: { marginBottom: 16 },
   editBtn: {
-    backgroundColor: PURPLE, paddingVertical: 12,
-    borderRadius: 12, alignItems: 'center',
+    backgroundColor: BLUE, paddingVertical: 12,
+    borderRadius: 14, alignItems: 'center',
+    shadowColor: BLUE, shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25, shadowRadius: 6, elevation: 3,
   },
   editBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   editActions: { gap: 8 },
   saveBtn: {
-    backgroundColor: '#2e7d32', paddingVertical: 13,
-    borderRadius: 12, alignItems: 'center',
+    backgroundColor: BLUE_DARK, paddingVertical: 13,
+    borderRadius: 14, alignItems: 'center',
+    shadowColor: BLUE_DARK, shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25, shadowRadius: 6, elevation: 3,
   },
   saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   cancelBtn: {
-    borderWidth: 1, borderColor: '#ccc',
-    paddingVertical: 11, borderRadius: 12, alignItems: 'center',
+    borderWidth: 1.5, borderColor: '#c0d8e0',
+    paddingVertical: 11, borderRadius: 14, alignItems: 'center',
   },
   cancelBtnText: { color: '#666', fontWeight: '600', fontSize: 14 },
-  section: { marginTop: 24, borderTopWidth: 1, borderTopColor: '#eee', paddingTop: 16 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: PURPLE, marginBottom: 12 },
+  section: { marginTop: 24, borderTopWidth: 1, borderTopColor: '#e8f0f2', paddingTop: 16 },
+  sectionTitle: { fontSize: 15, fontWeight: '800', color: BLUE_DARK, marginBottom: 12, letterSpacing: 0.3 },
   item: { marginBottom: 10 },
   itemLabel: {
-    fontSize: 11, color: '#999', fontWeight: '600', marginBottom: 2,
+    fontSize: 11, color: '#89b5bf', fontWeight: '700', marginBottom: 2,
     textTransform: 'uppercase', letterSpacing: 0.5,
   },
   itemValue: { fontSize: 16, fontWeight: '600', color: '#333' },
   editInput: {
-    borderWidth: 1, borderColor: '#d0d0e0', borderRadius: 10,
+    borderWidth: 1.5, borderColor: '#a8dfe8', borderRadius: 12,
     paddingHorizontal: 12, paddingVertical: 10,
     fontSize: 15, color: '#333', backgroundColor: LIGHT_BG,
     marginBottom: 2,
   },
   tagsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8, marginBottom: 4 },
   tag: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: PURPLE,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: BLUE,
     borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, gap: 6,
   },
-  tagText: { color: '#fff', fontSize: 12 },
+  tagText: { color: '#fff', fontSize: 12, fontWeight: '600' },
   tagClose: { color: '#fff', fontSize: 13, fontWeight: 'bold' },
   hint: { fontSize: 11, color: '#aaa', marginTop: 4 },
   dropdown: {
-    backgroundColor: '#fff', borderWidth: 1, borderColor: PURPLE,
-    borderRadius: 10, maxHeight: 200, zIndex: 99,
+    backgroundColor: '#fff', borderWidth: 1.5, borderColor: BLUE,
+    borderRadius: 12, maxHeight: 200, zIndex: 99,
   },
-  dropdownItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
+  dropdownItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: '#e8f0f2' },
   dropdownText: { fontSize: 14, color: '#333' },
   fileBtns: { flexDirection: 'row', gap: 8, marginBottom: 8 },
   fileAddBtn: {
-    flex: 1, backgroundColor: PURPLE,
-    paddingVertical: 10, borderRadius: 10, alignItems: 'center',
+    flex: 1, backgroundColor: BLUE,
+    paddingVertical: 10, borderRadius: 12, alignItems: 'center',
   },
-  fileAddBtnText: { color: '#fff', fontSize: 13 },
+  fileAddBtnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
   chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   fileChip: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#e8eaf5', borderRadius: 10,
+    backgroundColor: '#d6f0f5', borderRadius: 10,
     paddingHorizontal: 10, paddingVertical: 7,
     gap: 6, maxWidth: '48%',
   },
   fileChipReadOnly: {
-    backgroundColor: '#eee', borderRadius: 10,
+    backgroundColor: '#e8f5f8', borderRadius: 10,
     paddingHorizontal: 10, paddingVertical: 7, maxWidth: '48%',
   },
   fileChipText: { fontSize: 12, color: '#333', flex: 1 },

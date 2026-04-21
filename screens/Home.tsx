@@ -35,6 +35,7 @@ import { getUserID, useIsGuest } from "../store/authStore";
 import { HomeEventRenderer } from "../components/home/HomeEventRenderer";
 import { useHomeEventsStore } from "../store/homeEventsStore";
 import usePrefetchData from "../lib/hooks/usePrefetchData";
+import WorkerHomeView from "../components/home/WorkerHomeView";
 
 type Props = NativeStackScreenProps<MainStackParamList, "Home">;
 
@@ -53,7 +54,9 @@ function Home({ navigation }: Props) {
   const {
     askDniVerification,
     askProfileCompletion,
+    rol,
   } = useHomeData();
+  const isWorker = rol === "worker";
   const isFocused = useIsFocused();
   const { setHomeVisible, setHomeDataReady } = useHomeEventsStore();
 
@@ -79,21 +82,16 @@ function Home({ navigation }: Props) {
       return;
     }
 
+    // Registrar evento
     fetch("https://insightpulse.store/api/registrar_evento.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         tipo_evento: "categoria_visitada",
-        datos: {
-          usuario_id: getUserID(),
-          categoria: categoria
-        }
+        datos: { usuario_id: getUserID(), categoria }
       })
-    }).catch(error => {
-      console.error("Error al registrar evento:", error);
-    });
+    }).catch(() => {});
 
-    // Navegar después de registrar
     navigation.navigate("ServiciosPorCategoria", { categoria });
   };
 
@@ -145,16 +143,22 @@ function Home({ navigation }: Props) {
 
           {authUser && askDniVerification && <DniPendingWarning />}
 
-          <CategoryList
-            busqueda={busqueda}
-            onCategoryPress={handleCategoryPress}
-            isUserRestricted={isUserRestricted}
-          />
+          {isWorker ? (
+            <WorkerHomeView navigation={navigation} onCategoryPress={handleCategoryPress} />
+          ) : (
+            <CategoryList
+              busqueda={busqueda}
+              onCategoryPress={handleCategoryPress}
+              isUserRestricted={isUserRestricted}
+            />
+          )}
 
-          <FloatingActionButtonMenu
-            onHelpPress={() => setVideoVisible(true)}
-            onChatPress={() => setChatVisible(true)}
-          />
+          {!isWorker && (
+            <FloatingActionButtonMenu
+              onHelpPress={() => setVideoVisible(true)}
+              onChatPress={() => setChatVisible(true)}
+            />
+          )}
           <ChatBotModal
             visible={chatVisible}
             onClose={() => setChatVisible(false)}
@@ -171,7 +175,6 @@ export default withDropDownProvider(
 );
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#069eb3" },
-  background: { flex: 1, backgroundColor: "#0882b3ff" },
-  container: { flex: 1, backgroundColor: "rgba(255, 255, 255, 0)" },
+  safeArea: { flex: 1, backgroundColor: "#f0f2f5" },
+  container: { flex: 1, backgroundColor: "#f0f2f5" },
 });

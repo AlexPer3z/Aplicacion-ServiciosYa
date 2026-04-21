@@ -5,6 +5,7 @@ import React, { useEffect } from "react";
 import {
   NavigationContainer,
 } from "@react-navigation/native";
+import { StatusBar } from "expo-status-bar";
 import * as Linking from "expo-linking";
 import { supabase } from "./lib/supabase";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -71,6 +72,7 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
+        <StatusBar style="light" backgroundColor="#069eb3" translucent={false} />
         <QueryClientProvider client={queryClient}>
           <AppProvider>
           <NavigationContainer

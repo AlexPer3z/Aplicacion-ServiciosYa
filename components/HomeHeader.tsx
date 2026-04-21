@@ -20,6 +20,7 @@ import { useIsGuest } from "../store/authStore";
 import { useNotificationStore } from "../store/notificationStore";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { perfilQueryOptions } from "../lib/queryOptions";
+import { LinearGradient } from "expo-linear-gradient";
 
 interface HomeHeaderProps {
   onSearch: (query: string) => void;
@@ -55,12 +56,19 @@ function HomeHeader({ onSearch, onShowCountsOnlyChange }: HomeHeaderProps) {
   }, [busqueda, onSearch]);
 
   return (
-    <View style={styles.header}>
+    <LinearGradient
+      colors={["#069eb3", "#047a8f"]}
+      style={styles.header}
+    >
       <View style={styles.container}>
         <View style={styles.headerTop}>
-          <View style={styles.saludoContainer}>
-            <Text style={styles.saludo}>¡Servicios <Text style={styles.saludo2}>Ya!</Text></Text>
-            <Text style={styles.subtitulo}>¿Qué necesitás hoy?</Text>
+          <View style={styles.logoAndTextContainer}>
+            <Image source={require("../assets/logo.png")} style={styles.headerLogo} />
+            <View style={styles.saludoContainer}>
+              <Text style={styles.tooriLogo}>TOORI</Text>
+              <Text style={styles.serviciosYa}>Servicios Ya</Text>
+              <Text style={styles.subtitulo}>¿Qué necesitás hoy?</Text>
+            </View>
           </View>
 
           <View style={styles.iconsContainer}>
@@ -119,7 +127,7 @@ function HomeHeader({ onSearch, onShowCountsOnlyChange }: HomeHeaderProps) {
           <GuestContent onShowCountsOnlyChange={onShowCountsOnlyChange} />
         )}
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -133,10 +141,11 @@ const GuestContent = React.memo(
 
     return (
       <>
-        <View style={styles.filtroContainer}>
+        {/* Botones "Servicios Online" y "Actualizar Disponibilidad" ocultos */}
+        {/* <View style={styles.filtroContainer}>
           <OnlineFilterCheckBox style={styles.filtroColumn} />
           <WorkerState style={styles.filtroColumn} />
-        </View>
+        </View> */}
         <ProgressChip label="Mis Logros" />
       </>
     );
@@ -189,11 +198,15 @@ const styles2 = StyleSheet.create({
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: "#069eb3",
-    paddingTop: 12,
-    paddingBottom: 10,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    paddingTop: 16,
+    paddingBottom: 14,
+    borderBottomLeftRadius: 25,
+    borderBottomRightRadius: 25,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 6,
   },
   container: {
     marginHorizontal: 15,
@@ -203,23 +216,36 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  logoAndTextContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    gap: 12,
+  },
+  headerLogo: {
+    width: 50,
+    height: 50,
+    resizeMode: "contain",
+  },
   saludoContainer: {
     flex: 1,
   },
-  saludo: {
-    color: "#2D2A6E",
-    fontSize: 30,
-    fontWeight: "900",
+  tooriLogo: {
+    color: "#fff",
+    fontSize: 26,
+    fontWeight: "bold",
+    letterSpacing: 0.5,
   },
-  saludo2: {
-    color: "#fe971a",
-    fontSize: 30,
-    fontWeight: "900",
+  serviciosYa: {
+    color: "#f0f0f0",
+    fontSize: 18,
+    fontWeight: "600",
   },
   subtitulo: {
-    color: "#fff",
-    fontSize: 16,
-    marginTop: 4,
+    color: "#d1faff",
+    fontSize: 14,
+    marginTop: 2,
+    fontWeight: "400",
   },
   iconsContainer: {
     flexDirection: "row",
@@ -229,9 +255,15 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 15,
-    paddingVertical: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   buscador: {
     flex: 1,
@@ -241,14 +273,15 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   searchIcon: {
-    marginLeft: 12,
+    marginLeft: 4,
+    color: "#555",
   },
   filtroContainer: {
     flexDirection: "row",
     gap: 8,
   },
   locationContainer: {
-    marginVertical: 6,
+    marginVertical: 10,
   },
   filtroColumn: {
     flex: 1,
@@ -259,10 +292,10 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   avatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 1.5,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
     borderColor: "#fff",
   },
   badgeText: {
@@ -272,19 +305,21 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: "absolute",
-    top: -4,
-    right: -4,
-    backgroundColor: "#f00",
+    top: 0,
+    right: 0,
+    backgroundColor: "#ff5b5b",
     borderRadius: 10,
-    minWidth: 16,
-    paddingHorizontal: 4,
-    height: 18,
+    minWidth: 20,
+    height: 20,
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#fff",
   },
   searchBarContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 12,
+    gap: 8,
   },
 });

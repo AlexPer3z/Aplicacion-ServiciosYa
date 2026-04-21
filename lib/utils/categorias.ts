@@ -1,7 +1,5 @@
 export const categoriasDisponibles = [
   // Originales
-  "Mi Primer Trabajo",
-  "general",
   "Servicio",
   "Electricista",
   "Plomero",
@@ -124,7 +122,6 @@ export const categoriasDisponibles = [
 
 export const iconosCategoria = {
   // EXISTENTES
-  "Mi Primer Trabajo": require("../../assets/icons/mi-primer-trabajo.jpg"),
   Mecanico: require("../../assets/icons/Mecanico.jpg"),
   "chef ": require("../../assets/icons/chef.jpg"),
   "Cursos": require("../../assets/icons/cursos.jpg"),
@@ -132,7 +129,6 @@ export const iconosCategoria = {
   "publicidad de Radios o medios": require("../../assets/icons/publicidad de radios.jpg"),
   Gomeria: require("../../assets/icons/Gomeria.jpg"),
   Electromecanico: require("../../assets/icons/Mecanico.jpg"),
-  general: require("../../assets/icons/General.jpg"),
   Electricista: require("../../assets/icons/electricista.jpg"),
   Plomero: require("../../assets/icons/Plomero.jpg"),
   Pintor: require("../../assets/icons/Pintor.jpg"),
@@ -243,7 +239,6 @@ export const iconosCategoria = {
 };
 
 export const categoriasPorSeccion = {
-  "Generales":["Mi Primer Trabajo","general"],
   Hogar: [
     "Electricista",
     "Gasista",

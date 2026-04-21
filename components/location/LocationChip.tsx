@@ -72,11 +72,14 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   chip: {
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
-    paddingVertical: 4,
-    paddingHorizontal: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     flexDirection: "row",
     alignItems: "center",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)",
   },
   pressed: {
     opacity: 0.6,

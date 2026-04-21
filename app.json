@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Servicios Ya",
+    "name": "TOORI Servicios Ya",
     "slug": "appTrabajo",
     "scheme": "solucionesya",
     "linking": {
@@ -16,7 +16,7 @@
       "android",
       "web"
     ],
-    "version": "67.0.0",
+    "version": "84.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -57,10 +57,15 @@
       "associatedDomains": ["applinks:inicio.serviciosya.info"]
     },
     "android": {
-      "versionCode": 67,
+      "versionCode": 84,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+      },
+      "statusBar": {
+        "backgroundColor": "#069eb3",
+        "barStyle": "light-content",
+        "translucent": false
       },
       "edgeToEdgeEnabled": true,
       "package": "com.alex_6775.appTrabajo",
@@ -79,6 +84,15 @@
               "scheme": "https",
               "host": "inicio.serviciosya.info",
               "pathPrefix": "/invite"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        },
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "solucionesya"
             }
           ],
           "category": ["BROWSABLE", "DEFAULT"]

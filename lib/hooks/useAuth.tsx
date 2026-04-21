@@ -13,6 +13,7 @@ import {
 import { lastUserId } from "../storage";
 import { clearSettingsToStorage, queryKey } from "./useUserSettings";
 import { sessionQueryOptions } from "../queryOptions";
+import { registrarTokenPush } from "../notificaciones";
 import { useAuthStore } from "../../store/authStore";
 
 // Prevenir que la pantalla de inicio se oculte automáticamente antes de que estemos listos
@@ -167,7 +168,7 @@ export function useAuth(queryClient: QueryClient) {
 }
 
 function onSignedIn(session: Session, client: QueryClient) {
-  // TODO
+  registrarTokenPush();
 }
 
 function onAppStateChange(status: AppStateStatus) {
