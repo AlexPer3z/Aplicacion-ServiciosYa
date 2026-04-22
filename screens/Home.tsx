@@ -7,7 +7,8 @@ import React, {
 } from "react";
 import {
   View,
-  StyleSheet} from "react-native";
+  StyleSheet,
+  Linking} from "react-native";
 import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -30,6 +31,7 @@ import ChatBotModal from "../components/ChatBotModal";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { MainStackParamList } from "../types/navigation";
 import FloatingActionButtonMenu from "../components/FloatingActionButtonMenu";
+import SideQuickAccessMenu from "../components/SideQuickAccessMenu";
 import { withDropDownProvider } from "../components/forms/withDropDownProvider";
 import { getUserID, useIsGuest } from "../store/authStore";
 import { HomeEventRenderer } from "../components/home/HomeEventRenderer";
@@ -159,6 +161,18 @@ function Home({ navigation }: Props) {
               onChatPress={() => setChatVisible(true)}
             />
           )}
+
+          <SideQuickAccessMenu
+            onToori360Press={() =>
+              Linking.openURL("https://tooriserviciosya.com/toori360.php")
+            }
+            onCrmPress={() =>
+              Linking.openURL("https://tooriserviciosya.com/crm.php")
+            }
+            onFacturadorPress={() =>
+              Linking.openURL("https://tooriserviciosya.com/facturacion.php")
+            }
+          />
           <ChatBotModal
             visible={chatVisible}
             onClose={() => setChatVisible(false)}

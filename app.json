@@ -16,7 +16,7 @@
       "android",
       "web"
     ],
-    "version": "84.0.0",
+    "version": "85.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -57,7 +57,7 @@
       "associatedDomains": ["applinks:inicio.serviciosya.info"]
     },
     "android": {
-      "versionCode": 84,
+      "versionCode": 85,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"

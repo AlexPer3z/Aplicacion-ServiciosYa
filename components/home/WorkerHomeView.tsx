@@ -60,11 +60,14 @@ export default function WorkerHomeView({ navigation, onCategoryPress }: { naviga
       </View>
 
       {/* Content */}
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} bounces={true}>
-        {activeTab === "calendario" && <CalendarioView />}
-        {activeTab === "ofertas" && <OfertasView />}
-        {activeTab === "contratar" && <ContratarView navigation={navigation} onCategoryPress={onCategoryPress} />}
-      </ScrollView>
+      {activeTab === "contratar" ? (
+        <ContratarView navigation={navigation} onCategoryPress={onCategoryPress} />
+      ) : (
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} bounces={true}>
+          {activeTab === "calendario" && <CalendarioView />}
+          {activeTab === "ofertas" && <OfertasView />}
+        </ScrollView>
+      )}
     </View>
   );
 }
