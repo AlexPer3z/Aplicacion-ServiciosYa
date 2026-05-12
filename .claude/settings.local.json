@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx --no react-native config)",
+      "Bash(adb devices *)",
+      "Bash(./gradlew clean *)",
+      "Bash(./gradlew --stop)",
+      "PowerShell(Get-Process java -ErrorAction SilentlyContinue)"
+    ]
+  }
+}

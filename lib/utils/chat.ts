@@ -25,104 +25,85 @@ function getPartner(
 
 async function fetchUserChats() {
   const userId = getUserID();
-  const { data } = await supabase
+
+  // Query 1: solo metadata de chats (sin mensajes embebidos, mucho más liviano)
+  const { data: chatsData } = await supabase
     .from("chats")
-    .select(`
-        id,
-        usuario_1,
-        usuario_2,
-        servicio_id,
-        borrado_por_usuario_1,
-        borrado_por_usuario_2,
-        mensajes (
-          id,
-          leido_por_receptor,
-          remitente_id,
-          contenido,
-          creado_en
-        )
-      `)
-    .or(`usuario_1.eq.${userId},usuario_2.eq.${userId}`)
-    .order("id", { ascending: false })
+    .select("id, participant_a, participant_b, updated_at")
+    .or(`participant_a.eq.${userId},participant_b.eq.${userId}`)
+    .order("updated_at", { ascending: false })
     .throwOnError();
 
-  // ids de los usuarios del chat
-  const user_ids = data
-    .map((chat) => getPartner(chat.usuario_1, chat.usuario_2, userId))
+  if (!chatsData || chatsData.length === 0) return [];
+
+  const chatIds = chatsData.map((c) => c.id);
+  const user_ids = chatsData
+    .map((chat) => getPartner(chat.participant_a, chat.participant_b, userId))
     .filter((id) => id !== null);
-  // ids de los servicios
-  const servicios_ids = (data || [])
-    .map((chat) => chat.servicio_id)
-    .filter((id) => id !== null)
-    .map((id) => Number(id));
 
-  // nombres de los usuarios del chat
-  const { data: usuarios } = await supabase
-    .from("usuarios")
-    .select("id, nombre, foto_perfil")
-    .in("id", user_ids)
-    .throwOnError();
-  // servicios
-  const { data: servicios } = servicios_ids.length > 0
-    ? await supabase
-        .from("servicios")
-        .select("id, titulo, descripcion, categoria, horario")
-        .in("id", servicios_ids)
-        .throwOnError()
-    : { data: [] };
+  // Queries 2 y 3 en paralelo (independientes entre sí)
+  const [usuariosRes, msgsRes] = await Promise.all([
+    supabase
+      .from("usuarios")
+      .select("id, nombre, foto_perfil")
+      .in("id", user_ids),
+    supabase
+      .from("mensajes")
+      .select("chat_id, contenido, created_at, leido, remitente_id")
+      .in("chat_id", chatIds)
+      .order("created_at", { ascending: false }),
+  ]);
+
+  const usuarios = usuariosRes.data ?? [];
+  const msgs = msgsRes.data ?? [];
+
+  // Agrupar mensajes por chat_id (vienen DESC, así que [0] es el último)
+  const msgsByChat = new Map<string, typeof msgs>();
+  for (const msg of msgs) {
+    const arr = msgsByChat.get(msg.chat_id) ?? [];
+    arr.push(msg);
+    msgsByChat.set(msg.chat_id, arr);
+  }
 
   const chats: ChatItem[] = [];
-  for (const chat of data) {
-    const partnerID = getPartner(chat.usuario_1, chat.usuario_2, userId) ?? "";
-    const servicio_id = chat.servicio_id ? Number(chat.servicio_id) : 0;
+  for (const chat of chatsData) {
+    const partnerID =
+      getPartner(chat.participant_a, chat.participant_b, userId) ?? "";
     const user = usuarios.find((n) => n.id === partnerID);
-    const servicio = servicios.find((s) => s.id === servicio_id) ?? {};
-    if (!user) continue;
+    if (!user) {
+      console.warn("[fetchUserChats] partner no encontrado en `usuarios`:", {
+        chatId: chat.id,
+        partnerID,
+      });
+    }
 
-    // obtener cantidad de mensajes no leidos
-    const fechaBorrado =
-      chat.usuario_1 === userId
-        ? chat.borrado_por_usuario_1
-        : chat.borrado_por_usuario_2;
-    const mensajesFiltrados = fechaBorrado
-      ? chat.mensajes.filter(
-          (m) => new Date(m.creado_en ?? "") > new Date(fechaBorrado),
-        )
-      : chat.mensajes;
-
-    const noLeidos = mensajesFiltrados.filter(
-      (msg) => !msg.leido_por_receptor && msg.remitente_id !== userId,
+    const chatMsgs = msgsByChat.get(chat.id) ?? [];
+    const lastMsg = chatMsgs[0]; // ya viene ordenado DESC
+    const noLeidos = chatMsgs.filter(
+      (m) => !m.leido && m.remitente_id !== userId,
     ).length;
-
-    // obtener el ultimo mensaje
-    const mensaje =
-      mensajesFiltrados?.[mensajesFiltrados.length - 1]?.contenido ||
-      "Entra para comenzar a chatear";
-
-    const title = servicio && 'titulo' in servicio && servicio.titulo
-      ? `${user?.nombre ?? "Usuario"} - ${servicio.titulo}`
-      : (user?.nombre ?? "Usuario");
-    const avatar = user?.foto_perfil ?? "https://picsum.photos/id/9/200/300";
 
     chats.push({
       id: chat.id,
-      avatar,
-      title,
+      avatar: user?.foto_perfil ?? "https://picsum.photos/id/9/200/300",
+      title: user?.nombre ?? "Usuario",
       noLeidos,
-      mensaje,
-      usuario_1: chat.usuario_1 ? chat.usuario_1 : "",
-      usuario_2: chat.usuario_2 ? chat.usuario_2 : "",
-      servicio,
+      mensaje: lastMsg?.contenido || "Entra para comenzar a chatear",
+      usuario_1: chat.participant_a ?? "",
+      usuario_2: chat.participant_b ?? "",
+      servicio: {},
     });
   }
 
   return chats;
 }
 
-export async function deleteChat(columna: string, id: string) {
+export async function deleteChat(_columna: string, id: string) {
+  // El schema nuevo no tiene soft-delete por usuario (borrado_por_usuario_1/2).
+  // Hacemos hard-delete del chat — la FK ON DELETE CASCADE en mensajes los limpia.
   await supabase
     .from("chats")
-    .update({ [columna]: new Date().toISOString() })
+    .delete()
     .eq("id", id)
     .throwOnError();
 }

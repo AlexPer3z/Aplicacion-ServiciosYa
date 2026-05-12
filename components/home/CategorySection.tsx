@@ -9,6 +9,7 @@ interface CategorySectionProps {
   conteos: Record<string, number>;
   onCategoryPress: (category: string) => void;
   disabled?: boolean;
+  iconUrls?: Record<string, string | null | undefined>;
 }
 
 export const CategorySection = ({
@@ -17,6 +18,7 @@ export const CategorySection = ({
   conteos,
   onCategoryPress,
   disabled,
+  iconUrls,
 }: CategorySectionProps) => {
   if (categories.length === 0) return null;
 
@@ -25,6 +27,7 @@ export const CategorySection = ({
       <FlatList
   horizontal
   data={categories}
+  extraData={categories}
   keyExtractor={(item) => item}
   renderItem={({ item }) => (
     <CategoryItem
@@ -32,6 +35,7 @@ export const CategorySection = ({
       count={conteos[item] || 0}
       onPress={() => onCategoryPress(item)}
       disabled={disabled}
+      iconoUrl={iconUrls?.[item]}
     />
   )}
   showsHorizontalScrollIndicator={false}

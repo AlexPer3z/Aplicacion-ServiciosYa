@@ -22,21 +22,19 @@ export default function Chat() {
       .from('chats')
       .select(`
         id,
-        usuario_1,
-        usuario_2,
-        servicio_id,
-        borrado_por_usuario_1,
-        borrado_por_usuario_2,
+        participant_a,
+        participant_b,
+        updated_at,
         mensajes (
           id,
-          leido_por_receptor,
+          leido,
           remitente_id,
           contenido,
-          creado_en
+          created_at
         )
       `)
-      .or(`usuario_1.eq.${userId},usuario_2.eq.${userId}`)
-      .order('id', { ascending: false });
+      .or(`participant_a.eq.${userId},participant_b.eq.${userId}`)
+      .order('updated_at', { ascending: false });
 
     if (error || !chatsData) {
       console.error('Error al cargar chats:', error?.message);
@@ -46,19 +44,19 @@ export default function Chat() {
 
     const chatsFormateados = await Promise.all(
       chatsData.map(async (chat) => {
-        const otroUsuarioId = chat.usuario_1 === userId ? chat.usuario_2 : chat.usuario_1;
-        const fechaBorrado = chat.usuario_1 === userId ? chat.borrado_por_usuario_1 : chat.borrado_por_usuario_2;
+        const otroUsuarioId = chat.participant_a === userId ? chat.participant_b : chat.participant_a;
 
-        // Filtrar mensajes anteriores a la fecha de borrado (si existe)
-        const mensajesFiltrados = fechaBorrado
-          ? chat.mensajes.filter(m => new Date(m.creado_en) > new Date(fechaBorrado))
-          : chat.mensajes;
+        const mensajesOrdenados = [...(chat.mensajes ?? [])].sort((a, b) => {
+          const ta = new Date(a.created_at ?? '').getTime();
+          const tb = new Date(b.created_at ?? '').getTime();
+          return ta - tb;
+        });
 
-        const mensajesNoLeidos = mensajesFiltrados.filter(
-          msg => !msg.leido_por_receptor && msg.remitente_id !== userId
+        const mensajesNoLeidos = mensajesOrdenados.filter(
+          msg => !msg.leido && msg.remitente_id !== userId
         ).length;
 
-        const ultimoMensaje = mensajesFiltrados?.[mensajesFiltrados.length - 1]?.contenido || 'Entra para comenzar a chatear';
+        const ultimoMensaje = mensajesOrdenados?.[mensajesOrdenados.length - 1]?.contenido || 'Entra para comenzar a chatear';
 
         const { data: usuario } = await supabase
           .from('usuarios')
@@ -66,26 +64,16 @@ export default function Chat() {
           .eq('id', otroUsuarioId)
           .single();
 
-        const { data: servicio } = await supabase
-          .from('servicios')
-          .select('id, titulo, descripcion, categoria, horario')
-          .eq('id', chat.servicio_id)
-          .single();
-
         return {
           id: chat.id,
-          nombre: servicio
-            ? `${usuario?.nombre || 'Desconocido'} - ${servicio.titulo}`
-            : usuario?.nombre || 'Desconocido',
+          nombre: usuario?.nombre || 'Desconocido',
           avatar: usuario?.foto_perfil || 'https://picsum.photos/id/9/200/300',
           mensaje: ultimoMensaje,
-          servicioId: chat.servicio_id,
-          servicio: servicio,
+          servicioId: null,
+          servicio: null,
           noLeidos: mensajesNoLeidos,
-          usuario_1: chat.usuario_1,
-          usuario_2: chat.usuario_2,
-          borrado_por_usuario_1: chat.borrado_por_usuario_1,
-          borrado_por_usuario_2: chat.borrado_por_usuario_2,
+          usuario_1: chat.participant_a,
+          usuario_2: chat.participant_b,
         };
       })
     );
@@ -94,19 +82,16 @@ export default function Chat() {
     setLoading(false);
   };
 
-  const eliminarChat = async (item) => { 
-    if (!userId) return; 
-    try { 
-      const columna = userId === item.usuario_1 
-        ? 'borrado_por_usuario_1' 
-        : 'borrado_por_usuario_2';
-    
+  const eliminarChat = async (item) => {
+    if (!userId) return;
+    try {
+      // Schema nuevo: hard-delete del chat (FK ON DELETE CASCADE limpia mensajes).
       await supabase
         .from('chats')
-        .update({ [columna]: new Date().toISOString() })
-        .eq('id', item.id); 
-    }catch(error){
-      console.log(error)
+        .delete()
+        .eq('id', item.id);
+    } catch (error) {
+      console.log(error);
     }
     obtenerChatsInicial(userId);
   };
@@ -133,35 +118,29 @@ export default function Chat() {
             if (isMounted) {
               const chat = payload.new;
               if (!chat) return;
-              if (chat.usuario_1 !== userId && chat.usuario_2 !== userId) return;
+              if (chat.participant_a !== userId && chat.participant_b !== userId) return;
 
               if (payload.eventType === 'INSERT') {
-                // Traer datos del usuario y servicio primero
-                const otroUsuarioId = chat.usuario_1 === userId ? chat.usuario_2 : chat.usuario_1;
+                // Traer datos del usuario
+                const otroUsuarioId = chat.participant_a === userId ? chat.participant_b : chat.participant_a;
                 const { data: usuario } = await supabase
                   .from('usuarios')
                   .select('nombre, foto_perfil')
                   .eq('id', otroUsuarioId)
-                  .single(); 
-
-                const { data: servicio } = await supabase
-                  .from('servicios')
-                  .select('id, titulo')
-                  .eq('id', chat.servicio_id)
-                  .single(); 
+                  .single();
 
                 // Luego actualizar estado de manera síncrona
                 setChats(prevChats => [
                   {
                     id: chat.id,
-                    nombre: servicio ? `${usuario?.nombre} - ${servicio.titulo}` : usuario?.nombre,
+                    nombre: usuario?.nombre || 'Desconocido',
                     avatar: usuario?.foto_perfil,
                     mensaje: 'Entra para comenzar a chatear',
-                    servicioId: chat.servicio_id,
-                    servicio,
+                    servicioId: null,
+                    servicio: null,
                     noLeidos: 0,
-                    usuario_1: chat.usuario_1,
-                    usuario_2: chat.usuario_2,
+                    usuario_1: chat.participant_a,
+                    usuario_2: chat.participant_b,
                   },
                   ...(prevChats || []), // prevChats podría ser undefined al inicio
                 ]);
@@ -190,7 +169,7 @@ export default function Chat() {
                     .from('mensajes')
                     .select('id')
                     .eq('chat_id', msg.chat_id)
-                    .eq('leido_por_receptor', false)
+                    .eq('leido', false)
                     .neq('remitente_id', userId);
 
                   const cantidadNoLeidos = errorMensajes ? 0 : mensajesNoLeidosData.length;

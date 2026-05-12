@@ -81,6 +81,20 @@ export const messagesQueryOptions = (userId: string) =>
     },
   });
 
+export const categoriasQueryKey = ["categorias"];
+
+export const categoriasQueryOptions = queryOptions({
+  queryKey: categoriasQueryKey,
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from("categorias")
+      .select("id, nombre, icono_url");
+    if (error) throw error;
+    return data ?? [];
+  },
+  staleTime: 10 * 60 * 1000,
+});
+
 export const servicesCountQuerKey = ["user", "services", "count"];
 
 export const serviciosCategoriaQueryOptions = (lat: number, lng: number) =>

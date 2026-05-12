@@ -146,7 +146,7 @@ function Home({ navigation }: Props) {
           {authUser && askDniVerification && <DniPendingWarning />}
 
           {isWorker ? (
-            <WorkerHomeView navigation={navigation} onCategoryPress={handleCategoryPress} />
+            <WorkerHomeView navigation={navigation} onCategoryPress={handleCategoryPress} busqueda={busqueda} />
           ) : (
             <CategoryList
               busqueda={busqueda}

@@ -40,6 +40,7 @@ const LocationChip = () => {
     <View style={styles.container}>
       <Pressable
         onPress={handleOnPress}
+        disabled
         style={({ pressed }) => [styles.chip, pressed && styles.pressed]}
         android_ripple={{ color: "rgba(255, 255, 255, 0.2)" }}
       >
@@ -52,12 +53,6 @@ const LocationChip = () => {
         <Text style={styles.label} numberOfLines={1} ellipsizeMode="tail">
           {locationText}
         </Text>
-        <Ionicons
-          name="chevron-down"
-          size={14}
-          color="white"
-          style={styles.selectIcon}
-        />
       </Pressable>
       <BottomSheetModal {...modalProps}>
         <SelectCitySheetView />

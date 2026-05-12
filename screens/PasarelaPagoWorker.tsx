@@ -83,12 +83,14 @@ if (response.ok && data?.url) {
 
     loadNotifications();
 
+    // chats.participant_a < participant_b (CHECK constraint)
+    const [participantA, participantB] = [trabajadorId, notificacion.emisor_id].slice().sort();
+
     const { data: chatExistente } = await supabase
       .from('chats')
-      .select('*')
-      .or(
-        `and(usuario_1.eq.${trabajadorId},usuario_2.eq.${notificacion.emisor_id}),and(usuario_1.eq.${notificacion.emisor_id},usuario_2.eq.${trabajadorId})`
-      )
+      .select('id')
+      .eq('participant_a', participantA)
+      .eq('participant_b', participantB)
       .maybeSingle();
 
     let chatId;
@@ -97,13 +99,8 @@ if (response.ok && data?.url) {
     } else {
       const { data: nuevoChat } = await supabase
         .from('chats')
-        .insert([{
-          usuario_1: trabajadorId,
-          usuario_2: notificacion.emisor_id,
-          contratante_id: notificacion.emisor_id,
-          contratado_id: trabajadorId,
-        }])
-        .select()
+        .insert({ participant_a: participantA, participant_b: participantB })
+        .select('id')
         .single();
 
       chatId = nuevoChat.id;
@@ -111,15 +108,13 @@ if (response.ok && data?.url) {
       await supabase.from('mensajes').insert([
         {
           chat_id: chatId,
-          emisor_id: trabajadorId,
+          remitente_id: trabajadorId,
           contenido: `📢 **IMPORTANTE** 📢\n\nEste chat ha sido creado exclusivamente para coordinar los detalles del servicio.\n\n⚠️ SolucionesYa no se hace responsable por la ejecución del servicio.\n⭐ Al finalizar, deja tu calificación.`,
-          fecha_creacion: new Date().toISOString(),
         },
         {
           chat_id: chatId,
-          emisor_id: trabajadorId,
+          remitente_id: trabajadorId,
           contenido: `🎫 Se ha concretado una propuesta de trabajo. Este chat funcionará como comprobante.`,
-          fecha_creacion: new Date().toISOString(),
         },
       ]);
     }
@@ -128,8 +123,8 @@ if (response.ok && data?.url) {
 
     navigation.replace('ChatIndividual', {
       chatId,
-      usuarioId1: trabajadorId,
-      usuarioId2: notificacion.emisor_id,
+      usuarioId1: participantA,
+      usuarioId2: participantB,
     });
   };
 

@@ -89,32 +89,37 @@ const BottomNavBar = ({ unreadMessagesCount: unreadProp }: BottomNavBarProps) =>
     if (!userId) return;
 
     const fetchUnread = async () => {
-      const { data } = await supabase
+      // El nuevo schema de `mensajes` no tiene receptor_id. Contamos los mensajes no leídos
+      // en los chats del usuario donde el remitente NO es él.
+      const { data: myChats } = await supabase
+        .from("chats")
+        .select("id")
+        .or(`participant_a.eq.${userId},participant_b.eq.${userId}`);
+
+      const chatIds = (myChats ?? []).map((c) => c.id);
+      if (chatIds.length === 0) {
+        setInternalUnread(0);
+        return;
+      }
+
+      const { count } = await supabase
         .from("mensajes")
         .select("id", { count: "exact", head: true })
-        .eq("receptor_id", userId)
-        .eq("leido_por_receptor", false);
-      setInternalUnread((data as any)?.length ?? 0);
+        .in("chat_id", chatIds)
+        .eq("leido", false)
+        .neq("remitente_id", userId);
+
+      setInternalUnread(count ?? 0);
     };
 
     // Initial fetch
-    supabase
-      .from("mensajes")
-      .select("id")
-      .eq("receptor_id", userId)
-      .eq("leido_por_receptor", false)
-      .then(({ data }) => setInternalUnread(data?.length ?? 0));
+    fetchUnread();
 
     // Realtime subscription
     const channel = supabase
       .channel(`unread-badge-${userId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "mensajes" }, () => {
-        supabase
-          .from("mensajes")
-          .select("id")
-          .eq("receptor_id", userId)
-          .eq("leido_por_receptor", false)
-          .then(({ data }) => setInternalUnread(data?.length ?? 0));
+        fetchUnread();
       })
       .subscribe();
 

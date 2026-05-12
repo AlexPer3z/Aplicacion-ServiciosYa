@@ -46,8 +46,8 @@ function ChatList() {
                     const oldRecord = payload.old as any;
 
                     const involvesUser =
-                        (newRecord?.usuario_1 === userId || newRecord?.usuario_2 === userId) ||
-                        (oldRecord?.usuario_1 === userId || oldRecord?.usuario_2 === userId);
+                        (newRecord?.participant_a === userId || newRecord?.participant_b === userId) ||
+                        (oldRecord?.participant_a === userId || oldRecord?.participant_b === userId);
 
                     if (involvesUser) {
                         refetch();
@@ -60,12 +60,10 @@ function ChatList() {
             .on(
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'mensajes' },
-                async (payload) => {
-                    const msg = payload.new as MensajeRow;
-                    const involvesUser = msg?.remitente_id === userId || msg?.receptor_id === userId;
-                    if (involvesUser) {
-                        refetch();
-                    }
+                async () => {
+                    // El nuevo schema de mensajes no tiene receptor_id.
+                    // Refetch siempre: el query del lado del cliente ya filtra solo chats del usuario.
+                    refetch();
                 }
             )
             .subscribe();
@@ -76,12 +74,8 @@ function ChatList() {
     }, [refetch]);
 
     const eliminarChat = async (item: ChatItem) => {
-        const userId = getUserID();
         try {
-            const columna = userId === item.usuario_1
-                ? 'borrado_por_usuario_1'
-                : 'borrado_por_usuario_2';
-            await deleteChat(columna, item.id);
+            await deleteChat("", item.id);
             refetch();
         } catch (error) {
             console.log(error);

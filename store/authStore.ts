@@ -64,62 +64,11 @@ export const useAuthStore = create<AuthState>()(
                     return;
                 }
 
-                // Use cached session immediately if available
-                const cachedSession = get().session;
-                if (cachedSession?.user?.email) {
-                    // 3. Identify from cache
-                    if (cachedSession.user.email === "guest@example.com") {
-                        identifyDevice(null);
-                    } else {
-                        identifyDevice(cachedSession.user.email);
-                    }
-                    set({ isInitialized: true, isLoading: false });
-                }
-
-                try {
-                    const {
-                        data: { session },
-                        error,
-                    } = await supabase.auth.getSession();
-
-                    if (error) {
-                        handleLogout();
-                        identifyDevice(null); // Reset analytics
-                        set({
-                            session: null,
-                            user: null,
-                            isAuth: false,
-                            isGuest: false,
-                            isLoading: false,
-                            isInitialized: true,
-                        });
-                        return;
-                    }
-
-                    const user = session?.user ?? null;
-                    const isGuest = user?.user_metadata?.email === "guest@example.com";
-
-                    // 4. Identify with fresh session
-                    if (user?.email) {
-                        if (user.email === "guest@example.com") {
-                            identifyDevice(null);
-                        } else {
-                            identifyDevice(user.email);
-                        }
-                    } else {
-                        identifyDevice(null);
-                    }
-
-                    set({
-                        session,
-                        user,
-                        isAuth: !!session,
-                        isGuest,
-                        isLoading: false,
-                        isInitialized: true,
-                    });
-
-                    // Setup auth listener
+                // FIX 1: registrar el listener ANTES de cualquier await que pueda fallar.
+                // Antes vivía dentro del try{} al final — si getSession() lanzaba (red,
+                // timeout), el catch saltaba sin registrarlo y la app quedaba sorda a los
+                // cambios de auth (login no redirigía hasta reiniciar).
+                if (!authSubscription) {
                     const {
                         data: { subscription },
                     } = supabase.auth.onAuthStateChange(
@@ -131,7 +80,6 @@ export const useAuthStore = create<AuthState>()(
                             const user = session?.user ?? null;
                             const isGuest = user?.user_metadata?.email === "guest@example.com";
 
-                            // 5. Update identification on auto-refresh or logout
                             if (user?.email) {
                                 if (user.email === "guest@example.com") {
                                     identifyDevice(null);
@@ -153,16 +101,80 @@ export const useAuthStore = create<AuthState>()(
                     );
 
                     authSubscription = subscription;
-                } catch (error) {
-                    identifyDevice(null);
+                }
+
+                // Use cached session immediately if available
+                const cachedSession = get().session;
+                if (cachedSession?.user?.email) {
+                    if (cachedSession.user.email === "guest@example.com") {
+                        identifyDevice(null);
+                    } else {
+                        identifyDevice(cachedSession.user.email);
+                    }
+                    set({ isInitialized: true, isLoading: false });
+                }
+
+                try {
+                    // FIX 2: timeout defensivo. Si getSession() cuelga (red flaky), no
+                    // bloqueamos el bootstrap indefinidamente — la app queda en negro
+                    // porque App.tsx renderiza null mientras isInitialized sea false.
+                    const TIMEOUT_MS = 5000;
+                    const sessionResult = await Promise.race([
+                        supabase.auth.getSession().then((r) => ({ kind: "ok" as const, ...r })),
+                        new Promise<{ kind: "timeout" }>((resolve) =>
+                            setTimeout(() => resolve({ kind: "timeout" }), TIMEOUT_MS),
+                        ),
+                    ]);
+
+                    if (sessionResult.kind === "timeout") {
+                        // Sin respuesta a tiempo: mantenemos la cache (si había) y
+                        // dejamos que el listener corrija después si el token caducó.
+                        set({ isInitialized: true, isLoading: false });
+                        return;
+                    }
+
+                    const { data: { session }, error } = sessionResult;
+
+                    if (error) {
+                        handleLogout();
+                        identifyDevice(null);
+                        set({
+                            session: null,
+                            user: null,
+                            isAuth: false,
+                            isGuest: false,
+                            isLoading: false,
+                            isInitialized: true,
+                        });
+                        return;
+                    }
+
+                    const user = session?.user ?? null;
+                    const isGuest = user?.user_metadata?.email === "guest@example.com";
+
+                    if (user?.email) {
+                        if (user.email === "guest@example.com") {
+                            identifyDevice(null);
+                        } else {
+                            identifyDevice(user.email);
+                        }
+                    } else {
+                        identifyDevice(null);
+                    }
+
                     set({
-                        session: null,
-                        user: null,
-                        isAuth: false,
-                        isGuest: false,
+                        session,
+                        user,
+                        isAuth: !!session,
+                        isGuest,
                         isLoading: false,
                         isInitialized: true,
                     });
+                } catch (error) {
+                    // FIX 3: no desloguear por errores de red. Antes se reseteaba
+                    // session/isAuth/... a null/false, dejando al usuario afuera
+                    // incluso teniendo cache válida. Ahora solo destrabamos el render.
+                    set({ isInitialized: true, isLoading: false });
                 }
             },
 

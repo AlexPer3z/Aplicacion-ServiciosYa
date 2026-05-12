@@ -11,6 +11,7 @@ import {
   Alert,
   Modal,
   ScrollView,
+  Share,
 } from "react-native";
 import * as Location from "expo-location";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -162,49 +163,67 @@ function WorkerDetailModal({ worker, visible, onClose, workerServices, loadingSe
 
   const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
 
+  const compartirPerfil = async () => {
+    if (!worker?.id) {
+      Alert.alert("Error", "No se pudo identificar al profesional.");
+      return;
+    }
+    const url = `https://tooriserviciosya.com/PerfileProfesionales.php?ids=${encodeURIComponent(worker.id)}`;
+    const nombre = worker.nombre?.trim();
+    const message = nombre
+      ? `Mirá el perfil de ${nombre} en Toori Servicios Ya: ${url}`
+      : `Mirá este profesional en Toori Servicios Ya: ${url}`;
+    try {
+      await Share.share({ message, url, title: nombre || "Profesional Toori" });
+    } catch {
+      // usuario canceló o falló el share — no hace falta avisar
+    }
+  };
+
   const contactarChat = async () => {
     const myId = getUserID();
     if (!myId) { Alert.alert("Error", "Debes iniciar sesión para enviar mensajes."); return; }
+    if (!worker?.id) { Alert.alert("Error", "No se pudo identificar al profesional."); return; }
+    if (worker.id.toLowerCase() === myId.toLowerCase()) {
+      Alert.alert("Error", "No podés chatear con vos mismo.");
+      return;
+    }
     try {
-      // Buscar chat existente entre los dos usuarios
-      const { data: existing } = await supabase
+      // La tabla `chats` tiene CHECK (participant_a < participant_b) y UNIQUE (participant_a, participant_b).
+      // Ordenamos los UUIDs antes de buscar/insertar.
+      const [participantA, participantB] = [myId, worker.id].slice().sort();
+
+      const { data: existing, error: searchError } = await supabase
         .from("chats")
-        .select("id, usuario_1, usuario_2")
-        .or(
-          `and(usuario_1.eq.${myId},usuario_2.eq.${worker.id}),and(usuario_1.eq.${worker.id},usuario_2.eq.${myId})`
-        )
+        .select("id")
+        .eq("participant_a", participantA)
+        .eq("participant_b", participantB)
         .maybeSingle();
 
+      if (searchError) console.error("[contactarChat] búsqueda:", searchError);
+
       let chatId: string;
-      let u1: string;
-      let u2: string;
 
       if (existing) {
         chatId = existing.id;
-        u1 = existing.usuario_1 ?? myId;
-        u2 = existing.usuario_2 ?? worker.id;
       } else {
-        // Obtener el primer servicio del worker para asociar al chat
-        const { data: svc } = await supabase
-          .from("servicios")
-          .select("id")
-          .eq("usuario_id", worker.id)
-          .limit(1)
-          .maybeSingle();
-
-        const { data: newChat, error: chatError } = await supabase
+        const { data: created, error: createError } = await supabase
           .from("chats")
-          .insert({ usuario_1: myId, usuario_2: worker.id, servicio_id: svc ? String(svc.id) : null })
-          .select("id, usuario_1, usuario_2")
+          .insert({ participant_a: participantA, participant_b: participantB })
+          .select("id")
           .single();
 
-        if (chatError || !newChat) {
-          Alert.alert("Error", "No se pudo iniciar el chat.");
+        if (createError || !created) {
+          console.error("[contactarChat] insert:", createError);
+          Alert.alert(
+            "Error",
+            createError?.message
+              ? `No se pudo iniciar el chat: ${createError.message}`
+              : "No se pudo iniciar el chat.",
+          );
           return;
         }
-        chatId = newChat.id;
-        u1 = newChat.usuario_1 ?? myId;
-        u2 = newChat.usuario_2 ?? worker.id;
+        chatId = created.id;
       }
 
       onClose();
@@ -213,11 +232,15 @@ function WorkerDetailModal({ worker, visible, onClose, workerServices, loadingSe
         nombre: worker.nombre || "Profesional",
         servicio: {},
         servicioId: "",
-        usuarioId1: u1,
-        usuarioId2: u2,
+        usuarioId1: participantA,
+        usuarioId2: participantB,
       });
-    } catch {
-      Alert.alert("Error", "No se pudo abrir el chat.");
+    } catch (e: any) {
+      console.error("[contactarChat] excepción:", e);
+      Alert.alert(
+        "Error",
+        e?.message ? `No se pudo abrir el chat: ${e.message}` : "No se pudo abrir el chat.",
+      );
     }
   };
 
@@ -307,6 +330,11 @@ function WorkerDetailModal({ worker, visible, onClose, workerServices, loadingSe
                   )}
                 </>
               )}
+
+              <TouchableOpacity style={styles.shareBtn} onPress={compartirPerfil}>
+                <MaterialIcons name="share" size={20} color="#069eb3" />
+                <Text style={styles.shareBtnText}>Compartir perfil</Text>
+              </TouchableOpacity>
 
               <TouchableOpacity style={styles.contactBtn} onPress={contactarChat}>
                 <MaterialIcons name="chat" size={20} color="#fff" />
@@ -610,8 +638,10 @@ const styles = StyleSheet.create({
   verText: { fontSize: 12, fontWeight: "600", color: "#fff" },
   docBtn: { flexDirection: "row", alignItems: "center", gap: 10, padding: 14, backgroundColor: "#f0f8fa", borderRadius: 12, marginBottom: 8, borderWidth: 1, borderColor: "#a8dfe8" },
   docBtnText: { flex: 1, fontSize: 14, fontWeight: "600", color: "#047a8f" },
-  contactBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, backgroundColor: "#069eb3", paddingVertical: 15, borderRadius: 30, marginTop: 16, shadowColor: "#069eb3", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
+  contactBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, backgroundColor: "#069eb3", paddingVertical: 15, borderRadius: 30, marginTop: 10, shadowColor: "#069eb3", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
   contactBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  shareBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, backgroundColor: "#fff", paddingVertical: 13, borderRadius: 30, marginTop: 16, borderWidth: 2, borderColor: "#069eb3" },
+  shareBtnText: { color: "#069eb3", fontSize: 16, fontWeight: "700" },
   closeBtn: { alignItems: "center", paddingVertical: 16, borderTopWidth: 1, borderTopColor: "#f0f2f5" },
   closeBtnText: { color: "#888", fontSize: 15, fontWeight: "600" },
   svcCard: { backgroundColor: "#f0f8fa", borderRadius: 12, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: "#a8dfe8" },

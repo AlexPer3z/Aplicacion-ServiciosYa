@@ -17,17 +17,17 @@ export const serviceInfoQueryOptions = (chatId: string) =>
     queryFn: async ({ client }) => {
       const { data: chat } = await supabase
         .from("chats")
-        .select("usuario_1, usuario_2")
+        .select("participant_a, participant_b")
         .eq("id", chatId)
         .single()
         .throwOnError();
 
       const logged_user = getUserFromClient(client);
       let receiver: string | null = null;
-      if (chat.usuario_1 === logged_user.id) {
-        receiver = chat.usuario_2;
+      if (chat.participant_a === logged_user.id) {
+        receiver = chat.participant_b;
       } else {
-        receiver = chat.usuario_1;
+        receiver = chat.participant_a;
       }
 
       if (!receiver) throw Error("User id no encontrado");

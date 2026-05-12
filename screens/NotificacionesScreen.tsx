@@ -165,13 +165,16 @@ export default function Notificaciones() {
 
     Alert.alert("✅ Servicio confirmado", "Has aceptado la solicitud.");
     await marcarComoLeida(notificacion.id);
-    // Verificar si ya existe un chat
+
+    // chats.participant_a < participant_b (CHECK constraint)
+    const [participantA, participantB] = [userId, notificacion.emisor_id].slice().sort();
+
+    // Verificar si ya existe un chat entre los dos usuarios
     const { data: chatExistente, error: errorCheck } = await supabase
       .from("chats")
-      .select("*")
-      .or(
-        `and(usuario_1.eq.${userId},usuario_2.eq.${notificacion.emisor_id}),and(usuario_1.eq.${notificacion.emisor_id},usuario_2.eq.${userId})`,
-      )
+      .select("id")
+      .eq("participant_a", participantA)
+      .eq("participant_b", participantB)
       .maybeSingle();
 
     if (errorCheck) {
@@ -191,92 +194,37 @@ Este chat ha sido creado exclusivamente para que puedas coordinar y acordar los 
 
     const mensajeTicket = `🎫 Se ha concretado una propuesta de trabajo. Este chat funcionará como comprobante. Puedes coordinar los detalles del servicio aquí.`;
 
+    let chatId: string;
     if (chatExistente) {
-      console.log("por aqui");
-      await supabase
-        .from("chats")
-        .update({ servicio_id: notificacion.servicio_id })
-        .eq("id", chatExistente.id);
-
+      chatId = chatExistente.id;
       await supabase.from("mensajes").insert({
-        chat_id: chatExistente.id,
+        chat_id: chatId,
+        remitente_id: userId,
         contenido: mensajeImportante,
-        emisor_id: userId,
-        fecha_creacion: new Date().toISOString(),
       });
-
-      const otroUsuarioId =
-        nuevoChat.usuario_1 === userId
-          ? nuevoChat.usuario_2
-          : nuevoChat.usuario_1;
-      const { data: usuario } = await supabase
-        .from("usuarios")
-        .select("nombre, foto_perfil")
-        .eq("id", otroUsuarioId)
+    } else {
+      const { data: nuevoChat, error: errorNuevoChat } = await supabase
+        .from("chats")
+        .insert({ participant_a: participantA, participant_b: participantB })
+        .select("id")
         .single();
 
-      const { data: servicio } = await supabase
-        .from("servicios")
-        .select("id, titulo, descripcion, categoria, horario")
-        .eq("id", notificacion.servicio_id)
-        .single();
+      if (errorNuevoChat || !nuevoChat) {
+        Alert.alert(
+          "Error al crear el chat",
+          errorNuevoChat?.message || "Error desconocido",
+        );
+        return;
+      }
 
-      loadUnreadMessages();
-      navigation.navigate("ChatIndividual", {
-        chatId: chatExistente.id,
-        nombre: servicio
-          ? `${usuario?.nombre || "Desconocido"} - ${servicio.titulo}`
-          : usuario?.nombre || "Desconocido",
-        servicio: servicio,
-        usuarioId1: userId,
-        usuarioId2: notificacion.emisor_id,
-        servicioId: notificacion.servicio_id,
-      });
-      return;
+      chatId = nuevoChat.id;
+      await supabase.from("mensajes").insert([
+        { chat_id: chatId, remitente_id: userId, contenido: mensajeImportante },
+        { chat_id: chatId, remitente_id: userId, contenido: mensajeTicket },
+      ]);
     }
 
-    // Crear nuevo chat
-    const { data: nuevoChat, error: errorNuevoChat } = await supabase
-      .from("chats")
-      .insert([
-        {
-          usuario_1: userId,
-          usuario_2: notificacion.emisor_id,
-          contratante_id: notificacion.emisor_id,
-          contratado_id: userId,
-          servicio_id: notificacion.servicio_id,
-        },
-      ])
-      .select()
-      .single();
-
-    if (errorNuevoChat || !nuevoChat) {
-      Alert.alert(
-        "Error al crear el chat",
-        errorNuevoChat?.message || "Error desconocido",
-      );
-      return;
-    }
-
-    await supabase.from("mensajes").insert([
-      {
-        chat_id: nuevoChat.id,
-        emisor_id: userId,
-        contenido: mensajeImportante,
-        fecha_creacion: new Date().toISOString(),
-      },
-      {
-        chat_id: nuevoChat.id,
-        emisor_id: userId,
-        contenido: mensajeTicket,
-        fecha_creacion: new Date().toISOString(),
-      },
-    ]);
-
-    const otroUsuarioId =
-      nuevoChat.usuario_1 === userId
-        ? nuevoChat.usuario_2
-        : nuevoChat.usuario_1;
+    const otroUsuarioId = notificacion.emisor_id;
     const { data: usuario } = await supabase
       .from("usuarios")
       .select("nombre, foto_perfil")
@@ -291,13 +239,13 @@ Este chat ha sido creado exclusivamente para que puedas coordinar y acordar los 
 
     loadUnreadMessages();
     navigation.navigate("ChatIndividual", {
-      chatId: nuevoChat.id,
+      chatId,
       nombre: servicio
         ? `${usuario?.nombre || "Desconocido"} - ${servicio.titulo}`
         : usuario?.nombre || "Desconocido",
       servicio: servicio,
-      usuarioId1: userId,
-      usuarioId2: notificacion.emisor_id,
+      usuarioId1: participantA,
+      usuarioId2: participantB,
       servicioId: notificacion.servicio_id,
     });
   };

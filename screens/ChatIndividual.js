@@ -117,47 +117,37 @@ function ChatIndividual({ route }) {
   // --- Cargar mensajes de la BD
   const cargarMensajes = async (userId) => {
     try {
-      // Primero obtenemos la fecha de borrado del chat para este usuario
-      const { data: chatData, error: chatError } = await supabase
-        .from('chats')
-        .select('borrado_por_usuario_1, borrado_por_usuario_2')
-        .eq('id', chatId)
-        .single();
+      console.log("[chat] cargarMensajes →", { chatId, userId, usuarioId1, usuarioId2 });
 
-      if (chatError || !chatData) {
-        console.error("No se pudo obtener info del chat:", chatError?.message);
-        return;
-      }
-
-      const fechaBorrado = userId === usuarioId1 
-        ? chatData.borrado_por_usuario_1 
-        : chatData.borrado_por_usuario_2;
+      // Diagnóstico: verificar que el chat existe y a quién pertenece
+      const { data: chatRow } = await supabase
+        .from("chats")
+        .select("id, participant_a, participant_b")
+        .eq("id", chatId)
+        .maybeSingle();
+      console.log("[chat] chat row →", chatRow);
 
       const { data, error } = await supabase
         .from("mensajes")
         .select("*")
         .eq("chat_id", chatId)
-        .order("creado_en", { ascending: true });
+        .order("created_at", { ascending: true });
 
       if (error) {
-        console.error("Error al cargar mensajes:", error.message);
+        console.error("[chat] error al cargar mensajes:", error.message, error);
         return;
       }
 
-      // Filtrar mensajes anteriores a la fecha de borrado
-      const mensajesFiltrados = fechaBorrado 
-        ? data.filter(m => new Date(m.creado_en) > new Date(fechaBorrado))
-        : data;
-
-      setMensajes(mensajesFiltrados);
+      console.log("[chat] mensajes encontrados:", data?.length ?? 0);
+      setMensajes(data ?? []);
       setLoadingMsg(false);
-      marcarComoLeidos(mensajesFiltrados, userId);
+      marcarComoLeidos(data ?? [], userId);
 
       // scroll al final
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
 
     } catch (e) {
-      console.error("Error en cargarMensajes:", e);
+      console.error("[chat] excepción cargarMensajes:", e);
     }
   };
 
@@ -166,11 +156,11 @@ function ChatIndividual({ route }) {
     const mensajesNoLeidos = mensajesData.filter(
       (msg) =>
         msg.remitente_id?.toString().trim() !== userId?.toString().trim() &&
-        !msg.leido_por_receptor
+        !msg.leido
     );
     if (mensajesNoLeidos.length > 0) {
       const ids = mensajesNoLeidos.map((msg) => msg.id);
-      await supabase.from("mensajes").update({ leido_por_receptor: true }).in("id", ids);
+      await supabase.from("mensajes").update({ leido: true }).in("id", ids);
     }
   };
 
@@ -202,67 +192,22 @@ function ChatIndividual({ route }) {
     messageChannelRef.current = channel;
   };
 
-  // --- Enviar mensaje y notificar
+  // --- Enviar mensaje (la push la dispara el trigger SQL `trg_notify_on_new_message`)
   const enviarMensaje = useCallback(async (mensaje) => {
     if (!mensaje.trim() || !usuarioId) return;
-
-    const receptorId = usuarioId === usuarioId1 ? usuarioId2 : usuarioId1;
 
     const { error } = await supabase.from("mensajes").insert({
       chat_id: chatId,
       remitente_id: usuarioId,
-      receptor_id: receptorId,
       contenido: mensaje.trim(),
-      leido_por_emisor: true,
-      leido_por_receptor: false,
     });
 
-    if (!error) {
-      enviarNotificacionPush(mensaje.trim(), receptorId);
+    if (error) {
+      console.error("Error al enviar mensaje:", error.message);
     }
-  }, [usuarioId, chatId, usuarioId1, usuarioId2]);
+  }, [usuarioId, chatId]);
 
-  const enviarNotificacionPush = async (mensaje, receptorId) => {
-    try {
-      const { data: receptorData, error } = await supabase
-        .from("usuarios")
-        .select("expo_token")
-        .eq("id", receptorId)
-        .single();
-
-      if (error || !receptorData?.expo_token) return;
-
-      await fetch("https://exp.host/--/api/v2/push/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer HqAsPKHR0s-jilCTTYKwQhUhY5g57rnOlUYb_H6c`,
-        },
-        body: JSON.stringify({
-          to: receptorData.expo_token,
-          priority: "high",
-          sound: "default",
-          title: "Nuevo mensaje",
-          body: mensaje,
-          data: {
-            screen: "ChatIndividual",
-            params: { 
-              chatId: chatId,
-              nombre: nombre,
-              servicio: servicio,
-              usuarioId1: usuarioId1,
-              usuarioId2: usuarioId2,
-              servicioId: servicioId,
-            }
-          },
-        }),
-      });
-    } catch (e) {
-      console.error("Error al enviar notificación push:", e);
-    }
-  };
-
-  // ---  Función para formatear la fecha con "Hoy", "Ayer" o DD/MM/YYYY 
+  // ---  Función para formatear la fecha con "Hoy", "Ayer" o DD/MM/YYYY
   const formatearFecha = (fechaISO) => {
     const fecha = new Date(fechaISO); // UTC → local automáticamente
     const hoy = new Date();
@@ -290,7 +235,7 @@ function ChatIndividual({ route }) {
     let ultimaFecha = null;
 
     mensajes.forEach((msg) => {
-      const fechaMsg = formatearFecha(msg.creado_en);
+      const fechaMsg = formatearFecha(msg.created_at);
       if (fechaMsg !== ultimaFecha) {
         // Insertar chip de fecha
         resultado.push({ tipo: 'fecha', fecha: fechaMsg, id: `fecha-${fechaMsg}` });
@@ -370,14 +315,10 @@ function ChatIndividual({ route }) {
         .single();
       const celular = workerData?.celular;
       if (celular) {
-        const receptorId = myId === usuarioId1 ? usuarioId2 : usuarioId1;
         await supabase.from('mensajes').insert({
           chat_id: chatId,
           remitente_id: myId,
-          receptor_id: receptorId,
           contenido: `✅ Pago aprobado. WhatsApp del profesional: 📱 ${celular}`,
-          leido_por_emisor: true,
-          leido_por_receptor: false,
         });
       } else {
         Alert.alert('Pago recibido', 'Tu pago fue aprobado. El profesional se comunicará contigo pronto.');

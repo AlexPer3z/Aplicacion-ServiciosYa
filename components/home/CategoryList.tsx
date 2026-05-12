@@ -19,6 +19,8 @@ import { useUserSettings } from "../../lib/hooks/useUserSettings";
 import { withSuspense } from "../withSuspense";
 import { useHomeEventsStore } from "../../store/homeEventsStore";
 import { supabase } from "../../lib/supabase";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { categoriasQueryOptions } from "../../lib/queryOptions";
 
 interface CategoryListProps {
   busqueda: string;
@@ -29,6 +31,13 @@ interface CategoryListProps {
 
 const AnimatedSectionList =
   Animated.createAnimatedComponent(SectionList);
+
+const normalize = (s: string) =>
+  s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+
+const EXCLUDED_CATEGORIES = new Set(
+  ["general", "mi primer trabajo"].map(normalize),
+);
 
 const CategoryList = ({
   busqueda,
@@ -41,6 +50,20 @@ const CategoryList = ({
   const [isPullingToRefresh, setIsPullingToRefresh] = useState(false);
   const setHomeDataReady = useHomeEventsStore(s => s.setHomeDataReady);
   const [workerCounts, setWorkerCounts] = useState<Record<string, number>>({});
+  const { data: categoriasDB } = useSuspenseQuery(categoriasQueryOptions);
+
+  const { dbByNormalized, iconUrls } = useMemo(() => {
+    const map = new Map<string, string>();
+    const urls: Record<string, string | null> = {};
+    for (const c of categoriasDB) {
+      if (!c?.nombre) continue;
+      const norm = normalize(c.nombre);
+      if (EXCLUDED_CATEGORIES.has(norm)) continue;
+      map.set(norm, c.nombre);
+      urls[c.nombre] = c.icono_url ?? null;
+    }
+    return { dbByNormalized: map, iconUrls: urls };
+  }, [categoriasDB]);
 
   useEffect(() => {
     supabase
@@ -80,29 +103,50 @@ const CategoryList = ({
   // Create a map for O(1) access to counts
   const conteosMap = workerCounts;
   const filteredSections = useMemo(() => {
-    const searchLower = busqueda.toLowerCase();
+    const searchNorm = normalize(busqueda);
+    const usedInSections = new Set<string>();
 
-    return Object.entries(categoriasPorSeccion).reduce(
+    const sections = Object.entries(categoriasPorSeccion).reduce(
       (acc, [seccion, categorias]) => {
-        const activeCategories = categorias.filter((cat) => {
-          const count = conteosMap[cat] || 0;
-          const matchesSearch = cat.toLowerCase().includes(searchLower);
+        const activeCategories: string[] = [];
+        for (const cat of categorias) {
+          const dbName = dbByNormalized.get(normalize(cat));
+          if (!dbName) continue;
+          if (usedInSections.has(dbName)) continue;
+          usedInSections.add(dbName);
+          const count = conteosMap[dbName] || 0;
+          const matchesSearch = !searchNorm || normalize(dbName).includes(searchNorm);
           const hasItemsOrShowAll = showAllCategories || count > 0;
-
-          return matchesSearch && hasItemsOrShowAll;
-        });
+          if (matchesSearch && hasItemsOrShowAll) activeCategories.push(dbName);
+        }
 
         if (activeCategories.length > 0) {
           acc.push({
             title: seccion,
-            data: [activeCategories], // ⚠️ IMPORTANTE
+            data: [activeCategories],
           });
         }
         return acc;
       },
       [] as { title: string; data: string[][] }[]
     );
-  }, [busqueda, conteosMap, showAllCategories]);
+
+    const otras = Array.from(dbByNormalized.values())
+      .filter((cat) => !usedInSections.has(cat))
+      .filter((cat) => {
+        const count = conteosMap[cat] || 0;
+        const matchesSearch = !searchNorm || normalize(cat).includes(searchNorm);
+        const hasItemsOrShowAll = showAllCategories || count > 0;
+        return matchesSearch && hasItemsOrShowAll;
+      })
+      .sort((a, b) => a.localeCompare(b));
+
+    if (otras.length > 0) {
+      sections.push({ title: "Otros", data: [otras] });
+    }
+
+    return sections;
+  }, [busqueda, conteosMap, showAllCategories, dbByNormalized]);
 
   // 4. Handlers
   const handleOnRefresh = useCallback(async () => {
@@ -141,6 +185,7 @@ const CategoryList = ({
     <SectionList
       sections={filteredSections}
       keyExtractor={(_, index) => index.toString()}
+      extraData={busqueda}
 
       renderSectionHeader={({ section }) => (
         <Text style={styles.sectionTitle}>{section.title}</Text>
@@ -153,6 +198,7 @@ const CategoryList = ({
           conteos={conteosMap}
           onCategoryPress={onCategoryPress}
           disabled={isUserRestricted}
+          iconUrls={iconUrls}
         />
       )}
 

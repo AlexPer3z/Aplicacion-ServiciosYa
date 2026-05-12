@@ -24,8 +24,12 @@ import { supabase } from "../../lib/supabase";
 
 type Tab = "calendario" | "ofertas" | "contratar";
 
-export default function WorkerHomeView({ navigation, onCategoryPress }: { navigation: any; onCategoryPress: (cat: string) => void }) {
+export default function WorkerHomeView({ navigation, onCategoryPress, busqueda = "" }: { navigation: any; onCategoryPress: (cat: string) => void; busqueda?: string }) {
   const [activeTab, setActiveTab] = useState<Tab>("calendario");
+
+  useEffect(() => {
+    if (busqueda.trim().length > 0) setActiveTab("contratar");
+  }, [busqueda]);
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: "calendario", label: "Calendario", icon: "calendar-today" },
@@ -61,7 +65,7 @@ export default function WorkerHomeView({ navigation, onCategoryPress }: { naviga
 
       {/* Content */}
       {activeTab === "contratar" ? (
-        <ContratarView navigation={navigation} onCategoryPress={onCategoryPress} />
+        <ContratarView navigation={navigation} onCategoryPress={onCategoryPress} busqueda={busqueda} />
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} bounces={true}>
           {activeTab === "calendario" && <CalendarioView />}
@@ -462,10 +466,10 @@ function OfertasView() {
   );
 }
 
-function ContratarView({ navigation, onCategoryPress }: { navigation: any; onCategoryPress: (cat: string) => void }) {
+function ContratarView({ navigation, onCategoryPress, busqueda }: { navigation: any; onCategoryPress: (cat: string) => void; busqueda: string }) {
   return (
     <CategoryList
-      busqueda=""
+      busqueda={busqueda}
       onCategoryPress={onCategoryPress}
       isUserRestricted={false}
     />
