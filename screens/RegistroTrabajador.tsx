@@ -27,6 +27,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import * as DocumentPicker from "expo-document-picker";
 import { AuthContext } from "../lib/context/AppContext";
+import { syncPrestadorConToori } from "../lib/tooriApi";
 
 type NavigationProp = NativeStackNavigationProp<MainStackParamList>;
 
@@ -274,6 +275,22 @@ export default function RegistroTrabajadorSimplificado() {
       if (error) {
         Alert.alert("Error", "No se pudo guardar la información.");
         return;
+      }
+
+      const syncResult = await syncPrestadorConToori({
+        appUserId: user.id,
+        nombre,
+        telefono: numeroCelular,
+        email: user.email ?? null,
+        oficios: categoriasSeleccionadas,
+        ciudad,
+        provincia,
+        barrio: barrio || null,
+        verificado,
+      });
+
+      if (!syncResult.ok && !syncResult.skipped) {
+        console.warn("No se pudo sincronizar prestador con Toori/Mica", syncResult.error, syncResult.raw);
       }
 
       const redirectTo = enBolivia ? "pagoInicial" : "Home";

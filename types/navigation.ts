@@ -4,13 +4,19 @@ import type { UserProfile } from "../components/workers/WorkerProfile";
 import type { ServicioRow } from "./db.overrides.types";
 
 export type MainStackParamList = {
+  InicioRouter: undefined;
+  SeleccionRol: undefined;
+  RegistroCliente: undefined;
+  RegistroTrabajador: undefined;
   Home: undefined;
   CrearPerfil: undefined;
   Perfil: undefined;
   OfrecerServicio: undefined;
   Configuracion: undefined;
   ServiciosPorCategoria: { categoria: string };
+  pagoInicial: undefined;
   PasarelaPago: { categoria: string };
+  PasarelaPagoWorker: undefined;
   ChatIA: undefined;
   ChatIndividual: {
     chatId: string;

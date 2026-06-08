@@ -21,6 +21,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import CategoryList from "./CategoryList";
 import { supabase } from "../../lib/supabase";
+import { obtenerPedidosDisponibles, responderPedidoMica } from "../../lib/tooriApi";
 
 type Tab = "calendario" | "ofertas" | "contratar";
 
@@ -160,60 +161,41 @@ function OfertasView() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Obtener datos del usuario (categorias)
+      // Obtener datos del usuario para consultar el puente Web/Mica.
       const { data: userData } = await supabase
         .from("usuarios")
-        .select("categoria, id")
+        .select("categoria, id, nombre, celular, ciudad, provincia")
         .eq("id", user.id)
         .single();
 
       const categoriasUsuario: string[] = Array.isArray(userData?.categoria)
-        ? userData.categoria.map((c: string) => c.trim().toLowerCase())
+        ? userData.categoria.map((c: string) => c.trim()).filter(Boolean)
         : userData?.categoria
-        ? [userData.categoria.trim().toLowerCase()]
+        ? [String(userData.categoria).trim()].filter(Boolean)
         : [];
 
       const userId = userData?.id || user.id;
+      setPresupuestos([]);
 
-      // Presupuestos enviados (últimas 48h, no pagados)
-      const { data: presData } = await supabase
-        .from("presupuestos")
-        .select("*, nuevaOferta:oferta_id(id, estado)")
-        .eq("trabajador_uuid", userId)
-        .order("created_at", { ascending: false });
-
-      const ahora = new Date();
-      const presFiltrados = (presData || []).filter((p: any) => {
-        if (p.nuevaOferta?.estado?.toLowerCase() === "pagado") return false;
-        if (!p.created_at) return false;
-        return (ahora.getTime() - new Date(p.created_at).getTime()) / 3600000 <= 48;
-      });
-      setPresupuestos(presFiltrados);
-
-      // Ofertas disponibles
-      const { data, error: err } = await supabase
-        .from("nuevaOferta")
-        .select("*, presupuestos(count)")
-        .order("created_at", { ascending: false });
-
-      if (err) throw err;
-
-      const filtradas = (data || []).filter((o: any) => {
-        if (!o.created_at) return false;
-        if ((ahora.getTime() - new Date(o.created_at).getTime()) / 3600000 > 48) return false;
-        const estado = o.estado?.toLowerCase() || "";
-        if (estado !== "completa" && estado !== "completo") return false;
-        const cantPres = o.presupuestos?.[0]?.count ?? 0;
-        if (cantPres >= 3) return false;
-        if (categoriasUsuario.length === 0) return true;
-        if (!o.categoria) return false;
-        const catOferta = o.categoria.trim().toLowerCase();
-        return categoriasUsuario.some(
-          (c) => catOferta.includes(c) || c.includes(catOferta)
-        );
+      const response = await obtenerPedidosDisponibles({
+        appUserId: userId,
+        telefono: userData?.celular ? String(userData.celular) : null,
+        oficios: categoriasUsuario,
+        ciudad: userData?.ciudad ?? null,
+        provincia: userData?.provincia ?? null,
+        limit: 30,
       });
 
-      setOfertas(filtradas);
+      if (!response.ok) {
+        if (response.skipped) {
+          setError("Conexión con Mica no configurada todavía. Pedile al administrador activar el puente Toori.");
+          setOfertas([]);
+          return;
+        }
+        throw new Error(response.error);
+      }
+
+      setOfertas(response.data.pedidos.filter((pedido) => !pedido.yaRespondio));
     } catch (e: any) {
       setError("Error al cargar ofertas. Intenta nuevamente.");
     } finally {
@@ -252,20 +234,23 @@ function OfertasView() {
       if (!user) throw new Error("No autenticado");
       const { data: userData } = await supabase
         .from("usuarios")
-        .select("id")
+        .select("id, nombre, celular")
         .eq("id", user.id)
         .single();
       const trabajadorId = userData?.id || user.id;
 
-      const { error } = await (supabase as any).from("presupuestos").insert({
-        oferta_id: ofertaSeleccionada.id,
-        trabajador_uuid: trabajadorId,
+      const response = await responderPedidoMica({
+        ofertaId: ofertaSeleccionada.id,
+        appUserId: trabajadorId,
+        nombre: userData?.nombre ?? null,
+        telefono: userData?.celular ? String(userData.celular) : null,
+        accion: "presupuesto",
         monto: parseFloat(monto.replace(",", ".")),
         descripcion: descripcion.trim(),
-        horarios_disponibles: horarios.trim(),
+        horariosDisponibles: horarios.trim(),
       });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error(response.error);
 
       setModalVisible(false);
       Alert.alert("¡Presupuesto enviado!", "Tu presupuesto fue enviado correctamente.", [
@@ -273,6 +258,40 @@ function OfertasView() {
       ]);
     } catch (e: any) {
       Alert.alert("Error", e.message || "No se pudo enviar el presupuesto.");
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  const confirmarNoDisponible = async () => {
+    if (!ofertaSeleccionada) return;
+    setEnviando(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No autenticado");
+      const { data: userData } = await supabase
+        .from("usuarios")
+        .select("id, nombre, celular")
+        .eq("id", user.id)
+        .single();
+      const trabajadorId = userData?.id || user.id;
+
+      const response = await responderPedidoMica({
+        ofertaId: ofertaSeleccionada.id,
+        appUserId: trabajadorId,
+        nombre: userData?.nombre ?? null,
+        telefono: userData?.celular ? String(userData.celular) : null,
+        accion: "no_disponible",
+      });
+
+      if (!response.ok) throw new Error(response.error);
+
+      setModalVisible(false);
+      Alert.alert("Gracias", "Marcamos que no podés tomar este pedido.", [
+        { text: "OK", onPress: () => cargarOfertas() },
+      ]);
+    } catch (e: any) {
+      Alert.alert("Error", e.message || "No se pudo responder el pedido.");
     } finally {
       setEnviando(false);
     }
@@ -370,12 +389,12 @@ function OfertasView() {
             )}
             <View style={styles.ofertaFooter}>
               <Text style={styles.ofertaFooterText}>
-                🕐 {(() => { const d = new Date(oferta.created_at); return d.toLocaleString("es-AR"); })()}
+                🕐 {(() => { const d = new Date(oferta.createdAt || Date.now()); return d.toLocaleString("es-AR"); })()}
               </Text>
               <View style={styles.presupuestosBadge}>
                 <MaterialIcons name="send" size={12} color="#fff" />
                 <Text style={styles.presupuestosBadgeText}>
-                  {oferta.presupuestos?.[0]?.count ?? 0}/3 presupuestos
+                  Pedido Mica
                 </Text>
               </View>
             </View>
@@ -454,10 +473,18 @@ function OfertasView() {
 
             <TouchableOpacity
               style={styles.modalCancelBtn}
+              onPress={confirmarNoDisponible}
+              disabled={enviando}
+            >
+              <Text style={styles.modalCancelText}>No puedo tomarlo</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modalCancelBtn}
               onPress={() => setModalVisible(false)}
               disabled={enviando}
             >
-              <Text style={styles.modalCancelText}>Cancelar</Text>
+              <Text style={styles.modalCancelText}>Cerrar</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
