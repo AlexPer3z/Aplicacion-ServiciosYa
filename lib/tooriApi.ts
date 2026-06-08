@@ -1,4 +1,5 @@
 import Constants from "expo-constants";
+import { supabase } from "./supabase";
 
 export type SyncPrestadorInput = {
   appUserId: string;
@@ -83,18 +84,18 @@ function getEnvValue(key: string): string | undefined {
 
 function getTooriApiConfig() {
   const baseUrl = getEnvValue("EXPO_PUBLIC_TOORI_SYNC_BASE_URL") ?? getExtraValue("tooriSyncBaseUrl");
-  const token = getEnvValue("EXPO_PUBLIC_TOORI_APP_SYNC_TOKEN") ?? getExtraValue("tooriAppSyncToken");
-  return { baseUrl, token };
+  const sharedToken = getEnvValue("EXPO_PUBLIC_TOORI_APP_SYNC_TOKEN") ?? getExtraValue("tooriAppSyncToken");
+  return { baseUrl, sharedToken };
 }
 
-function getEndpoint(path: string): TooriApiResult<{ endpoint: string; token: string }> {
-  const { baseUrl, token } = getTooriApiConfig();
+function getEndpoint(path: string): TooriApiResult<{ endpoint: string }> {
+  const { baseUrl } = getTooriApiConfig();
 
-  if (!baseUrl || !token) {
+  if (!baseUrl) {
     return {
       ok: false,
       skipped: true,
-      error: "Sync Toori no configurado: faltan extra.tooriSyncBaseUrl y/o extra.tooriAppSyncToken",
+      error: "Sync Toori no configurado: falta extra.tooriSyncBaseUrl o EXPO_PUBLIC_TOORI_SYNC_BASE_URL",
     };
   }
 
@@ -102,20 +103,35 @@ function getEndpoint(path: string): TooriApiResult<{ endpoint: string; token: st
     ok: true,
     data: {
       endpoint: `${baseUrl.replace(/\/$/, "")}${path}`,
-      token,
     },
   };
+}
+
+async function getAuthorizationToken(): Promise<string | undefined> {
+  const { sharedToken } = getTooriApiConfig();
+  if (sharedToken) return sharedToken;
+
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token;
 }
 
 async function requestToori<T>(path: string, options: RequestInit, errorLabel: string): Promise<TooriApiResult<T>> {
   const config = getEndpoint(path);
   if (!config.ok) return config;
 
+  const token = await getAuthorizationToken();
+  if (!token) {
+    return {
+      ok: false,
+      error: "No hay sesión activa para conectar con Toori/Mica",
+    };
+  }
+
   try {
     const response = await fetch(config.data.endpoint, {
       ...options,
       headers: {
-        Authorization: `Bearer ${config.data.token}`,
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
         ...(options.headers ?? {}),
       },
