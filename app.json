@@ -3,14 +3,6 @@
     "name": "TOORI Servicios Ya",
     "slug": "appTrabajo",
     "scheme": "solucionesya",
-    "linking": {
-      "prefixes": ["solucionesya://"],
-      "config": {
-        "screens": {
-          "pago-exitoso": "pago-exitoso"
-        }
-      }
-    },
     "platforms": [
       "ios",
       "android",
@@ -62,11 +54,6 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "statusBar": {
-        "backgroundColor": "#069eb3",
-        "barStyle": "light-content",
-        "translucent": false
-      },
       "edgeToEdgeEnabled": true,
       "package": "com.alex_6775.appTrabajo",
       "googleServicesFile": "./google-services.json",
@@ -116,7 +103,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#fff",
+          "backgroundColor": "#ffffff",
           "image": "./assets/splash-icon.png",
           "imageWidth": 150
         }
