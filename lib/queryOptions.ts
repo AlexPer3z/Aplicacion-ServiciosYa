@@ -107,6 +107,8 @@ export const serviciosCategoriaQueryOptions = (lat: number, lng: number) =>
           search_lat: lat,
           search_lon: lng,
           search_radius_meters: 10000, // 10 km
+          p_categoria: null,
+          worker_status_filter: null,
         },
       );
 

@@ -4,9 +4,9 @@ import { View, Text, StyleSheet } from "react-native";
 import BottomSheet from "@gorhom/bottom-sheet";
 
 // Note: `route.params` will contain data passed via navigate()
-const BottomSheetScreen = ({ navigation, route }) => {
+const BottomSheetScreen = ({ navigation, route }: { navigation: any; route: any }) => {
   const { itemId } = route.params || {};
-  const bottomSheetRef = useRef(null);
+  const bottomSheetRef = useRef<BottomSheet>(null);
 
   const snapPoints = useMemo(() => ["50%"], []);
 
@@ -16,7 +16,7 @@ const BottomSheetScreen = ({ navigation, route }) => {
   }, []);
 
   // When the sheet is closed, go back to the previous screen
-  const handleSheetChanges = (index) => {
+  const handleSheetChanges = (index: number) => {
     if (index === -1) {
       // -1 means the sheet is fully closed
       navigation.goBack();

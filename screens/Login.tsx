@@ -170,10 +170,10 @@ export default function Login({ navigation }: Props) {
 
   const getEmailFromPhone = async (phone: string): Promise<string | null> => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("usuarios")
         .select("email")
-        .eq("celular", Number(phone))
+        .eq("celular", phone)
         .single();
 
       if (error || !data) {

@@ -25,6 +25,10 @@ import BottomNavBar from "../components/home/BottomNavBar";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { getUserID } from "../store/authStore";
+import {
+  createUrgentWorkAlert,
+  sendUrgentWorkPush,
+} from "../lib/utils/urgentWorkNotification";
 
 type Props = NativeStackScreenProps<MainStackParamList, "ServiciosPorCategoria">;
 
@@ -224,6 +228,50 @@ function WorkerDetailModal({ worker, visible, onClose, workerServices, loadingSe
           return;
         }
         chatId = created.id;
+      }
+
+      try {
+        const { data: receptorUsuario } = await supabase
+          .from("usuarios")
+          .select("expo_token")
+          .eq("id", worker.id)
+          .single();
+
+        if (receptorUsuario?.expo_token) {
+          const urgentBody = `Un cliente quiere contactarte por ${worker.categoria?.[0] || "un servicio"}. Respondelo cuanto antes.`;
+
+          await sendUrgentWorkPush({
+            to: receptorUsuario.expo_token,
+            title: "Tenes trabajo urgente",
+            body: urgentBody,
+            data: {
+              screen: "ChatIndividual",
+              params: {
+                chatId,
+                nombre: "Cliente",
+                servicioId: "",
+                usuarioId1: participantA,
+                usuarioId2: participantB,
+              },
+            },
+          });
+
+          await createUrgentWorkAlert({
+            supabase,
+            source: "direct_contact",
+            workerId: worker.id,
+            clienteId: myId,
+            chatId,
+            category: worker.categoria?.[0] || null,
+            title: "Tenes trabajo urgente",
+            body: urgentBody,
+            metadata: {
+              worker_nombre: worker.nombre,
+            },
+          });
+        }
+      } catch (pushError) {
+        console.log("[contactarChat] aviso urgente no enviado:", pushError);
       }
 
       onClose();

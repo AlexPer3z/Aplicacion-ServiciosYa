@@ -6,7 +6,8 @@ import type { MainStackParamList } from "../../types/navigation";
 // Mostrar notificaciones incluso con la app en primer plano
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
   }),
@@ -19,23 +20,32 @@ export const useNotificationHandler = () => {
   const handleNotificationResponse = useCallback(
     (response: Notifications.NotificationResponse) => {
       const data = response.notification.request.content.data;
+      const screen = data?.screen;
+      const params = data?.params;
 
-      if (data?.screen !== "ChatIndividual" && typeof data.screen === "string") {
-        if (navigationRef.current?.isReady()) {
-          navigationRef.current.navigate(
-            data.screen as keyof MainStackParamList,
-            data.params,
-          );
-        }
-      }else if (data?.screen === "ChatIndividual") {
-        if (navigationRef.current?.isReady()) {
-          navigationRef.current.navigate(
-            "ChatIndividual",
-            data.params,
-          );
+      if (!navigationRef.current?.isReady() || typeof screen !== "string") {
+        return;
+      }
+
+      if (screen === "ChatIndividual") {
+        const chatParams = params as MainStackParamList["ChatIndividual"] | undefined;
+        if (chatParams?.chatId && chatParams?.usuarioId1 && chatParams?.usuarioId2) {
+          navigationRef.current.navigate("ChatIndividual", {
+            chatId: chatParams.chatId,
+            nombre: chatParams.nombre ?? "Chat",
+            servicio: chatParams.servicio ?? {},
+            servicioId: chatParams.servicioId ?? "",
+            usuarioId1: chatParams.usuarioId1,
+            usuarioId2: chatParams.usuarioId2,
+          });
         }
         return;
       }
+
+      (navigationRef.current.navigate as any)(
+        screen as keyof MainStackParamList,
+        params,
+      );
     },
     [],
   );

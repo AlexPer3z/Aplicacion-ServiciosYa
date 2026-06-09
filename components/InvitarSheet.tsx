@@ -32,7 +32,7 @@ function InviteSheetView({
             setUserCode(referral_code);
             update({ referral_code })
                 .then(() => refetch())
-                .catch(error => {
+                .catch((error: unknown) => {
                     console.error("Failed to update referral code:", error);
                     showToast.error("Error", "No se pudo generar tu código de invitación.");
                 });
@@ -141,7 +141,7 @@ function InviteSheetView({
                     title="Cerrar"
                     onPress={handleClose}
                     style={styles.closeButton}
-                    type="outline"
+                    textStyle={styles.closeButtonText}
                 />
                 <GenericButton
                     title="Compartir ahora"
@@ -302,6 +302,12 @@ const styles = StyleSheet.create({
         flex: 1,
         borderRadius: 10,
         paddingVertical: 14,
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.primary,
+    },
+    closeButtonText: {
+        color: colors.primary,
     },
     shareButton: {
         flex: 2,

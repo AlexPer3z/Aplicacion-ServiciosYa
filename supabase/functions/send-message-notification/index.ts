@@ -16,6 +16,9 @@ interface WebhookPayload {
   old_record: null | MensajeRecord;
 }
 
+const URGENT_WORK_CHANNEL_ID = "urgent-work";
+const URGENT_WORK_SOUND = "urgent-work.wav";
+
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -57,7 +60,7 @@ Deno.serve(async (req) => {
     const [{ data: receptor }, { data: remitente }] = await Promise.all([
       supabase
         .from("usuarios")
-        .select("expo_token")
+        .select("expo_token, rol")
         .eq("id", receptorId)
         .maybeSingle(),
       supabase
@@ -75,8 +78,8 @@ Deno.serve(async (req) => {
     }
 
     const title = remitente?.nombre
-      ? `Nuevo mensaje de ${remitente.nombre}`
-      : "Nuevo mensaje";
+      ? `Trabajo urgente: ${remitente.nombre}`
+      : "Tenes trabajo urgente";
 
     const expoRes = await fetch("https://exp.host/--/api/v2/push/send", {
       method: "POST",
@@ -87,7 +90,8 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         to: receptor.expo_token,
         priority: "high",
-        sound: "default",
+        channelId: URGENT_WORK_CHANNEL_ID,
+        sound: URGENT_WORK_SOUND,
         title,
         body: msg.contenido,
         data: {
@@ -100,6 +104,20 @@ Deno.serve(async (req) => {
         },
       }),
     }).then((r) => r.json());
+
+    if (receptor.rol === "worker") {
+      await supabase.from("urgent_work_alerts").insert({
+        source: "chat_message",
+        worker_id: receptorId,
+        cliente_id: msg.remitente_id,
+        chat_id: msg.chat_id,
+        title,
+        body: msg.contenido || "Nuevo mensaje de trabajo. Respondelo cuanto antes.",
+        metadata: {
+          mensaje_id: msg.id,
+        },
+      });
+    }
 
     return new Response(JSON.stringify({ ok: true, expo: expoRes }), {
       headers: { "Content-Type": "application/json" },

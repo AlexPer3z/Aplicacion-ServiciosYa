@@ -77,7 +77,7 @@ function MoreSheetModal() {
     const isInstalled = await isWhatsAppInstalled();
     console.log(isInstalled);
     await openWhatsApp(
-      data.toString(),
+      String(data),
       `Hola, Soy ${nombre} tu cliente de TOORI Servicios Ya, antes de continuar me gustaría hacer una breve videollamada para confirmar tu identidad y coordinar el servicio. ¿Es posible? Saludos.`,
     );
   };

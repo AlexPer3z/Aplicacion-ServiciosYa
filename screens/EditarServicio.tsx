@@ -26,11 +26,11 @@ type Props = NativeStackScreenProps<MainStackParamList, "EditarServicio">;
 
 function EditarServicio({ route, navigation }: Props) {
   const { servicio } = route.params;
-  const [titulo, setTitulo] = useState(servicio.titulo);
-  const [descripcion, setDescripcion] = useState(servicio.descripcion);
+  const [titulo, setTitulo] = useState(servicio.titulo ?? "");
+  const [descripcion, setDescripcion] = useState(servicio.descripcion ?? "");
   const [precio, setPrecio] = useState(servicio.precio?.toString() || '');
-  const [horario, setHorario] = useState(servicio.horario);
-  const [categoria, setCategoria] = useState(servicio.categoria);
+  const [horario, setHorario] = useState(servicio.horario ?? "");
+  const [categoria, setCategoria] = useState(servicio.categoria ?? "");
 
   const handleActualizar = async () => {
     if (!titulo || !descripcion || !precio || !horario || !categoria) {
@@ -43,7 +43,7 @@ function EditarServicio({ route, navigation }: Props) {
       .update({
         titulo,
         descripcion,
-        precio,
+        precio: Number(precio),
         horario,
         categoria,
       })
@@ -104,7 +104,10 @@ function EditarServicio({ route, navigation }: Props) {
             />
             <LocationInput
               onChange={(value) => handleUpdateLocation(value)}
-              initialValue={{ lat: servicio.latitude, lng: servicio.longitude }}
+              initialValue={{
+                lat: servicio.latitud ?? 0,
+                lng: servicio.longitud ?? 0,
+              }}
             />
 
             <Text style={styles.labelInput}>Precio</Text>

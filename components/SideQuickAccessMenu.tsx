@@ -13,21 +13,23 @@ import { LinearGradient } from "expo-linear-gradient";
 
 interface QuickAccessItem {
   label: string;
+  subtitle: string;
   icon: keyof typeof Ionicons.glyphMap;
-  color: string;
+  gradient: [string, string, string];
+  badge: string;
   onPress: () => void;
 }
 
 interface SideQuickAccessMenuProps {
-  onToori360Press?: () => void;
-  onCrmPress?: () => void;
-  onFacturadorPress?: () => void;
+  onBuscarServicioPress?: () => void;
+  onOfrecerServicioPress?: () => void;
+  onB2BPress?: () => void;
 }
 
 const SideQuickAccessMenu: React.FC<SideQuickAccessMenuProps> = ({
-  onToori360Press,
-  onCrmPress,
-  onFacturadorPress,
+  onBuscarServicioPress,
+  onOfrecerServicioPress,
+  onB2BPress,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const progress = useRef(new Animated.Value(0)).current;
@@ -109,22 +111,28 @@ const SideQuickAccessMenu: React.FC<SideQuickAccessMenuProps> = ({
 
   const items: QuickAccessItem[] = [
     {
-      label: "Toori360",
-      icon: "globe-outline",
-      color: "#069eb3",
-      onPress: () => onToori360Press?.(),
+      label: "Buscar servicio",
+      subtitle: "Contale a MICA que necesitas",
+      icon: "search-outline",
+      gradient: ["#12c7dd", "#069eb3", "#047486"],
+      badge: "CLIENTE",
+      onPress: () => onBuscarServicioPress?.(),
     },
     {
-      label: "CRM",
-      icon: "people-outline",
-      color: "#fe971a",
-      onPress: () => onCrmPress?.(),
+      label: "Ofrecer servicio",
+      subtitle: "Arma tu perfil de prestador",
+      icon: "briefcase-outline",
+      gradient: ["#ffb04a", "#fe971a", "#d86f00"],
+      badge: "PRO",
+      onPress: () => onOfrecerServicioPress?.(),
     },
     {
-      label: "FacturadorIA",
-      icon: "receipt-outline",
-      color: "#19D4C6",
-      onPress: () => onFacturadorPress?.(),
+      label: "SolucionesYa B2B",
+      subtitle: "Para consorcios y empresas",
+      icon: "business-outline",
+      gradient: ["#48dfc8", "#19b7a7", "#08786f"],
+      badge: "B2B",
+      onPress: () => onB2BPress?.(),
     },
   ];
 
@@ -210,7 +218,7 @@ const SideQuickAccessMenu: React.FC<SideQuickAccessMenuProps> = ({
       <View style={styles.container}>
         {isOpen &&
           items.map((item, index) => {
-            const verticalOffset = -(75 + index * 68);
+            const verticalOffset = -(84 + index * 78);
 
             const translateY = progress.interpolate({
               inputRange: [0, 1],
@@ -241,19 +249,28 @@ const SideQuickAccessMenu: React.FC<SideQuickAccessMenuProps> = ({
                   onPress={() => handleItemPress(item.onPress)}
                   style={styles.itemRow}
                 >
-                  <View
-                    style={[
-                      styles.iconCircle,
-                      { backgroundColor: item.color },
-                    ]}
+                  <LinearGradient
+                    colors={item.gradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.itemCard}
                   >
-                    <Ionicons name={item.icon} size={20} color="#fff" />
-                  </View>
-                  <View style={styles.labelPill}>
-                    <Text style={styles.labelText} numberOfLines={1}>
-                      {item.label}
-                    </Text>
-                  </View>
+                    <View style={styles.iconCircle}>
+                      <Ionicons name={item.icon} size={21} color="#fff" />
+                    </View>
+                    <View style={styles.itemCopy}>
+                      <View style={styles.itemHeader}>
+                        <Text style={styles.badgeText}>{item.badge}</Text>
+                      </View>
+                      <Text style={styles.labelText} numberOfLines={1}>
+                        {item.label}
+                      </Text>
+                      <Text style={styles.subtitleText} numberOfLines={1}>
+                        {item.subtitle}
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={19} color="#fff" />
+                  </LinearGradient>
                 </TouchableOpacity>
               </Animated.View>
             );
@@ -276,6 +293,15 @@ const SideQuickAccessMenu: React.FC<SideQuickAccessMenuProps> = ({
             { transform: [{ scale: Animated.multiply(pulse, breathScale) }] },
           ]}
         >
+          {!isOpen && (
+            <Animated.View
+              style={[styles.mainCallout, { opacity: idleActive }]}
+              pointerEvents="none"
+            >
+              <Text style={styles.mainCalloutTitle}>MICA</Text>
+              <Text style={styles.mainCalloutText}>empeza aca</Text>
+            </Animated.View>
+          )}
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={toggleMenu}
@@ -296,11 +322,16 @@ const SideQuickAccessMenu: React.FC<SideQuickAccessMenuProps> = ({
                 }}
               >
                 <Ionicons
-                  name={isOpen ? "close" : "help"}
-                  size={28}
+                  name={isOpen ? "close" : "chatbubble-ellipses"}
+                  size={29}
                   color="#fff"
                 />
               </Animated.View>
+              {!isOpen && (
+                <View style={styles.spark}>
+                  <Ionicons name="sparkles" size={12} color="#ffffff" />
+                </View>
+              )}
             </LinearGradient>
           </TouchableOpacity>
         </Animated.View>
@@ -325,50 +356,79 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
+  itemCard: {
+    width: 250,
+    minHeight: 66,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingLeft: 10,
+    paddingRight: 9,
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.58)",
+    elevation: 8,
+    shadowColor: "#06333a",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.24,
+    shadowRadius: 10,
+  },
   iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 42,
+    height: 42,
+    borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
-    elevation: 6,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.34)",
   },
-  labelPill: {
+  itemCopy: {
+    flex: 1,
     marginLeft: 10,
-    backgroundColor: "#ffffff",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
+    marginRight: 6,
+  },
+  itemHeader: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginBottom: 2,
+  },
+  badgeText: {
+    color: "#ffffff",
+    fontSize: 9,
+    fontWeight: "900",
   },
   labelText: {
-    color: "#1f2937",
-    fontWeight: "600",
-    fontSize: 13,
+    color: "#ffffff",
+    fontWeight: "900",
+    fontSize: 15,
+  },
+  subtitleText: {
+    color: "rgba(255,255,255,0.88)",
+    fontWeight: "700",
+    fontSize: 11,
   },
   glowHalo: {
     position: "absolute",
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 62,
+    height: 62,
+    borderRadius: 31,
     backgroundColor: "#1ed4e8",
   },
-  mainButtonWrapper: {},
+  mainButtonWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   mainButtonTouch: {
-    borderRadius: 28,
+    borderRadius: 31,
   },
   mainButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 62,
+    height: 62,
+    borderRadius: 31,
     justifyContent: "center",
     alignItems: "center",
     elevation: 8,
@@ -377,6 +437,45 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
     shadowRadius: 8,
+  },
+  mainCallout: {
+    position: "absolute",
+    left: 70,
+    width: 112,
+    minHeight: 38,
+    borderRadius: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.94)",
+    borderWidth: 1,
+    borderColor: "rgba(6,158,179,0.28)",
+    elevation: 5,
+    shadowColor: "#06333a",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.16,
+    shadowRadius: 6,
+  },
+  mainCalloutTitle: {
+    color: "#069eb3",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  mainCalloutText: {
+    color: "#334155",
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  spark: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,161,60,0.95)",
   },
 });
 

@@ -68,7 +68,7 @@ export default function ServicioItem({
               style={[styles.workerName, isOnline && onlineTextStyle]}
               numberOfLines={1}
             >
-              {servicio.nombre}
+              {(servicio as any).nombre ?? ""}
             </Text>
 
             {workerStatus !== "OFFLINE" && (

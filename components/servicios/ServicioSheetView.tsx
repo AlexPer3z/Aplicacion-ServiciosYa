@@ -11,7 +11,7 @@ import { Suspense, useState } from "react";
 import { useMainNavigation } from "../../lib/hooks/useNavigation";
 import { useSuspenseProfile } from "../../lib/hooks/useUser";
 import { isGuest } from "../../lib/utils/user";
-import useContratar, { CONTRATAR_ERRORS } from "../../lib/hooks/useContratar";
+import useContratar from "../../lib/hooks/useContratar";
 import showToast from "../../lib/toast";
 import { useBottomSheetModal } from "@gorhom/bottom-sheet";
 import { useGrantAchievement } from "../../lib/services/achievements.services";
@@ -36,27 +36,13 @@ function ServicioSheetView({
     const { rol, isSuscriptor } = useSuspenseProfile();
     const [showFullDescription, setShowFullDescription] = useState(false);
     const { dismiss } = useBottomSheetModal();
-    const { creditos, mutate, isPending } = useContratar({
+    const { mutate, isPending } = useContratar({
         onSuccess: async () => {
             await checkService();
             dismiss();
             showToast.success("¡Éxito!", "Tu propuesta fue enviada.");
         },
         onError(error) {
-            if (error.message === CONTRATAR_ERRORS.NO_CREDITS) {
-                Alert.alert(
-                    "Sin créditos",
-                    "No tenés créditos disponibles. Vas a ser redirigido para comprar uno.",
-                    [
-                        {
-                            text: "Comprar crédito",
-                            onPress: () => navigation.navigate("PasarelaPago"),
-                        },
-                        { text: "Cancelar", style: "cancel" },
-                    ]
-                );
-                return;
-            }
             showToast.error("Error al contratar", error.message);
         },
     });
@@ -68,9 +54,9 @@ function ServicioSheetView({
 
     const handleVisitProfile = () => {
         navigation.navigate('WorkerProfile', {
-            id: servicio.user_id,
-            name: servicio.nombre,
-            profileImage: servicio.user_foto_perfil,
+            id: String(servicio.user_id ?? ""),
+            name: (servicio as any).nombre ?? "",
+            profileImage: (servicio as any).user_foto_perfil ?? (servicio as any).foto_perfil ?? "",
         });
     };
 
@@ -152,9 +138,9 @@ function ServicioSheetView({
                 {showProfile && (
                     <Suspense>
                         <ProviderInfoCard
-                            user={servicio.user_id}
-                            providerName={servicio.nombre}
-                            imageProfile={servicio.user_foto_perfil}
+                            user={String(servicio.user_id ?? "")}
+                            providerName={(servicio as any).nombre ?? ""}
+                            imageProfile={(servicio as any).user_foto_perfil ?? (servicio as any).foto_perfil ?? ""}
                             onPress={handleVisitProfile}
                         />
                     </Suspense>

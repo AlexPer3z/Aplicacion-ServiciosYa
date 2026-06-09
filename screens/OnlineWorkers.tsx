@@ -45,7 +45,7 @@ function OnlineWorkers() {
   const { data: services } = useSuspenseQuery({
     queryKey: ["user", "services", "online"],
     queryFn: async ({ client }): Promise<Servicio[]> => {
-      const locationParams = getLocationParamsFromClient(client);
+      const locationParams = await getLocationParamsFromClient(client);
       const { data, error } = await supabase.rpc(
         "get_servicios_with_online_workers",
         locationParams,

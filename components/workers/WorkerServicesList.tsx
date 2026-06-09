@@ -4,8 +4,9 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { MaterialIcons } from "@expo/vector-icons";
 import { userServiceListQueryOptions } from "../../lib/queryOptions";
 import colors from "../../lib/constants/colors";
@@ -24,12 +25,12 @@ const WorkerServicesList: React.FC<WorkerServicesListProps> = ({
   onServiceSelected,
 }) => {
   const { data: servicios = [], isLoading } = useQuery(
-  userServiceListQueryOptions(userId)
-);
+    userServiceListQueryOptions(userId),
+  );
 
-if (isLoading) {
-  return <ActivityIndicator />;
-}
+  if (isLoading) {
+    return <ActivityIndicator color={colors.primary} />;
+  }
 
 
   const renderServiceItem = (service: Servicio) => (
@@ -41,7 +42,7 @@ if (isLoading) {
     >
       <View style={styles.serviceImageContainer}>
         <View style={styles.iconWrapper}>
-          <CategoryIcon categoria={service.categoria} />
+          <CategoryIcon categoria={service.categoria ?? ""} />
         </View>
       </View>
 
@@ -50,7 +51,7 @@ if (isLoading) {
           {service.titulo}
         </Text>
         <Text style={styles.serviceCategory} numberOfLines={1}>
-          {service.categoria}
+          {service.categoria ?? "Sin categoria"}
         </Text>
 
         <View style={styles.scheduleContainer}>
@@ -61,7 +62,7 @@ if (isLoading) {
             style={styles.scheduleIcon}
           />
           <Text style={styles.scheduleText} numberOfLines={1}>
-            {service.horario}
+            {service.horario ?? "Horario a coordinar"}
           </Text>
         </View>
 
@@ -98,7 +99,7 @@ const styles = StyleSheet.create({
   servicesSectionTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: colors.text || "#111827",
+    color: colors.textPrimary || "#111827",
   },
   servicesGrid: {
     flexDirection: "row",
@@ -157,7 +158,7 @@ const styles = StyleSheet.create({
   serviceName: {
     fontSize: 14,
     fontWeight: "600",
-    color: colors.text || "#111827",
+    color: colors.textPrimary || "#111827",
     marginBottom: 4,
   },
   serviceCategory: { fontSize: 12, color: "#6b7280", marginBottom: 8 },

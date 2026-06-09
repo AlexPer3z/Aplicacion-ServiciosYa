@@ -25,6 +25,8 @@ expo-env.d.ts
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+*.log
+expo-web.*.log
 
 # macOS
 .DS_Store
@@ -32,9 +34,19 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
 
 # typescript
 *.tsbuildinfo
 
 # supabase
 supabase/.temp
+
+# local working folders and backups
+.omc/
+.tmp/
+_BACKUP_*/
+_FIXES/
+_seguridad_paso*/
+webhook (*.zip
+webhook (*)/

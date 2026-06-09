@@ -102,7 +102,7 @@ export default function RegistroCliente() {
   const siguiente = () => {
     if (validarPaso()) {
       if (step < 3) setStep(step + 1);
-      else navigation.navigate("pagoInicial"); // Finaliza el formulario
+      else navigation.navigate("Home"); // Finaliza el formulario sin cobro de registro
     }
   };
 
@@ -151,6 +151,8 @@ export default function RegistroCliente() {
 
         // Insertar en Supabase
         const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Usuario no autenticado");
+
     const { error: insertError } = await supabase.from("usuarios").update({
       nombre,
       apellido,
@@ -164,8 +166,9 @@ export default function RegistroCliente() {
       foto_perfil: urlFotoPerfil,
       perfil_completo: true,
       creditos: 0,
+      pago: true,
       dni_verificado: true
-    })
+    } as any)
     .eq("id", user.id);
 
     if (insertError) throw insertError;
@@ -427,6 +430,12 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 16,
     color: "#4A7C84",
+  },
+  label: {
+    fontSize: 15,
+    color: "#4A7C84",
+    fontWeight: "700",
+    marginBottom: 8,
   },
   leyenda: {
     fontSize: 19,

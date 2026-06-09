@@ -41,7 +41,7 @@ const fetchServiciosCatgoryByRadius = async (
   const { data, error } = await supabase.rpc("get_servicios_with_worker_status", {
     search_lat,
     search_lon,
-    categoria_filter,
+    p_categoria: categoria_filter,
     search_radius_meters,
   });
 

@@ -213,6 +213,10 @@ function OfertasView() {
   const [monto, setMonto] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [horarios, setHorarios] = useState("");
+  const [materiales, setMateriales] = useState("Materiales incluidos");
+  const [garantia, setGarantia] = useState("7 dias");
+  const [validez, setValidez] = useState("24 horas");
+  const [notas, setNotas] = useState("");
   const [enviando, setEnviando] = useState(false);
 
   const enviarPresupuesto = (oferta: any) => {
@@ -220,6 +224,10 @@ function OfertasView() {
     setMonto("");
     setDescripcion("");
     setHorarios("");
+    setMateriales("Materiales incluidos");
+    setGarantia("7 dias");
+    setValidez("24 horas");
+    setNotas("");
     setModalVisible(true);
   };
 
@@ -239,6 +247,15 @@ function OfertasView() {
         .single();
       const trabajadorId = userData?.id || user.id;
 
+      const descripcionCompleta = [
+        `Incluye: ${descripcion.trim()}`,
+        `Materiales: ${materiales.trim() || "A confirmar"}`,
+        `Tiempo disponible: ${horarios.trim()}`,
+        `Garantia: ${garantia.trim() || "Sin garantia especificada"}`,
+        `Validez: ${validez.trim() || "24 horas"}`,
+        notas.trim() ? `Notas: ${notas.trim()}` : null,
+      ].filter(Boolean).join("\n");
+
       const response = await responderPedidoMica({
         ofertaId: ofertaSeleccionada.id,
         appUserId: trabajadorId,
@@ -246,7 +263,7 @@ function OfertasView() {
         telefono: userData?.celular ? String(userData.celular) : null,
         accion: "presupuesto",
         monto: parseFloat(monto.replace(",", ".")),
-        descripcion: descripcion.trim(),
+        descripcion: descripcionCompleta,
         horariosDisponibles: horarios.trim(),
       });
 
@@ -416,7 +433,8 @@ function OfertasView() {
           style={styles.modalOverlay}
         >
           <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Enviar presupuesto</Text>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <Text style={styles.modalTitle}>Presupuesto profesional</Text>
             {ofertaSeleccionada && (
               <View style={[styles.ofertasInfoBox, { marginBottom: 16 }]}>
                 <MaterialIcons name="work-outline" size={18} color="#047a8f" />
@@ -426,7 +444,7 @@ function OfertasView() {
               </View>
             )}
 
-            <Text style={styles.modalLabel}>Monto ($)</Text>
+            <Text style={styles.modalLabel}>Monto final ($)</Text>
             <TextInput
               style={styles.modalInput}
               placeholder="Ej: 5000"
@@ -436,23 +454,65 @@ function OfertasView() {
               onChangeText={setMonto}
             />
 
-            <Text style={styles.modalLabel}>Descripción de tu propuesta</Text>
+            <Text style={styles.modalLabel}>Que incluye tu propuesta</Text>
             <TextInput
-              style={[styles.modalInput, { height: 80, textAlignVertical: "top" }]}
-              placeholder="Contá brevemente qué harías..."
+              style={[styles.modalInput, { height: 86, textAlignVertical: "top" }]}
+              placeholder="Ej: visita, diagnostico, reparacion, limpieza y prueba final"
               placeholderTextColor="#aaa"
               multiline
               value={descripcion}
               onChangeText={setDescripcion}
             />
 
-            <Text style={styles.modalLabel}>Horarios disponibles</Text>
+            <Text style={styles.modalLabel}>Materiales</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Incluidos / aparte / a confirmar"
+              placeholderTextColor="#aaa"
+              value={materiales}
+              onChangeText={setMateriales}
+            />
+
+            <Text style={styles.modalLabel}>Tiempo u horarios disponibles</Text>
             <TextInput
               style={styles.modalInput}
               placeholder="Ej: Lunes a viernes de 9 a 18hs"
               placeholderTextColor="#aaa"
               value={horarios}
               onChangeText={setHorarios}
+            />
+
+            <View style={styles.modalTwoColumns}>
+              <View style={styles.modalColumn}>
+                <Text style={styles.modalLabel}>Garantia</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Ej: 7 dias"
+                  placeholderTextColor="#aaa"
+                  value={garantia}
+                  onChangeText={setGarantia}
+                />
+              </View>
+              <View style={styles.modalColumn}>
+                <Text style={styles.modalLabel}>Validez</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Ej: 24 horas"
+                  placeholderTextColor="#aaa"
+                  value={validez}
+                  onChangeText={setValidez}
+                />
+              </View>
+            </View>
+
+            <Text style={styles.modalLabel}>Notas para el cliente</Text>
+            <TextInput
+              style={[styles.modalInput, { height: 72, textAlignVertical: "top" }]}
+              placeholder="Ej: no incluye repuestos especiales si aparecen piezas rotas"
+              placeholderTextColor="#aaa"
+              multiline
+              value={notas}
+              onChangeText={setNotas}
             />
 
             <TouchableOpacity
@@ -486,6 +546,7 @@ function OfertasView() {
             >
               <Text style={styles.modalCancelText}>Cerrar</Text>
             </TouchableOpacity>
+            </ScrollView>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -810,6 +871,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
     padding: 24,
     paddingBottom: 36,
+    maxHeight: "88%",
   },
   modalTitle: {
     fontSize: 20,
@@ -834,6 +896,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 15,
     color: "#222",
+  },
+  modalTwoColumns: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  modalColumn: {
+    flex: 1,
   },
   modalCancelBtn: {
     alignItems: "center",

@@ -8,6 +8,8 @@ export default function AppleSignInButton() {
   const [loading, setLoading] = React.useState(false);
 
   const handleAppleLogin = async () => {
+    if (loading) return;
+
     if (Platform.OS !== "ios") {
       Alert.alert("Disponible solo en iOS");
       return;
@@ -94,7 +96,6 @@ export default function AppleSignInButton() {
       cornerRadius={30}
       style={{ width: "100%", height: 55, paddingVertical: 15, borderRadius: 30 }}
       onPress={handleAppleLogin}
-      disabled={loading}
     />
   );
 }

@@ -165,7 +165,7 @@ try {
   await queryClient.invalidateQueries({ queryKey: perfilQueryKey });
   await completeProfile();
   Alert.alert('✅ Éxito', 'Datos guardados correctamente.');
-  navigation.navigate('pagoInicial');
+  navigation.navigate('Home');
 
 } catch (error) {
   console.log('Error al enviar:', error);

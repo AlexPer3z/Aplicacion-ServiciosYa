@@ -8,7 +8,7 @@ import React, {
 import {
   View,
   StyleSheet,
-  Linking} from "react-native";
+} from "react-native";
 import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -38,6 +38,7 @@ import { HomeEventRenderer } from "../components/home/HomeEventRenderer";
 import { useHomeEventsStore } from "../store/homeEventsStore";
 import usePrefetchData from "../lib/hooks/usePrefetchData";
 import WorkerHomeView from "../components/home/WorkerHomeView";
+import type { MicaChatMode } from "../types/navigation";
 
 type Props = NativeStackScreenProps<MainStackParamList, "Home">;
 
@@ -95,6 +96,10 @@ function Home({ navigation }: Props) {
     }).catch(() => {});
 
     navigation.navigate("ServiciosPorCategoria", { categoria });
+  };
+
+  const handleMicaModePress = (mode: MicaChatMode) => {
+    navigation.navigate("MicaChat", { mode });
   };
 
 
@@ -163,15 +168,9 @@ function Home({ navigation }: Props) {
           )}
 
           <SideQuickAccessMenu
-            onToori360Press={() =>
-              Linking.openURL("https://tooriserviciosya.com/toori360.php")
-            }
-            onCrmPress={() =>
-              Linking.openURL("https://tooriserviciosya.com/crm.php")
-            }
-            onFacturadorPress={() =>
-              Linking.openURL("https://tooriserviciosya.com/facturacion.php")
-            }
+            onBuscarServicioPress={() => handleMicaModePress("buscar-servicio")}
+            onOfrecerServicioPress={() => handleMicaModePress("ofrecer-servicio")}
+            onB2BPress={() => handleMicaModePress("b2b")}
           />
           <ChatBotModal
             visible={chatVisible}

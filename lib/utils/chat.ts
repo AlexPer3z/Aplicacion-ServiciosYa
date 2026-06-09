@@ -60,6 +60,7 @@ async function fetchUserChats() {
   // Agrupar mensajes por chat_id (vienen DESC, así que [0] es el último)
   const msgsByChat = new Map<string, typeof msgs>();
   for (const msg of msgs) {
+    if (!msg.chat_id) continue;
     const arr = msgsByChat.get(msg.chat_id) ?? [];
     arr.push(msg);
     msgsByChat.set(msg.chat_id, arr);

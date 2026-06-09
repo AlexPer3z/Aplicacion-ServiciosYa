@@ -12,14 +12,14 @@ import { MaterialIcons } from "@expo/vector-icons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 type LoadingIndicatorProps = {
-  loading: boolean;
+  loading?: boolean;
   size?: number;
   color?: string;
   children?: React.ReactNode;
 };
 
 const LoadingIndicator = ({
-  loading,
+  loading = true,
   size = 32,
   color = "#000",
   children,

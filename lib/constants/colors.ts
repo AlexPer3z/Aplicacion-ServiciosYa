@@ -11,8 +11,11 @@ const colors = {
   darkGray: "#3E3E3E",
   textPrimary: "#1A1A1A",
   textSecondary: "#5E5E5E",
+  text: "#1A1A1A",
+  border: "#E5E7EB",
   background: "#FFFFFF",
   surface: "#FFFFFF", // Added surface property
+  secondaryDark: "#C56F10",
 };
 
 export default colors;

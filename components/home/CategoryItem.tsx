@@ -17,7 +17,8 @@ interface CategoryIconProps {
 export const CategoryIcon = ({ categoria, iconoUrl }: CategoryIconProps) => {
   const [remoteFailed, setRemoteFailed] = useState(false);
   const remote = iconoUrl && !remoteFailed ? { uri: iconoUrl } : null;
-  const source = remote ?? iconosCategoria[categoria] ?? fallbackIcon;
+  const localIcons = iconosCategoria as Record<string, number>;
+  const source = remote ?? localIcons[categoria] ?? fallbackIcon;
   return (
     <View renderToHardwareTextureAndroid>
       <Image

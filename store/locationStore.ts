@@ -143,10 +143,11 @@ export const useLocationStore = create<LocationState>()(
                             effectiveLocation: ipLocation,
                             isLoading: false,
                         });
-                    } catch (e) {
+                    } catch (e: unknown) {
                         console.log(`Failed to resolve location: ${e}`);
+                        const message = e instanceof Error ? e.message : "Failed to resolve location";
                         set({
-                            error: e.message ?? "Failed to resolve location",
+                            error: message,
                             isLoading: false,
                         });
                     }

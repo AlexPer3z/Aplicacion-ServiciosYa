@@ -107,7 +107,7 @@ function ChatList() {
                     servicio: item.servicio,
                     usuarioId1: item.usuario_1,
                     usuarioId2: item.usuario_2,
-                    servicioId: item.servicio.id,
+                    servicioId: String(item.servicio.id ?? ""),
                 })}
                 onLongPress={handleEliminar}
             >

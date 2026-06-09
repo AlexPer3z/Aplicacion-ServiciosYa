@@ -1,11 +1,19 @@
 import React from "react";
-import { StyleSheet, View, Pressable, Text } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Pressable,
+  Text,
+  type LayoutChangeEvent,
+  type ViewStyle,
+} from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withTiming,
   withDelay,
+  type SharedValue,
 } from "react-native-reanimated";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -21,10 +29,25 @@ const DEFAULT_POSITION = { bottom: 50, right: 30 };
 const ICON_SIZE = 40;
 const ICON_OFFSET = 12;
 
+export type FloatingMenuButton = {
+  icon: string;
+  label: string;
+  onPress: () => void;
+};
+
+type FloatingMenuPosition = Pick<ViewStyle, "bottom" | "top" | "left" | "right">;
+
+type ActionButtonProps = {
+  isExpanded: SharedValue<boolean>;
+  index: number;
+  button: FloatingMenuButton;
+  position: FloatingMenuPosition;
+};
+
 // --- Child Action Button Component ---
-const ActionButton = ({ isExpanded, index, button, position }) => {
+const ActionButton = ({ isExpanded, index, button, position }: ActionButtonProps) => {
   const { icon, label, onPress } = button;
-  const [textWidth, setTextWidth] = React.useState(null);
+  const [textWidth, setTextWidth] = React.useState<number | null>(null);
 
   // Animation for the entire component (icon + label) to move up/down
   const containerAnimatedStyle = useAnimatedStyle(() => {
@@ -64,7 +87,7 @@ const ActionButton = ({ isExpanded, index, button, position }) => {
   }, [position]);
 
   // Measure text width using hidden text
-  const handleTextLayout = (event) => {
+  const handleTextLayout = (event: LayoutChangeEvent) => {
     const { width } = event.nativeEvent.layout;
     if (textWidth === null) {
       setTextWidth(width);
@@ -119,6 +142,9 @@ const ActionButton = ({ isExpanded, index, button, position }) => {
 export default function FloatingButtonMenu({
   buttons,
   position = DEFAULT_POSITION,
+}: {
+  buttons: FloatingMenuButton[];
+  position?: FloatingMenuPosition;
 }) {
   const isExpanded = useSharedValue(false);
 
@@ -135,7 +161,7 @@ export default function FloatingButtonMenu({
 
   return (
     <View style={[styles.menuContainer, position]}>
-      {buttons.map((button, index) => (
+      {buttons.map((button: FloatingMenuButton, index: number) => (
         <ActionButton
           key={button.label}
           isExpanded={isExpanded}

@@ -8,6 +8,8 @@ import {
 } from "react-native-google-places-autocomplete";
 import type { LocationItem } from "../../types/location"; // Adjust path if needed
 
+const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+
 interface CityInputProps {
   onCitySelected: (location: LocationItem) => void;
   placeholder?: string;

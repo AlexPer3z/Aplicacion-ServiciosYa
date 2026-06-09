@@ -244,14 +244,8 @@ export const LocationAutocomplete: FC<LocationAutocompleteProps> = ({
       loading={loading}
       useFilter={false} // We fetch from API
       debounce={0} // We handle our own debouncing
-      placeholder={placeholder}
       initialValue={initialValue} // {id: place_id, title: description}
-      // textInputProps={{
-      //   onFocus: () => {
-      //     // Potentially generate a new session token on focus if it wasn't set or is old
-      //     if (!sessionToken) setSessionToken(uuidv4());
-      //   }
-      // }}
+      textInputProps={{ placeholder }}
       clearOnFocus={false}
       closeOnBlur={true} // Personal preference
       closeOnSubmit={false}

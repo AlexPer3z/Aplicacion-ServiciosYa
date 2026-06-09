@@ -1,15 +1,17 @@
 import React, { useCallback, useRef, useEffect, memo } from "react";
 import CustomTextInput from "../inputs/CustomTextInput";
-import { TouchableOpacity, View, StyleSheet, Pressable, Text, Modal, TextInput, KeyboardAvoidingView, Platform, Animated } from "react-native";
+import { TouchableOpacity, View, StyleSheet, Pressable, Text, Modal, TextInput, KeyboardAvoidingView, Platform, Animated, ScrollView } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import MoreSheetModal from "./MoreSheetModal";
 import { theme } from "../../lib/constants/colors";
+import { createQuoteMessage } from "../../lib/utils/quoteMessage";
 
 interface ChatInputBarProps {
-  onSend: (message: string) => void;
+  onSend: (message: string) => void | Promise<void>;
+  serviceId?: string;
 }
 
 function ChatInputBar({ onSend }: ChatInputBarProps) {
@@ -17,6 +19,12 @@ function ChatInputBar({ onSend }: ChatInputBarProps) {
   const [sending, setSending] = React.useState(false);
   const [presupuestoVisible, setPresupuestoVisible] = React.useState(false);
   const [monto, setMonto] = React.useState("");
+  const [alcance, setAlcance] = React.useState("");
+  const [materiales, setMateriales] = React.useState("Materiales incluidos");
+  const [tiempo, setTiempo] = React.useState("A coordinar");
+  const [garantia, setGarantia] = React.useState("7 dias");
+  const [validez, setValidez] = React.useState("24 horas");
+  const [notas, setNotas] = React.useState("");
   const [enviandoPresupuesto, setEnviandoPresupuesto] = React.useState(false);
 
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
@@ -58,6 +66,16 @@ function ChatInputBar({ onSend }: ChatInputBarProps) {
   const MoreButtonPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
   }, []);
+
+  const resetQuoteForm = () => {
+    setMonto("");
+    setAlcance("");
+    setMateriales("Materiales incluidos");
+    setTiempo("A coordinar");
+    setGarantia("7 dias");
+    setValidez("24 horas");
+    setNotas("");
+  };
 
   return (
     <>
@@ -142,34 +160,119 @@ function ChatInputBar({ onSend }: ChatInputBarProps) {
       <Modal visible={presupuestoVisible} transparent animationType="fade" onRequestClose={() => setPresupuestoVisible(false)}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Enviar presupuesto</Text>
-            <Text style={styles.modalSubtitle}>Ingresá el monto en pesos</Text>
-            <View style={styles.montoRow}>
-              <Text style={styles.montoPrefix}>$</Text>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              <View style={styles.modalHeader}>
+                <View style={styles.modalIconBox}>
+                  <MaterialIcons name="receipt-long" size={22} color="#fff" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.modalTitle}>Presupuesto profesional</Text>
+                  <Text style={styles.modalSubtitle}>Completo, claro y listo para aceptar.</Text>
+                </View>
+              </View>
+
+              <Text style={styles.fieldLabel}>Monto final</Text>
+              <View style={styles.montoRow}>
+                <Text style={styles.montoPrefix}>$</Text>
+                <TextInput
+                  style={styles.montoInput}
+                  keyboardType="numeric"
+                  placeholder="0"
+                  placeholderTextColor="#90a4ae"
+                  value={monto}
+                  onChangeText={(t) => setMonto(t.replace(/[^0-9]/g, ""))}
+                  autoFocus
+                />
+              </View>
+
+              <Text style={styles.fieldLabel}>Que incluye el trabajo</Text>
               <TextInput
-                style={styles.montoInput}
-                keyboardType="numeric"
-                placeholder="0"
-                placeholderTextColor="#aaa"
-                value={monto}
-                onChangeText={(t) => setMonto(t.replace(/[^0-9]/g, ""))}
-                autoFocus
+                style={[styles.quoteInput, styles.quoteInputLarge]}
+                multiline
+                placeholder="Ej: visita, diagnostico, reparacion, limpieza y prueba final."
+                placeholderTextColor="#94a3b8"
+                value={alcance}
+                onChangeText={setAlcance}
               />
-            </View>
+
+              <View style={styles.fieldGrid}>
+                <View style={styles.fieldGridItem}>
+                  <Text style={styles.fieldLabel}>Materiales</Text>
+                  <TextInput
+                    style={styles.quoteInput}
+                    placeholder="Incluidos / aparte"
+                    placeholderTextColor="#94a3b8"
+                    value={materiales}
+                    onChangeText={setMateriales}
+                  />
+                </View>
+                <View style={styles.fieldGridItem}>
+                  <Text style={styles.fieldLabel}>Tiempo estimado</Text>
+                  <TextInput
+                    style={styles.quoteInput}
+                    placeholder="Hoy / 24 hs / 2 dias"
+                    placeholderTextColor="#94a3b8"
+                    value={tiempo}
+                    onChangeText={setTiempo}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.fieldGrid}>
+                <View style={styles.fieldGridItem}>
+                  <Text style={styles.fieldLabel}>Garantia</Text>
+                  <TextInput
+                    style={styles.quoteInput}
+                    placeholder="7 dias"
+                    placeholderTextColor="#94a3b8"
+                    value={garantia}
+                    onChangeText={setGarantia}
+                  />
+                </View>
+                <View style={styles.fieldGridItem}>
+                  <Text style={styles.fieldLabel}>Validez</Text>
+                  <TextInput
+                    style={styles.quoteInput}
+                    placeholder="24 horas"
+                    placeholderTextColor="#94a3b8"
+                    value={validez}
+                    onChangeText={setValidez}
+                  />
+                </View>
+              </View>
+
+              <Text style={styles.fieldLabel}>Notas para el cliente</Text>
+              <TextInput
+                style={[styles.quoteInput, styles.quoteInputLarge]}
+                multiline
+                placeholder="Ej: no incluye repuestos especiales si se detectan piezas rotas."
+                placeholderTextColor="#94a3b8"
+                value={notas}
+                onChangeText={setNotas}
+              />
+            </ScrollView>
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => { setPresupuestoVisible(false); setMonto(""); }}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => { setPresupuestoVisible(false); resetQuoteForm(); }}>
                 <Text style={styles.modalCancelText}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalSendBtn, (!monto || enviandoPresupuesto) && { opacity: 0.5 }]}
-                disabled={!monto || enviandoPresupuesto}
+                style={[styles.modalSendBtn, (!monto || !alcance.trim() || enviandoPresupuesto) && { opacity: 0.5 }]}
+                disabled={!monto || !alcance.trim() || enviandoPresupuesto}
                 onPress={async () => {
-                  if (!monto) return;
+                  if (!monto || !alcance.trim()) return;
                   setEnviandoPresupuesto(true);
                   try {
-                    await onSend(`💰 Presupuesto: $${Number(monto).toLocaleString("es-AR")}`);
+                    await onSend(createQuoteMessage({
+                      amount: Number(monto),
+                      scope: alcance.trim(),
+                      materials: materiales.trim() || "A confirmar",
+                      timeframe: tiempo.trim() || "A coordinar",
+                      warranty: garantia.trim() || "Sin garantia especificada",
+                      validUntil: validez.trim() || "24 horas",
+                      notes: notas.trim() || undefined,
+                    }));
                     setPresupuestoVisible(false);
-                    setMonto("");
+                    resetQuoteForm();
                   } finally {
                     setEnviandoPresupuesto(false);
                   }
@@ -229,16 +332,23 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   presupuestoBtnText: { fontSize: 15, fontWeight: "800", color: "#fff", letterSpacing: 0.2 },
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", alignItems: "center", padding: 24 },
-  modalBox: { backgroundColor: "#fff", borderRadius: 20, padding: 24, width: "100%", maxWidth: 360, shadowColor: "#000", shadowOpacity: 0.15, shadowOffset: { width: 0, height: 6 }, shadowRadius: 16, elevation: 8 },
-  modalTitle: { fontSize: 18, fontWeight: "800", color: "#222", marginBottom: 4 },
-  modalSubtitle: { fontSize: 13, color: "#888", marginBottom: 20 },
-  montoRow: { flexDirection: "row", alignItems: "center", borderWidth: 1.5, borderColor: "#a8dfe8", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 20, backgroundColor: "#f0f8fa" },
-  montoPrefix: { fontSize: 22, fontWeight: "700", color: "#047a8f", marginRight: 4 },
-  montoInput: { flex: 1, fontSize: 22, fontWeight: "700", color: "#222" },
-  modalActions: { flexDirection: "row", gap: 10 },
-  modalCancelBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1.5, borderColor: "#ddd", alignItems: "center" },
-  modalCancelText: { fontSize: 15, fontWeight: "600", color: "#888" },
-  modalSendBtn: { flex: 1, flexDirection: "row", gap: 6, paddingVertical: 12, borderRadius: 12, backgroundColor: "#069eb3", alignItems: "center", justifyContent: "center" },
+  modalOverlay: { flex: 1, backgroundColor: "rgba(7,18,28,0.58)", justifyContent: "center", alignItems: "center", padding: 18 },
+  modalBox: { backgroundColor: "#fff", borderRadius: 8, padding: 16, width: "100%", maxWidth: 440, maxHeight: "88%", shadowColor: "#000", shadowOpacity: 0.16, shadowOffset: { width: 0, height: 8 }, shadowRadius: 18, elevation: 8 },
+  modalHeader: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 14 },
+  modalIconBox: { width: 44, height: 44, borderRadius: 8, alignItems: "center", justifyContent: "center", backgroundColor: "#047a8f" },
+  modalTitle: { fontSize: 18, fontWeight: "900", color: "#102a35", marginBottom: 3 },
+  modalSubtitle: { fontSize: 13, color: "#64748b" },
+  fieldLabel: { fontSize: 12, fontWeight: "800", color: "#38515d", marginBottom: 6, marginTop: 8 },
+  fieldGrid: { flexDirection: "row", gap: 10 },
+  fieldGridItem: { flex: 1 },
+  montoRow: { flexDirection: "row", alignItems: "center", borderWidth: 1.5, borderColor: "#8dd4df", borderRadius: 8, paddingHorizontal: 14, paddingVertical: 9, marginBottom: 4, backgroundColor: "#f1fbfd" },
+  montoPrefix: { fontSize: 22, fontWeight: "900", color: "#047a8f", marginRight: 4 },
+  montoInput: { flex: 1, fontSize: 23, fontWeight: "900", color: "#102a35", paddingVertical: 0 },
+  quoteInput: { minHeight: 44, borderWidth: 1, borderColor: "#d6e6ea", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, color: "#102a35", backgroundColor: "#fbfdfe", fontSize: 14, fontWeight: "600" },
+  quoteInputLarge: { minHeight: 78, textAlignVertical: "top" },
+  modalActions: { flexDirection: "row", gap: 10, marginTop: 14 },
+  modalCancelBtn: { flex: 1, paddingVertical: 12, borderRadius: 8, borderWidth: 1.5, borderColor: "#d7e2e5", alignItems: "center", backgroundColor: "#fff" },
+  modalCancelText: { fontSize: 15, fontWeight: "800", color: "#667085" },
+  modalSendBtn: { flex: 1, flexDirection: "row", gap: 6, paddingVertical: 12, borderRadius: 8, backgroundColor: "#069eb3", alignItems: "center", justifyContent: "center" },
   modalSendText: { fontSize: 15, fontWeight: "700", color: "#fff" },
 });

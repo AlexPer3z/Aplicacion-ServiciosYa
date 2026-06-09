@@ -20,6 +20,8 @@ import { supabase } from "../lib/supabase";
 import ChatInputBar from "../components/chat/ChatInputBar";
 import BotonVolver from "../components/BotonVolver";
 import { withModalProvider } from "../components/sheet/withModalProvider";
+import { parseQuoteMessage, formatQuoteAmount } from "../lib/utils/quoteMessage";
+import { calculateServiceConfirmationFee } from "../lib/constants/billing";
 
 function ChatIndividual({ route }) {
   const { chatId, nombre, servicio, usuarioId1, usuarioId2, servicioId } = route.params;
@@ -257,18 +259,45 @@ function ChatIndividual({ route }) {
     }
 
     const esMio = item.remitente_id === usuarioId;
-    const esPresupuesto = typeof item.contenido === 'string' && item.contenido.startsWith('💰 Presupuesto:');
-    const montoMatch = esPresupuesto && item.contenido.match(/\$([\d.,]+)/);
-    const montoNumerico = montoMatch ? parseFloat(montoMatch[1].replace(/\./g, '').replace(',', '.')) : 0;
+    const quote = parseQuoteMessage(item.contenido);
+    const esPresupuestoTexto = typeof item.contenido === 'string' && item.contenido.startsWith('💰 Presupuesto:');
+    const montoMatch = esPresupuestoTexto && item.contenido.match(/\$([\d.,]+)/);
+    const montoNumerico = quote?.amount ?? (montoMatch ? parseFloat(montoMatch[1].replace(/\./g, '').replace(',', '.')) : 0);
+    const esPresupuesto = Boolean(quote) || esPresupuestoTexto;
 
     return (
       <View
         style={[
-          styles.mensajeContainer,
+          quote ? styles.quoteMessageContainer : styles.mensajeContainer,
           esMio ? styles.mensajeDerecha : styles.mensajeIzquierda,
         ]}
       >
-        <Text style={styles.textoMensaje}>{item.contenido}</Text>
+        {quote ? (
+          <View style={styles.quoteCard}>
+            <View style={styles.quoteHeader}>
+              <View>
+                <Text style={styles.quoteEyebrow}>Presupuesto completo</Text>
+                <Text style={styles.quoteTitle}>Propuesta profesional</Text>
+              </View>
+              <View style={styles.quoteBadge}>
+                <Ionicons name="shield-checkmark" size={15} color="#047a8f" />
+                <Text style={styles.quoteBadgeText}>App segura</Text>
+              </View>
+            </View>
+
+            <Text style={styles.quoteAmount}>{formatQuoteAmount(quote.amount)}</Text>
+
+            <View style={styles.quoteDivider} />
+            <QuoteRow icon="construct-outline" label="Incluye" value={quote.scope} />
+            <QuoteRow icon="cube-outline" label="Materiales" value={quote.materials} />
+            <QuoteRow icon="time-outline" label="Tiempo" value={quote.timeframe} />
+            <QuoteRow icon="ribbon-outline" label="Garantia" value={quote.warranty} />
+            <QuoteRow icon="calendar-outline" label="Validez" value={quote.validUntil} />
+            {quote.notes ? <QuoteRow icon="document-text-outline" label="Notas" value={quote.notes} /> : null}
+          </View>
+        ) : (
+          <Text style={styles.textoMensaje}>{item.contenido}</Text>
+        )}
         {esPresupuesto && !esMio && (
           <TouchableOpacity
             style={styles.pagarBtn}
@@ -278,7 +307,7 @@ function ChatIndividual({ route }) {
           >
             <Ionicons name="card-outline" size={15} color="#fff" />
             <Text style={styles.pagarBtnText}>
-              {pagando ? 'Procesando...' : `Pagar 15% para habilitar WhatsApp ($${Math.round(montoNumerico * 0.15).toLocaleString('es-AR')})`}
+              {pagando ? 'Procesando...' : `Confirmar presupuesto y habilitar WhatsApp ($${Math.round(calculateServiceConfirmationFee(montoNumerico)).toLocaleString('es-AR')})`}
             </Text>
           </TouchableOpacity>
         )}
@@ -331,7 +360,7 @@ function ChatIndividual({ route }) {
   const pagarPresupuesto = async (montoTotal) => {
     setPagando(true);
     try {
-      const comision = Math.round(montoTotal * 0.15 * 100) / 100;
+      const comision = calculateServiceConfirmationFee(montoTotal);
       const res = await fetch('https://api.mercadopago.com/checkout/preferences', {
         method: 'POST',
         headers: {
@@ -340,7 +369,7 @@ function ChatIndividual({ route }) {
         },
         body: JSON.stringify({
           items: [{
-            title: 'Habilitación WhatsApp - 15% del presupuesto',
+            title: 'Confirmación de presupuesto - 15%',
             quantity: 1,
             unit_price: comision,
             currency_id: 'ARS',
@@ -423,6 +452,20 @@ function ChatIndividual({ route }) {
 }
 
 export default withModalProvider(ChatIndividual);
+
+function QuoteRow({ icon, label, value }) {
+  return (
+    <View style={styles.quoteRow}>
+      <View style={styles.quoteRowIcon}>
+        <Ionicons name={icon} size={15} color="#047a8f" />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.quoteRowLabel}>{label}</Text>
+        <Text style={styles.quoteRowValue}>{value}</Text>
+      </View>
+    </View>
+  );
+}
 
 function ChatRules() {
   const rules = [
@@ -537,6 +580,17 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowRadius: 2,
   },
+  quoteMessageContainer: {
+    maxWidth: "92%",
+    padding: 4,
+    borderRadius: 10,
+    marginVertical: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 2,
+  },
   mensajeDerecha: {
     alignSelf: "flex-end",
     backgroundColor: "#19D4C6",
@@ -550,6 +604,86 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "500",
     letterSpacing: 0.1,
+  },
+  quoteCard: {
+    width: "100%",
+    minWidth: 286,
+    borderRadius: 8,
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#d5eef2",
+    padding: 14,
+  },
+  quoteHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 10,
+  },
+  quoteEyebrow: {
+    color: "#047a8f",
+    fontSize: 11,
+    fontWeight: "900",
+    textTransform: "uppercase",
+  },
+  quoteTitle: {
+    color: "#102a35",
+    fontSize: 16,
+    fontWeight: "900",
+    marginTop: 2,
+  },
+  quoteBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderRadius: 8,
+    backgroundColor: "#e8fbf7",
+    borderWidth: 1,
+    borderColor: "#b9ece7",
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+  },
+  quoteBadgeText: {
+    color: "#047a8f",
+    fontSize: 11,
+    fontWeight: "900",
+  },
+  quoteAmount: {
+    color: "#102a35",
+    fontSize: 30,
+    fontWeight: "900",
+    marginTop: 12,
+  },
+  quoteDivider: {
+    height: 1,
+    backgroundColor: "#e5f2f4",
+    marginVertical: 12,
+  },
+  quoteRow: {
+    flexDirection: "row",
+    gap: 9,
+    marginBottom: 10,
+  },
+  quoteRowIcon: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#eefbfd",
+  },
+  quoteRowLabel: {
+    color: "#64748b",
+    fontSize: 11,
+    fontWeight: "900",
+    textTransform: "uppercase",
+    marginBottom: 2,
+  },
+  quoteRowValue: {
+    color: "#1f3540",
+    fontSize: 13.5,
+    lineHeight: 19,
+    fontWeight: "600",
   },
   pagarBtn: {
     flexDirection: "row",

@@ -89,7 +89,7 @@ export default function HelpVideoModal({
 
           <Video
             ref={videoRef}
-            source={videoSource}
+            source={{ uri: videoSource }}
             style={styles.video}
             resizeMode={ResizeMode.CONTAIN}
             shouldPlay

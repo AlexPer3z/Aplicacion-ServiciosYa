@@ -10,29 +10,34 @@ import {
   Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { supabase } from "../lib/supabase";
 import { AuthContext } from "../lib/context/AppContext";
 import BotonVolver from "../components/BotonVolver";
-import type { NotificacionRow } from "../types/db.overrides.types";
+import type { NotificacionRow, ServicioRow } from "../types/db.overrides.types";
+import type { MainStackParamList } from "../types/navigation";
 import vexo from "../lib/vexo";
 import { getUserID } from "../store/authStore";
 import { useQuery } from "@tanstack/react-query";
 import { userNotificationsQueryOptions } from "../lib/utils/notificationes";
 
+type NotificationItem = NotificacionRow & { foto_perfil?: string | null };
+type Navigation = NativeStackNavigationProp<MainStackParamList>;
+
 export default function Notificaciones() {
-  const [notificaciones, setNotificaciones] = useState<NotificacionRow[]>([]);
-  const { data, isLoading, refetch, isFetched } = useQuery({ ...userNotificationsQueryOptions, staleTime: 200, refetchOnMount: true })
-  const navigation = useNavigation();
+  const [notificaciones, setNotificaciones] = useState<NotificationItem[]>([]);
+  const { data, isFetched } = useQuery({ ...userNotificationsQueryOptions, staleTime: 200, refetchOnMount: true })
+  const navigation = useNavigation<Navigation>();
 
   const { loadUnreadMessages } = useContext(AuthContext);
 
   useEffect(() => {
     if (data && isFetched) {
-      setNotificaciones(data);
+      setNotificaciones(data as NotificationItem[]);
     }
   }, [data, isFetched])
 
-  const marcarComoLeida = async (id) => {
+  const marcarComoLeida = async (id: string) => {
     const { error } = await supabase
       .from("notificaciones")
       .update({ leido: true })
@@ -45,7 +50,7 @@ export default function Notificaciones() {
     }
   };
 
-  const eliminarNotificacion = async (id) => {
+  const eliminarNotificacion = async (id: string) => {
     const { error } = await supabase
       .from("notificaciones")
       .delete()
@@ -70,52 +75,11 @@ export default function Notificaciones() {
   const aceptarNotificacion = async (notificacion: NotificacionRow) => {
     const userId = getUserID();
 
-    if (!notificacion?.emisor_id || !notificacion?.id) {
+    if (!userId || !notificacion?.emisor_id || !notificacion?.id) {
       Alert.alert("Error", "Faltan datos de la notificación.");
       return;
     }
     vexo.accept(notificacion.servicio_id ?? "");
-
-    // Obtener info usuario una sola vez
-    const { data: usuarioActual, error: errorUsuario } = await supabase
-      .from("usuarios")
-      .select("creditos, suscriptor")
-      .eq("id", userId)
-      .single();
-
-    if (errorUsuario || !usuarioActual) {
-      Alert.alert("Error", "No se pudo obtener la información del usuario.");
-      return;
-    }
-
-    // Si NO es suscriptor, verificar y descontar créditos
-    if (!usuarioActual.suscriptor) {
-      if (usuarioActual.creditos <= 0) {
-        Alert.alert(
-          "Sin créditos",
-          "No tenés créditos disponibles. Vas a ser redirigido para comprar uno.",
-          [
-            {
-              text: "Comprar crédito",
-              onPress: () => navigation.navigate("PasarelaPago"),
-            },
-            { text: "Cancelar", style: "cancel" },
-          ],
-        );
-        return;
-      }
-
-      // Restar 1 crédito
-      const { error: errorActualizarCreditos } = await supabase
-        .from("usuarios")
-        .update({ creditos: usuarioActual.creditos - 1 })
-        .eq("id", userId);
-
-      if (errorActualizarCreditos) {
-        Alert.alert("Error", "No se pudo actualizar los créditos.");
-        return;
-      }
-    }
 
     // Continuar con el resto del flujo normalmente
     const { error: errorEstado } = await supabase
@@ -231,11 +195,15 @@ Este chat ha sido creado exclusivamente para que puedas coordinar y acordar los 
       .eq("id", otroUsuarioId)
       .single();
 
-    const { data: servicio } = await supabase
-      .from("servicios")
-      .select("id, titulo, descripcion, categoria, horario")
-      .eq("id", notificacion.servicio_id)
-      .single();
+    const servicioId = notificacion.servicio_id ?? "";
+    const servicioIdNumber = Number(servicioId);
+    const { data: servicio } = Number.isFinite(servicioIdNumber)
+      ? await supabase
+          .from("servicios")
+          .select("id, titulo, descripcion, categoria, horario")
+          .eq("id", servicioIdNumber)
+          .maybeSingle()
+      : { data: null };
 
     loadUnreadMessages();
     navigation.navigate("ChatIndividual", {
@@ -243,14 +211,14 @@ Este chat ha sido creado exclusivamente para que puedas coordinar y acordar los 
       nombre: servicio
         ? `${usuario?.nombre || "Desconocido"} - ${servicio.titulo}`
         : usuario?.nombre || "Desconocido",
-      servicio: servicio,
+      servicio: (servicio ?? {}) as Partial<ServicioRow>,
       usuarioId1: participantA,
       usuarioId2: participantB,
-      servicioId: notificacion.servicio_id,
+      servicioId,
     });
   };
 
-  const rechazarNotificacion = async (id) => {
+  const rechazarNotificacion = async (id: string) => {
     const { error } = await supabase
       .from("notificaciones")
       .update({ estado: "rechazado" })
@@ -264,7 +232,7 @@ Este chat ha sido creado exclusivamente para que puedas coordinar y acordar los 
     }
   };
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({ item }: { item: NotificationItem }) => (
     <View style={[styles.item, !item.leido && styles.noLeido]}>
       {item.foto_perfil && (
         <Image source={{ uri: item.foto_perfil }} style={styles.fotoPerfil} />

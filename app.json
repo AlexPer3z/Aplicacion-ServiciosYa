@@ -8,7 +8,7 @@
       "android",
       "web"
     ],
-    "version": "87.0.0",
+    "version": "88.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -22,12 +22,14 @@
       "assets/icon.png",
       "assets/splash-icon.png",
       "assets/adaptive-icon.png",
-      "assets/favicon.png"
+      "assets/favicon.png",
+      "assets/sounds/*"
     ],
     "experiments": {
       "reactCompiler": true
     },
     "ios": {
+      "buildNumber": "88",
       "supportsTablet": false,
       "usesAppleSignIn": true,
       "infoPlist": {
@@ -49,7 +51,7 @@
       "associatedDomains": ["applinks:inicio.serviciosya.info"]
     },
     "android": {
-      "versionCode": 87,
+      "versionCode": 88,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -61,7 +63,9 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.VIBRATE"
       ],
       "intentFilters": [
         {
@@ -90,7 +94,12 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "sounds": ["./assets/sounds/urgent-work.wav"]
+        }
+      ],
       "expo-secure-store",
       "expo-apple-authentication",
       "@maplibre/maplibre-react-native",

@@ -36,7 +36,7 @@ const workStatusDescriptions: Record<WorkerStatus, string> = {
 // Dummy async function to simulate status update
 async function updateWorkerStatus(status: WorkerStatus, client: QueryClient) {
   const user = getUserFromClient(client);
-  const location = getLocationParamsFromClient(client);
+  const location = await getLocationParamsFromClient(client);
   
   const { error } = await supabase.from("workers").upsert(
     {

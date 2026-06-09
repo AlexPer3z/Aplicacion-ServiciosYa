@@ -35,6 +35,7 @@ import InicioRouter from '../screens/InicioRouter';
 import WorkerProfile from "../components/workers/WorkerProfile";
 import { useInitializeHomeEvents } from "../lib/hooks/useInitializeHomeEvents";
 import ChatListScreen from "../screens/ChatListScreen";
+import MicaChat from "../screens/MicaChat";
 
 const withSafeArea = <P extends object>(Component: FC<P>) => {
   const WrappedComponent: FC<P> = (props: PropsWithChildren<P>) => (
@@ -88,6 +89,7 @@ export default function MainStackNavigator() {
         options={{ headerShown: false }}
       />
       <Stack.Screen name="ChatIA" component={withSafeArea(ChatListScreen)} />
+      <Stack.Screen name="MicaChat" component={MicaChat} />
       <Stack.Screen
         name="ChatIndividual"
         component={withSafeArea(ChatIndividual)}

@@ -11,6 +11,8 @@ import logo from '../assets/logo.png';
 // import useAuthSession from '../lib/hooks/useAuthSession';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { AuthStackParamList } from '../types/navigation';
 
 import AppleSignInButton from "../components/AppleSignInButton"; 
 import vexo from '../lib/vexo';
@@ -18,7 +20,19 @@ import { useGoogleAuth } from './useGoogleAuth';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const LoginButton = ({ icon, label, onPress, style = {} }) => (
+type LoginSelectProps = NativeStackScreenProps<AuthStackParamList, "LoginSelect">;
+
+const LoginButton = ({
+  icon,
+  label,
+  onPress,
+  style = {},
+}: {
+  icon: React.ComponentProps<typeof MaterialIcons>["name"];
+  label: string;
+  onPress: () => void;
+  style?: object;
+}) => (
   <TouchableOpacity
     style={[styles.loginButton, style]}
     onPress={onPress}
@@ -31,13 +45,13 @@ const LoginButton = ({ icon, label, onPress, style = {} }) => (
   </TouchableOpacity>
 );
 
-const ErrorBox = ({ message }) => (
+const ErrorBox = ({ message }: { message: string }) => (
   <View style={styles.errorBox}>
     <Text style={styles.errorText}>{message}</Text>
   </View>
 );
 
-export default function LoginSelect({ navigation }) {
+export default function LoginSelect({ navigation }: LoginSelectProps) {
   const [errorMessage, setErrorMessage] = useState('');
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
@@ -78,7 +92,7 @@ export default function LoginSelect({ navigation }) {
   //   }
   // };
   
-  const handleLoginGoogle = async (errorResponse, response) => {
+  const handleLoginGoogle = async (errorResponse: string | null, response: any) => {
     if (errorResponse) {
       setErrorMessage(errorResponse);
       return;
@@ -148,7 +162,7 @@ export default function LoginSelect({ navigation }) {
       return;
     }
 
-    navigation.reset({
+    (navigation as any).reset({
       index: 0,
       routes: [{ name: 'InicioRouter' }],
     });
@@ -238,7 +252,7 @@ export default function LoginSelect({ navigation }) {
 
         </View>
 
-        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+        <TouchableOpacity onPress={() => navigation.navigate('Register', {})}>
           <Text style={styles.registerText}>¿No tienes cuenta? Regístrate</Text>
         </TouchableOpacity>
 

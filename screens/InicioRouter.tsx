@@ -1,47 +1,49 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { supabase } from '../lib/supabase'; // ajustá el path si es necesario
-import { getUserID } from '../store/authStore';
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { supabase } from "../lib/supabase";
+import { getUserID } from "../store/authStore";
+import type { MainStackParamList } from "../types/navigation";
 
 export default function InicioRouter() {
-  const navigation = useNavigation();
-  const [loading, setLoading] = useState(true);
+  const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
+  const [loading] = useState(true);
 
   useEffect(() => {
     const verificarRuta = async () => {
       const userId = getUserID();
 
+      if (!userId) {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "RegistroTrabajador" }],
+        });
+        return;
+      }
+
       const { data, error } = await supabase
-        .from('usuarios')
-        .select('perfil_completo')
-        .eq('id', userId)
+        .from("usuarios")
+        .select("perfil_completo")
+        .eq("id", userId)
         .single();
 
-      if (error || !data) {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'RegistroTrabajador' }],
-        });
-      } else if (data.perfil_completo === true) {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Home' }],
-        });
-      } else {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'RegistroTrabajador' }],
-        });
-      }
+      navigation.reset({
+        index: 0,
+        routes: [
+          {
+            name: !error && data?.perfil_completo ? "Home" : "RegistroTrabajador",
+          },
+        ],
+      });
     };
 
     verificarRuta();
-  }, []);
+  }, [navigation]);
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <ActivityIndicator size="large" color="#FFA13C" />
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      {loading ? <ActivityIndicator size="large" color="#FFA13C" /> : null}
     </View>
   );
 }

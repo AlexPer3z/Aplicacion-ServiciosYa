@@ -102,7 +102,6 @@ export async function getLocationParamsFromClient(
       console.log("⏳ Obteniendo nueva ubicación GPS...");
       const location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
-        timeout: 10000,
       });
       coords = location.coords;
     }
@@ -118,7 +117,9 @@ export async function getLocationParamsFromClient(
     return {
       search_lat: coords.latitude,
       search_lon: coords.longitude,
-      search_radius_meters: settings?.searchRadius ?? 5000,
+      search_radius_meters:
+        (settings as { searchRadius?: number } | null | undefined)
+          ?.searchRadius ?? 5000,
     };
   } catch (e) {
     console.warn("Error obteniendo ubicación:", e);

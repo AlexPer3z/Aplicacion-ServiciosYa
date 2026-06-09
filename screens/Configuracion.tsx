@@ -10,7 +10,7 @@ import {
   Linking,
 } from "react-native";
 import { supabase } from "../lib/supabase";
-import { removeAuthSession } from "../lib/storage";
+import { removeCredentials } from "../lib/storage";
 import { useUserSettings } from "../lib/hooks/useUserSettings";
 import BotonVolver from "../components/BotonVolver";
 import { FontAwesome } from "@expo/vector-icons";
@@ -41,7 +41,7 @@ function Configuracion({ navigation }: Props) {
 
   const { settings } = useUserSettings();
 
-  const validarContrasena = (password) => {
+  const validarContrasena = (password: string) => {
     const minLength = 8;
     const hasUpperCase = /[A-Z]/.test(password);
     const hasNumber = /\d/.test(password);
@@ -55,11 +55,11 @@ function Configuracion({ navigation }: Props) {
     };
   };
 
-  const verificarContraseñas = (password, confirmPassword) => {
+  const verificarContraseñas = (password: string, confirmPassword: string) => {
     setPasswordMatch(password === confirmPassword);
   };
 
-  const handlePasswordChange = (password) => {
+  const handlePasswordChange = (password: string) => {
     setPassword(password);
     const valid = validarContrasena(password);
     setPasswordValid(
@@ -68,7 +68,7 @@ function Configuracion({ navigation }: Props) {
     verificarContraseñas(password, confirmPassword);
   };
 
-  const handleConfirmPasswordChange = (confirmPassword) => {
+  const handleConfirmPasswordChange = (confirmPassword: string) => {
     setConfirmPassword(confirmPassword);
     verificarContraseñas(password, confirmPassword);
   };
@@ -150,7 +150,7 @@ function Configuracion({ navigation }: Props) {
             }
 
             const { error: deleteError } = await supabase.rpc(
-              "eliminar_usuario",
+              "delete_user",
               {
                 uid: user.user.id,
               },
@@ -162,8 +162,8 @@ function Configuracion({ navigation }: Props) {
             }
 
             await supabase.auth.signOut();
-            await removeAuthSession();
-            navigation.reset({
+            await removeCredentials();
+            (navigation as any).reset({
               index: 0,
               routes: [{ name: "Login" }],
             });

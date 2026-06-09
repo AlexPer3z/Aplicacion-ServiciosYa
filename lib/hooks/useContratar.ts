@@ -1,12 +1,15 @@
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useSuspenseProfile } from "./useUser";
-import { userCreditQueryOptions } from "../queryOptions";
 import type { Servicio } from "../../types/servicios";
 import { supabase } from "../supabase";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
 import { isGuest } from "../utils/user";
 import vexo from "../vexo";
+import {
+    createUrgentWorkAlert,
+    sendUrgentWorkPush,
+} from "../utils/urgentWorkNotification";
 
 export const CONTRATAR_ERRORS = {
     GUEST_USER: "Los usuarios invitados no pueden contratar servicios.",
@@ -38,10 +41,7 @@ export interface UseContratarProps {
  * @returns Un objeto con los créditos del usuario y las propiedades de la mutación de `react-query`.
  */
 export default function useContratar({ onSuccess, onError }: UseContratarProps = {}) {
-    const queryClient = useQueryClient();
     const user = useSuspenseProfile();
-    const { data: creditos } = useSuspenseQuery(userCreditQueryOptions(user.id));
-
     // Cada vez que este activa el screen donde es utilizado este hook, se va actualizar el perfil del usuario
     useFocusEffect(
         useCallback(() => {
@@ -68,6 +68,10 @@ export default function useContratar({ onSuccess, onError }: UseContratarProps =
                 throw new Error(CONTRATAR_ERRORS.ALREADY_HIRED);
             }
 
+            if (!servicio.user_id) {
+                throw new Error("Este servicio no tiene prestador asociado.");
+            }
+
             const contratanteId = user.id;
             const mensaje = `Un usuario ha solicitado tu servicio: ${servicio.titulo}`;
 
@@ -81,12 +85,12 @@ export default function useContratar({ onSuccess, onError }: UseContratarProps =
             ]).throwOnError();
 
             // 2. Insertar en notificaciones
-            await supabase.from("notificaciones").insert({
+            const { data: notificacion } = await supabase.from("notificaciones").insert({
                 receptor_id: servicio.user_id,
                 emisor_id: contratanteId,
                 mensaje,
                 servicio_id: `${servicio.id}`
-            }).throwOnError();
+            }).select("id").single().throwOnError();
 
             vexo.contratar(servicio.id);
 
@@ -99,20 +103,28 @@ export default function useContratar({ onSuccess, onError }: UseContratarProps =
                     .single();
 
                 if (receptorUsuario?.expo_token) {
-                    fetch("https://exp.host/--/api/v2/push/send", {
-                        method: "POST",
-                        headers: {
-                            Accept: "application/json",
-                            "Accept-encoding": "gzip, deflate",
-                            "Content-Type": "application/json",
+                    const urgentBody = `Nuevo pedido: ${servicio.titulo}. Respondelo cuanto antes.`;
+
+                    await sendUrgentWorkPush({
+                        to: receptorUsuario.expo_token,
+                        title: "Tenes trabajo urgente",
+                        body: urgentBody,
+                        data: { screen: 'MisServicios', params: { screen: 'Solicitudes' } }
+                    });
+
+                    await createUrgentWorkAlert({
+                        supabase,
+                        source: "service_request",
+                        workerId: servicio.user_id,
+                        clienteId: contratanteId,
+                        servicioId: servicio.id,
+                        notificacionId: notificacion?.id,
+                        category: servicio.categoria,
+                        title: "Tenes trabajo urgente",
+                        body: urgentBody,
+                        metadata: {
+                            servicio_titulo: servicio.titulo,
                         },
-                        body: JSON.stringify({
-                            to: receptorUsuario.expo_token,
-                            sound: "default",
-                            title: "¡Nueva solicitud!",
-                            body: mensaje,
-                            data: { screen: 'MisServicios', params: { screen: 'Solicitudes' } }
-                        }),
                     });
                 }
             } catch (pushError: any) {
@@ -123,7 +135,6 @@ export default function useContratar({ onSuccess, onError }: UseContratarProps =
             }
         },
         onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: userCreditQueryOptions(user.id).queryKey });
             onSuccess?.();
         },
         onError: (error: Error) => {
@@ -131,5 +142,5 @@ export default function useContratar({ onSuccess, onError }: UseContratarProps =
         }
     });
 
-    return { creditos, ...contratarMutation };
+    return contratarMutation;
 }

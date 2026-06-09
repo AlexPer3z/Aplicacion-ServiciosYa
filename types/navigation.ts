@@ -3,7 +3,10 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { UserProfile } from "../components/workers/WorkerProfile";
 import type { ServicioRow } from "./db.overrides.types";
 
+export type MicaChatMode = "buscar-servicio" | "ofrecer-servicio" | "b2b";
+
 export type MainStackParamList = {
+  AuthStack: { screen?: keyof AuthStackParamList } | undefined;
   InicioRouter: undefined;
   SeleccionRol: undefined;
   RegistroCliente: undefined;
@@ -16,8 +19,16 @@ export type MainStackParamList = {
   ServiciosPorCategoria: { categoria: string };
   pagoInicial: undefined;
   PasarelaPago: { categoria: string };
-  PasarelaPagoWorker: undefined;
+  PasarelaPagoWorker: {
+    notificacion?: {
+      id: string;
+      emisor_id: string;
+      servicio_id?: string | null;
+      mensaje?: string | null;
+    };
+  } | undefined;
   ChatIA: undefined;
+  MicaChat: { mode: MicaChatMode };
   ChatIndividual: {
     chatId: string;
     nombre: string;
@@ -27,7 +38,7 @@ export type MainStackParamList = {
     usuarioId2: string;
   };
   MisServicios: undefined;
-  EditarServicio: undefined;
+  EditarServicio: { servicio: Partial<ServicioRow> & { id: number } };
   VerificacionPendiente: undefined;
   NotificacionesScreen: undefined;
   DniPendiente: undefined;
@@ -39,10 +50,13 @@ export type MainStackParamList = {
 };
 
 export type AuthStackParamList = {
+    MainStack: { screen?: keyof MainStackParamList } | undefined;
     LoginSelect: undefined;
     Login: undefined;
     Register: { referralCode?: string };
     VerificacionPendiente: undefined;
+    "Recuperar contraseña": undefined;
+    "Nueva contraseña": undefined;
 };
 
 // This type will be used by components for navigation prop
