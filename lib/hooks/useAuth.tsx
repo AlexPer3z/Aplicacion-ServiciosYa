@@ -1,20 +1,20 @@
-// app/hooks/useAuth.ts
-import { useEffect, useCallback } from "react";
-import * as Linking from "expo-linking";
-import * as SplashScreen from "expo-splash-screen";
-import { Alert, AppState, Platform, type AppStateStatus } from "react-native";
-import { supabase } from "../supabase";
 import type { Session } from "@supabase/supabase-js";
 import {
+  type QueryClient,
   focusManager,
   useQuery,
-  type QueryClient,
 } from "@tanstack/react-query";
-import { lastUserId } from "../storage";
-import { clearSettingsToStorage, queryKey } from "./useUserSettings";
-import { sessionQueryOptions } from "../queryOptions";
-import { registrarTokenPush } from "../notificaciones";
+import * as Linking from "expo-linking";
+import * as SplashScreen from "expo-splash-screen";
+// app/hooks/useAuth.ts
+import { useCallback, useEffect } from "react";
+import { Alert, AppState, type AppStateStatus, Platform } from "react-native";
 import { useAuthStore } from "../../store/authStore";
+import { registrarTokenPush } from "../notificaciones";
+import { sessionQueryOptions } from "../queryOptions";
+import { lastUserId } from "../storage";
+import { supabase } from "../supabase";
+import { clearSettingsToStorage, queryKey } from "./useUserSettings";
 
 // Prevenir que la pantalla de inicio se oculte automáticamente antes de que estemos listos
 SplashScreen.preventAutoHideAsync();
@@ -163,7 +163,7 @@ export function useAuth(queryClient: QueryClient) {
   return {
     session,
     isInitialized,
-    isAuth
+    isAuth,
   };
 }
 
