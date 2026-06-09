@@ -50,3 +50,7 @@ _FIXES/
 _seguridad_paso*/
 webhook (*.zip
 webhook (*)/
+
+android/keystore.properties
+android/app/toori-upload-keystore.README.txt
+*.der
