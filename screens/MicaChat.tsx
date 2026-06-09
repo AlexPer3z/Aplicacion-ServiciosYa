@@ -1,3 +1,6 @@
+import { Ionicons } from "@expo/vector-icons";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useMemo, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -10,9 +13,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import BotonVolver from "../components/BotonVolver";
@@ -57,13 +57,46 @@ type MicaApiResponse = {
 };
 
 const serviceSignals: Array<{ label: string; words: string[] }> = [
-  { label: "Plomeria", words: ["plomero", "perdida", "canilla", "agua", "bano", "inodoro", "caño", "cano"] },
-  { label: "Electricidad", words: ["electricista", "luz", "enchufe", "cable", "corto", "termica"] },
-  { label: "Gas", words: ["gas", "gasista", "calefon", "termotanque"] },
-  { label: "Cerrajeria", words: ["cerradura", "llave", "cerrajero", "puerta"] },
+  {
+    label: "Plomería",
+    words: [
+      "plomero",
+      "plomería",
+      "plomeria",
+      "pérdida",
+      "perdida",
+      "canilla",
+      "agua",
+      "baño",
+      "bano",
+      "inodoro",
+      "caño",
+      "cano",
+    ],
+  },
+  {
+    label: "Electricidad",
+    words: [
+      "electricista",
+      "luz",
+      "enchufe",
+      "cable",
+      "corto",
+      "térmica",
+      "termica",
+    ],
+  },
+  {
+    label: "Gas",
+    words: ["gas", "gasista", "calefón", "calefon", "termotanque"],
+  },
+  { label: "Cerrajería", words: ["cerradura", "llave", "cerrajero", "puerta"] },
   { label: "Limpieza", words: ["limpieza", "limpiar", "mucama", "consorcio"] },
   { label: "Pintura", words: ["pintor", "pintura", "humedad", "pared"] },
-  { label: "Refrigeracion", words: ["aire", "heladera", "refrigeracion", "split"] },
+  {
+    label: "Refrigeración",
+    words: ["aire", "heladera", "refrigeración", "refrigeracion", "split"],
+  },
 ];
 
 const searchFlowSteps = [
@@ -94,12 +127,12 @@ const sampleQuotes: SearchQuote[] = [
   },
   {
     id: "quote-3",
-    name: "Jose Alegre",
+    name: "José Alegre",
     price: "$75.950",
     rating: "4.7",
     jobs: "21 trabajos",
-    availability: "Disponible manana",
-    note: "Garantia del trabajo",
+    availability: "Disponible mañana",
+    note: "Garantía del trabajo",
   },
 ];
 
@@ -123,9 +156,9 @@ const modeConfig: Record<
     gradient: ["#1bd4e7", "#069eb3", "#046a79"],
     icon: "search",
     statusTitle: "Datos del pedido",
-    intro:
-      "Hola, buen dia. En que te puedo ayudar?",
-    placeholder: "Ej: tengo una perdida abajo de la bacha en Palermo y necesito solucionarlo hoy...",
+    intro: "Hola, buen día. ¿En qué te puedo ayudar?",
+    placeholder:
+      "Ej: tengo una pérdida abajo de la bacha en Palermo y necesito solucionarlo hoy...",
   },
   "ofrecer-servicio": {
     title: "Ofrecer un servicio",
@@ -135,19 +168,22 @@ const modeConfig: Record<
     icon: "briefcase",
     statusTitle: "Datos del perfil",
     intro:
-      "Hola, buen dia. Contame que servicio queres ofrecer y en que zona trabajas.",
-    placeholder: "Ej: soy electricista, trabajo en Cordoba capital y tengo 5 anos de experiencia...",
+      "Hola, buen día. Contame qué servicio querés ofrecer y en qué zona trabajás.",
+    placeholder:
+      "Ej: soy electricista, trabajo en Córdoba capital y tengo 5 años de experiencia...",
   },
   b2b: {
     title: "SolucionesYa B2B",
-    subtitle: "Para inmobiliarias, consorcios y operaciones con muchos pedidos.",
+    subtitle:
+      "Para inmobiliarias, consorcios y operaciones con muchos pedidos.",
     accent: "#344e7a",
     gradient: ["#496fa8", "#344e7a", "#1f2f4e"],
     icon: "business",
-    statusTitle: "Datos de la operacion",
+    statusTitle: "Datos de la operación",
     intro:
-      "Hola, buen dia. Contame si sos inmobiliaria, consorcio o empresa, y que tipo de mantenimiento necesitas resolver.",
-    placeholder: "Ej: administro 3 edificios y necesito centralizar arreglos de plomeria y electricidad...",
+      "Hola, buen día. Contame si sos inmobiliaria, consorcio o empresa, y qué tipo de mantenimiento necesitás resolver.",
+    placeholder:
+      "Ej: administro 3 edificios y necesito centralizar arreglos de plomería y electricidad...",
   },
 };
 
@@ -156,20 +192,29 @@ function includesAny(text: string, words: string[]) {
 }
 
 function inferService(text: string) {
-  return serviceSignals.find((signal) => includesAny(text, signal.words))?.label;
+  return serviceSignals.find((signal) => includesAny(text, signal.words))
+    ?.label;
 }
 
 function inferLocation(text: string) {
-  const match = text.match(/\b(?:en|por|zona|barrio)\s+([a-z0-9\s]+?)(?:,|\.| y | para | hoy| manana| urgente|$)/i);
+  const match = text.match(
+    /\b(?:en|por|zona|barrio)\s+([a-z0-9\s]+?)(?:,|\.| y | para | hoy| manana| urgente|$)/i,
+  );
   return match?.[1]?.trim();
 }
 
 function inferUnits(text: string) {
-  const match = text.match(/\b(\d+)\s+(?:edificios|propiedades|unidades|departamentos|locales|casas)\b/i);
+  const match = text.match(
+    /\b(\d+)\s+(?:edificios|propiedades|unidades|departamentos|locales|casas)\b/i,
+  );
   return match?.[0];
 }
 
-function inferInsight(mode: MicaChatMode, previous: AgentInsight, userText: string): AgentInsight {
+function inferInsight(
+  mode: MicaChatMode,
+  previous: AgentInsight,
+  userText: string,
+): AgentInsight {
   const text = userText.toLowerCase();
   const service = inferService(text);
   const location = inferLocation(text);
@@ -178,30 +223,73 @@ function inferInsight(mode: MicaChatMode, previous: AgentInsight, userText: stri
   if (userText.length > 6 && !next.issue) next.issue = userText.trim();
   if (service) next.service = service;
   if (location) next.location = location;
-  if (includesAny(text, ["urgente", "emergencia", "ahora", "inund", "sin luz", "sin agua"])) {
+  if (
+    includesAny(text, [
+      "urgente",
+      "emergencia",
+      "ahora",
+      "inund",
+      "sin luz",
+      "sin agua",
+    ])
+  ) {
     next.urgency = "Alta";
-  } else if (includesAny(text, ["hoy", "rapido", "esta tarde"])) {
+  } else if (includesAny(text, ["hoy", "rápido", "rapido", "esta tarde"])) {
     next.urgency = "Media";
   }
-  if (includesAny(text, ["hoy", "esta tarde", "manana", "semana", "fin de semana"])) {
-    next.timeframe = includesAny(text, ["hoy", "esta tarde"]) ? "Hoy" : "Flexible";
+  if (
+    includesAny(text, [
+      "hoy",
+      "esta tarde",
+      "mañana",
+      "manana",
+      "semana",
+      "fin de semana",
+    ])
+  ) {
+    next.timeframe = includesAny(text, ["hoy", "esta tarde"])
+      ? "Hoy"
+      : "Flexible";
   }
-  if (includesAny(text, ["foto", "imagen", "video"])) next.media = "Quiere sumar evidencia";
+  if (includesAny(text, ["foto", "imagen", "video"]))
+    next.media = "Quiere sumar evidencia";
 
   if (mode === "ofrecer-servicio") {
     if (service) next.service = service;
     if (location) next.coverage = location;
-    if (includesAny(text, ["ano", "anos", "experiencia", "trabajo hace"])) next.experience = "Experiencia mencionada";
-    if (includesAny(text, ["precio", "tarifa", "cobro", "presupuesto"])) next.price = "Necesita guia de precios";
+    if (
+      includesAny(text, [
+        "año",
+        "años",
+        "ano",
+        "anos",
+        "experiencia",
+        "trabajo hace",
+      ])
+    )
+      next.experience = "Experiencia mencionada";
+    if (includesAny(text, ["precio", "tarifa", "cobro", "presupuesto"]))
+      next.price = "Necesita guía de precios";
   }
 
   if (mode === "b2b") {
-    if (includesAny(text, ["inmobiliaria", "alquiler", "propiedades"])) next.companyType = "Inmobiliaria";
-    if (includesAny(text, ["consorcio", "edificio", "administracion"])) next.companyType = "Consorcio";
-    if (includesAny(text, ["empresa", "local", "sucursal"])) next.companyType = "Empresa";
+    if (includesAny(text, ["inmobiliaria", "alquiler", "propiedades"]))
+      next.companyType = "Inmobiliaria";
+    if (
+      includesAny(text, [
+        "consorcio",
+        "edificio",
+        "administración",
+        "administracion",
+      ])
+    )
+      next.companyType = "Consorcio";
+    if (includesAny(text, ["empresa", "local", "sucursal"]))
+      next.companyType = "Empresa";
     const units = inferUnits(text);
     if (units) next.units = units;
-    if (includesAny(text, ["demo", "llamar", "contactar", "whatsapp"])) next.contactIntent = "Quiere contacto comercial";
+    if (includesAny(text, ["demo", "llamar", "contactar", "whatsapp"]))
+      next.contactIntent = "Quiere contacto comercial";
   }
 
   return next;
@@ -225,7 +313,10 @@ function getChecklist(mode: MicaChatMode, insight: AgentInsight) {
       { label: "Zona", value: insight.coverage || insight.location },
       { label: "Experiencia", value: insight.experience },
       { label: "Precios", value: insight.price },
-      { label: "Presentacion", value: insight.issue ? "Base lista" : undefined },
+      {
+        label: "Presentación",
+        value: insight.issue ? "Base lista" : undefined,
+      },
     ];
   }
 
@@ -246,26 +337,37 @@ function getProgress(mode: MicaChatMode, insight: AgentInsight) {
 
 function getMissingQuestion(mode: MicaChatMode, insight: AgentInsight) {
   if (mode === "buscar-servicio") {
-    if (!insight.service) return "Que tipo de trabajo parece ser: plomeria, electricidad, gas, limpieza u otro?";
-    if (!insight.location) return "En que ciudad o barrio hay que resolverlo?";
-    if (!insight.urgency) return "Es urgente para hoy o puede coordinarse con mas tiempo?";
-    if (!insight.timeframe) return "Que horarios te sirven para que te contacten o visiten?";
-    return "Queres agregar una foto o algun detalle que el prestador deba saber antes de presupuestar?";
+    if (!insight.service)
+      return "¿Qué tipo de trabajo parece ser: plomería, electricidad, gas, limpieza u otro?";
+    if (!insight.location) return "¿En qué ciudad o barrio hay que resolverlo?";
+    if (!insight.urgency)
+      return "¿Es urgente para hoy o puede coordinarse con más tiempo?";
+    if (!insight.timeframe)
+      return "¿Qué horarios te sirven para que te contacten o visiten?";
+    return "¿Querés agregar una foto o algún detalle que el prestador deba saber antes de presupuestar?";
   }
 
   if (mode === "ofrecer-servicio") {
-    if (!insight.service) return "Cual es tu rubro principal y que trabajos queres aceptar?";
-    if (!insight.coverage && !insight.location) return "En que zonas trabajas?";
-    if (!insight.experience) return "Cuanta experiencia tenes o que trabajos hiciste recientemente?";
-    if (!insight.price) return "Tenes precios orientativos, visita minima o queres que te ayudemos a definirlos?";
-    return "Tenes fotos, referencias o documentacion para fortalecer tu perfil?";
+    if (!insight.service)
+      return "¿Cuál es tu rubro principal y qué trabajos querés aceptar?";
+    if (!insight.coverage && !insight.location)
+      return "¿En qué zonas trabajás?";
+    if (!insight.experience)
+      return "¿Cuánta experiencia tenés o qué trabajos hiciste recientemente?";
+    if (!insight.price)
+      return "¿Tenés precios orientativos, visita mínima o querés que te ayudemos a definirlos?";
+    return "¿Tenés fotos, referencias o documentación para fortalecer tu perfil?";
   }
 
-  if (!insight.companyType) return "Sos inmobiliaria, consorcio, empresa o administras otro tipo de operacion?";
-  if (!insight.units) return "Cuantas unidades, edificios o propiedades administran?";
-  if (!insight.service) return "Que incidencias se repiten mas: plomeria, electricidad, limpieza, gas o mantenimiento general?";
-  if (!insight.urgency) return "Necesitan guardia urgente, mantenimiento programado o ambas cosas?";
-  return "Quien aprueba presupuestos y por que canal quieren recibir el seguimiento?";
+  if (!insight.companyType)
+    return "¿Sos inmobiliaria, consorcio, empresa o administrás otro tipo de operación?";
+  if (!insight.units)
+    return "¿Cuántas unidades, edificios o propiedades administran?";
+  if (!insight.service)
+    return "¿Qué incidencias se repiten más: plomería, electricidad, limpieza, gas o mantenimiento general?";
+  if (!insight.urgency)
+    return "¿Necesitan guardia urgente, mantenimiento programado o ambas cosas?";
+  return "¿Quién aprueba presupuestos y por qué canal quieren recibir el seguimiento?";
 }
 
 function summarizeSignals(insight: AgentInsight) {
@@ -273,10 +375,10 @@ function summarizeSignals(insight: AgentInsight) {
     insight.service && `rubro ${insight.service}`,
     insight.location && `zona ${insight.location}`,
     insight.urgency && `urgencia ${insight.urgency.toLowerCase()}`,
-    insight.companyType && insight.companyType.toLowerCase(),
+    insight.companyType?.toLowerCase(),
     insight.units,
   ].filter(Boolean);
-  return parts.length ? parts.join(", ") : "todavia estoy juntando contexto";
+  return parts.length ? parts.join(", ") : "todavía estoy juntando contexto";
 }
 
 function buildReply(mode: MicaChatMode, insight: AgentInsight) {
@@ -296,27 +398,73 @@ function buildReply(mode: MicaChatMode, insight: AgentInsight) {
 
 function getSuggestions(mode: MicaChatMode, insight: AgentInsight) {
   if (mode === "buscar-servicio") {
-    if (!insight.service) return ["Tengo una perdida de agua", "No tengo luz", "Necesito limpieza", "Quiero reparar una puerta"];
-    if (!insight.location) return ["Estoy en Cordoba capital", "Zona Nueva Cordoba", "Estoy en CABA", "Barrio Centro"];
-    if (!insight.urgency) return ["Es urgente para hoy", "Puede ser esta semana", "Quiero comparar precios"];
+    if (!insight.service)
+      return [
+        "Tengo una pérdida de agua",
+        "No tengo luz",
+        "Necesito limpieza",
+        "Quiero reparar una puerta",
+      ];
+    if (!insight.location)
+      return [
+        "Estoy en Córdoba capital",
+        "Zona Nueva Córdoba",
+        "Estoy en CABA",
+        "Barrio Centro",
+      ];
+    if (!insight.urgency)
+      return [
+        "Es urgente para hoy",
+        "Puede ser esta semana",
+        "Quiero comparar precios",
+      ];
     return ["Tengo fotos", "Horario por la tarde", "Quiero 3 presupuestos"];
   }
 
   if (mode === "ofrecer-servicio") {
-    if (!insight.service) return ["Soy plomero", "Soy electricista", "Hago limpieza", "Hago reparaciones"];
-    if (!insight.coverage && !insight.location) return ["Trabajo en Cordoba", "Zona norte", "Atiendo a domicilio"];
-    if (!insight.experience) return ["Tengo 5 anos de experiencia", "Puedo mostrar trabajos", "Recien empiezo"];
-    return ["Necesito ayuda con precios", "Quiero cargar fotos", "Quiero publicar mi perfil"];
+    if (!insight.service)
+      return [
+        "Soy plomero",
+        "Soy electricista",
+        "Hago limpieza",
+        "Hago reparaciones",
+      ];
+    if (!insight.coverage && !insight.location)
+      return ["Trabajo en Córdoba", "Zona norte", "Atiendo a domicilio"];
+    if (!insight.experience)
+      return [
+        "Tengo 5 años de experiencia",
+        "Puedo mostrar trabajos",
+        "Recién empiezo",
+      ];
+    return [
+      "Necesito ayuda con precios",
+      "Quiero cargar fotos",
+      "Quiero publicar mi perfil",
+    ];
   }
 
-  if (!insight.companyType) return ["Soy inmobiliaria", "Administro un consorcio", "Tengo una empresa"];
-  if (!insight.units) return ["Administro 3 edificios", "Tengo 40 unidades", "Tengo varios locales"];
-  if (!insight.service) return ["Plomeria y electricidad", "Limpieza recurrente", "Mantenimiento general"];
+  if (!insight.companyType)
+    return ["Soy inmobiliaria", "Administro un consorcio", "Tengo una empresa"];
+  if (!insight.units)
+    return [
+      "Administro 3 edificios",
+      "Tengo 40 unidades",
+      "Tengo varios locales",
+    ];
+  if (!insight.service)
+    return [
+      "Plomería y electricidad",
+      "Limpieza recurrente",
+      "Mantenimiento general",
+    ];
   return ["Quiero una demo", "Necesito reportes", "Necesito guardia urgente"];
 }
 
 function createInitialMessages(mode: MicaChatMode): Message[] {
-  return [{ id: `intro-${mode}`, author: "mica", text: modeConfig[mode].intro }];
+  return [
+    { id: `intro-${mode}`, author: "mica", text: modeConfig[mode].intro },
+  ];
 }
 
 async function askMicaApi({
@@ -330,18 +478,21 @@ async function askMicaApi({
   insight: AgentInsight;
   history: Message[];
 }) {
-  const { data, error } = await supabase.functions.invoke<MicaApiResponse>("mica-chat", {
-    body: {
-      mode,
-      message,
-      insight,
-      history: history.map(({ author, text }) => ({ author, text })),
+  const { data, error } = await supabase.functions.invoke<MicaApiResponse>(
+    "mica-chat",
+    {
+      body: {
+        mode,
+        message,
+        insight,
+        history: history.map(({ author, text }) => ({ author, text })),
+      },
     },
-  });
+  );
 
   if (error) throw error;
   if (data?.error) throw new Error(data.error);
-  if (!data?.reply) throw new Error("MICA no devolvio una respuesta.");
+  if (!data?.reply) throw new Error("MICA no devolvió una respuesta.");
 
   return data;
 }
@@ -353,7 +504,9 @@ export default function MicaChat({ navigation, route }: Props) {
   const scrollRef = useRef<ScrollView>(null);
   const [input, setInput] = useState("");
   const [insight, setInsight] = useState<AgentInsight>({});
-  const [messages, setMessages] = useState<Message[]>(() => createInitialMessages(mode));
+  const [messages, setMessages] = useState<Message[]>(() =>
+    createInitialMessages(mode),
+  );
   const [searchStage, setSearchStage] = useState<SearchStage>("intake");
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
   const [isThinking, setIsThinking] = useState(false);
@@ -361,9 +514,17 @@ export default function MicaChat({ navigation, route }: Props) {
   const checklist = getChecklist(mode, insight);
   const progress = getProgress(mode, insight);
   const suggestions = getSuggestions(mode, insight);
-  const selectedQuote = sampleQuotes.find((quote) => quote.id === selectedQuoteId);
+  const selectedQuote = sampleQuotes.find(
+    (quote) => quote.id === selectedQuoteId,
+  );
   const searchStepIndex =
-    searchStage === "payment" ? 3 : searchStage === "selected" ? 2 : searchStage === "quotes" ? 1 : 0;
+    searchStage === "payment"
+      ? 3
+      : searchStage === "selected"
+        ? 2
+        : searchStage === "quotes"
+          ? 1
+          : 0;
 
   const addMicaMessage = (text: string) => {
     const timestamp = Date.now();
@@ -376,7 +537,9 @@ export default function MicaChat({ navigation, route }: Props) {
 
   const handleSearchPrimaryAction = () => {
     if (progress < 70) {
-      addMicaMessage(`Dale, antes de pedir presupuestos necesito un dato mas.\n\n${getMissingQuestion(mode, insight)}`);
+      addMicaMessage(
+        `Dale, antes de pedir presupuestos necesito un dato más.\n\n${getMissingQuestion(mode, insight)}`,
+      );
       return;
     }
 
@@ -389,12 +552,16 @@ export default function MicaChat({ navigation, route }: Props) {
     }
 
     if (searchStage === "quotes") {
-      addMicaMessage("Elegí el profesional que te cierre mejor. Despues coordinamos la visita y el pago queda para cuando estes conforme.");
+      addMicaMessage(
+        "Elegí el profesional que te cierre mejor. Después coordinamos la visita y el pago queda para cuando estés conforme.",
+      );
       return;
     }
 
     if (searchStage === "selected") {
-      addMicaMessage("Perfecto. Cuando termine el trabajo, podes pagar por transferencia, tarjeta o QR del profesional.");
+      addMicaMessage(
+        "Perfecto. Cuando termine el trabajo, podés pagar por transferencia, tarjeta o QR del profesional.",
+      );
     }
   };
 
@@ -402,13 +569,15 @@ export default function MicaChat({ navigation, route }: Props) {
     setSelectedQuoteId(quote.id);
     setSearchStage("selected");
     addMicaMessage(
-      `Perfecto, dejamos a ${quote.name} como opcion elegida. Ahora el siguiente paso es coordinar la visita y pagar recien cuando el trabajo este conforme.`,
+      `Perfecto, dejamos a ${quote.name} como opción elegida. Ahora el siguiente paso es coordinar la visita y pagar recién cuando el trabajo esté conforme.`,
     );
   };
 
   const handlePaymentOption = (method: string) => {
     setSearchStage("payment");
-    addMicaMessage(`Perfecto. Dejamos ${method} como forma de pago preferida para cuando el servicio este terminado.`);
+    addMicaMessage(
+      `Perfecto. Dejamos ${method} como forma de pago preferida para cuando el servicio esté terminado.`,
+    );
   };
 
   const primaryAction = useMemo(() => {
@@ -438,7 +607,7 @@ export default function MicaChat({ navigation, route }: Props) {
 
     if (mode === "ofrecer-servicio") {
       return {
-        label: progress >= 70 ? "Publicar con estos datos" : "Ir a ofrecer servicio",
+        label: progress >= 70 ? "Publicar mi servicio" : "Completar formulario",
         icon: "add-circle" as const,
         onPress: () => navigation.navigate("OfrecerServicio"),
       };
@@ -449,8 +618,10 @@ export default function MicaChat({ navigation, route }: Props) {
         label: progress >= 60 ? "Pedir demo B2B" : "Hablar por WhatsApp",
         icon: "logo-whatsapp" as const,
         onPress: () => {
-          const message = `Hola, quiero informacion de SolucionesYa B2B. Estos son los datos iniciales: ${summarizeSignals(insight)}`;
-          Linking.openURL(`https://wa.me/5493834035427?text=${encodeURIComponent(message)}`);
+          const message = `Hola, quiero información de SolucionesYa B2B. Estos son los datos iniciales: ${summarizeSignals(insight)}`;
+          Linking.openURL(
+            `https://wa.me/5493834035427?text=${encodeURIComponent(message)}`,
+          );
         },
       };
     }
@@ -473,7 +644,11 @@ export default function MicaChat({ navigation, route }: Props) {
     setMessages((current) => [
       ...current,
       { id: `user-${timestamp}`, author: "user", text: cleanText },
-      { id: thinkingId, author: "mica", text: "Estoy mirando los datos para responderte bien..." },
+      {
+        id: thinkingId,
+        author: "mica",
+        text: "Estoy mirando los datos para responderte bien...",
+      },
     ]);
     setInput("");
     setIsThinking(true);
@@ -492,7 +667,11 @@ export default function MicaChat({ navigation, route }: Props) {
       setMessages((current) =>
         current.map((message) =>
           message.id === thinkingId
-            ? { ...message, id: `mica-${timestamp}`, text: apiAnswer.reply ?? buildReply(mode, apiInsight) }
+            ? {
+                ...message,
+                id: `mica-${timestamp}`,
+                text: apiAnswer.reply ?? buildReply(mode, apiInsight),
+              }
             : message,
         ),
       );
@@ -500,7 +679,11 @@ export default function MicaChat({ navigation, route }: Props) {
       setMessages((current) =>
         current.map((message) =>
           message.id === thinkingId
-            ? { ...message, id: `mica-${timestamp}`, text: buildReply(mode, nextInsight) }
+            ? {
+                ...message,
+                id: `mica-${timestamp}`,
+                text: buildReply(mode, nextInsight),
+              }
             : message,
         ),
       );
@@ -545,7 +728,9 @@ export default function MicaChat({ navigation, route }: Props) {
         contentContainerStyle={styles.messagesContent}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
-        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+        onContentSizeChange={() =>
+          scrollRef.current?.scrollToEnd({ animated: true })
+        }
       >
         <View style={styles.agentPanel}>
           <View style={styles.panelHeader}>
@@ -553,20 +738,33 @@ export default function MicaChat({ navigation, route }: Props) {
               <Text style={styles.panelEyebrow}>Resumen</Text>
               <Text style={styles.panelTitle}>{config.statusTitle}</Text>
             </View>
-            <Text style={[styles.progressText, { color: config.accent }]}>{progress}%</Text>
+            <Text style={[styles.progressText, { color: config.accent }]}>
+              {progress}%
+            </Text>
           </View>
           <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${progress}%`, backgroundColor: config.accent }]} />
+            <View
+              style={[
+                styles.progressFill,
+                { width: `${progress}%`, backgroundColor: config.accent },
+              ]}
+            />
           </View>
           <View style={styles.checkGrid}>
             {checklist.map((item) => (
-              <View key={item.label} style={[styles.checkChip, item.value && styles.checkChipDone]}>
+              <View
+                key={item.label}
+                style={[styles.checkChip, item.value && styles.checkChipDone]}
+              >
                 <Ionicons
                   name={item.value ? "checkmark-circle" : "ellipse-outline"}
                   size={14}
                   color={item.value ? config.accent : "#8aa1a8"}
                 />
-                <Text style={[styles.checkText, item.value && styles.checkTextDone]} numberOfLines={1}>
+                <Text
+                  style={[styles.checkText, item.value && styles.checkTextDone]}
+                  numberOfLines={1}
+                >
                   {item.label}: {item.value || "falta"}
                 </Text>
               </View>
@@ -593,7 +791,10 @@ export default function MicaChat({ navigation, route }: Props) {
                       style={[
                         styles.searchFlowIcon,
                         isDone || isActive
-                          ? { backgroundColor: config.accent, borderColor: config.accent }
+                          ? {
+                              backgroundColor: config.accent,
+                              borderColor: config.accent,
+                            }
                           : null,
                       ]}
                     >
@@ -641,17 +842,30 @@ export default function MicaChat({ navigation, route }: Props) {
                   activeOpacity={0.9}
                   style={[
                     styles.quoteCard,
-                    isSelected ? { borderColor: config.accent, backgroundColor: "#f0fffb" } : null,
+                    isSelected
+                      ? {
+                          borderColor: config.accent,
+                          backgroundColor: "#f0fffb",
+                        }
+                      : null,
                   ]}
                   onPress={() => handleQuoteSelect(quote)}
                 >
                   <View style={styles.quoteAvatar}>
-                    <Text style={styles.quoteAvatarText}>{quote.name.charAt(0)}</Text>
+                    <Text style={styles.quoteAvatarText}>
+                      {quote.name.charAt(0)}
+                    </Text>
                   </View>
                   <View style={styles.quoteBody}>
                     <View style={styles.quoteTop}>
-                      <Text style={styles.quoteName} numberOfLines={1}>{quote.name}</Text>
-                      <Text style={[styles.quotePrice, { color: config.accent }]}>{quote.price}</Text>
+                      <Text style={styles.quoteName} numberOfLines={1}>
+                        {quote.name}
+                      </Text>
+                      <Text
+                        style={[styles.quotePrice, { color: config.accent }]}
+                      >
+                        {quote.price}
+                      </Text>
                     </View>
                     <View style={styles.quoteMeta}>
                       <Ionicons name="star" size={12} color="#f5a524" />
@@ -659,8 +873,12 @@ export default function MicaChat({ navigation, route }: Props) {
                       <Text style={styles.quoteDot}>•</Text>
                       <Text style={styles.quoteMetaText}>{quote.jobs}</Text>
                     </View>
-                    <Text style={styles.quoteNote} numberOfLines={1}>{quote.availability}</Text>
-                    <Text style={styles.quoteIncluded} numberOfLines={1}>{quote.note}</Text>
+                    <Text style={styles.quoteNote} numberOfLines={1}>
+                      {quote.availability}
+                    </Text>
+                    <Text style={styles.quoteIncluded} numberOfLines={1}>
+                      {quote.note}
+                    </Text>
                   </View>
                   <Ionicons
                     name={isSelected ? "checkmark-circle" : "chevron-forward"}
@@ -676,22 +894,32 @@ export default function MicaChat({ navigation, route }: Props) {
         {mode === "buscar-servicio" && selectedQuote && (
           <View style={styles.paymentPanel}>
             <View style={styles.paymentHeader}>
-              <Ionicons name="calendar-outline" size={20} color={config.accent} />
+              <Ionicons
+                name="calendar-outline"
+                size={20}
+                color={config.accent}
+              />
               <View style={styles.paymentCopy}>
-                <Text style={styles.paymentTitle}>Coordina con {selectedQuote.name}</Text>
-                <Text style={styles.paymentText}>Cuando termine el trabajo, elegis como pagar.</Text>
+                <Text style={styles.paymentTitle}>
+                  Coordiná con {selectedQuote.name}
+                </Text>
+                <Text style={styles.paymentText}>
+                  Cuando termine el trabajo, elegís cómo pagar.
+                </Text>
               </View>
             </View>
             <View style={styles.paymentOptions}>
-              {["Transferencia", "Tarjeta", "QR del profesional"].map((method) => (
-                <TouchableOpacity
-                  key={method}
-                  style={styles.paymentOption}
-                  onPress={() => handlePaymentOption(method)}
-                >
-                  <Text style={styles.paymentOptionText}>{method}</Text>
-                </TouchableOpacity>
-              ))}
+              {["Transferencia", "Tarjeta", "QR del profesional"].map(
+                (method) => (
+                  <TouchableOpacity
+                    key={method}
+                    style={styles.paymentOption}
+                    onPress={() => handlePaymentOption(method)}
+                  >
+                    <Text style={styles.paymentOptionText}>{method}</Text>
+                  </TouchableOpacity>
+                ),
+              )}
             </View>
           </View>
         )}
@@ -701,11 +929,15 @@ export default function MicaChat({ navigation, route }: Props) {
             key={message.id}
             style={[
               styles.messageRow,
-              message.author === "user" ? styles.userMessageRow : styles.micaMessageRow,
+              message.author === "user"
+                ? styles.userMessageRow
+                : styles.micaMessageRow,
             ]}
           >
             {message.author === "mica" && (
-              <View style={[styles.messageAvatar, { borderColor: config.accent }]}>
+              <View
+                style={[styles.messageAvatar, { borderColor: config.accent }]}
+              >
                 <Ionicons name="sparkles" size={15} color={config.accent} />
               </View>
             )}
@@ -731,20 +963,31 @@ export default function MicaChat({ navigation, route }: Props) {
       </ScrollView>
 
       <View style={styles.quickReplies}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.quickRepliesContent}
+        >
           {suggestions.map((reply) => (
             <TouchableOpacity
               key={reply}
               style={[styles.quickReply, { borderColor: config.accent }]}
               onPress={() => sendMessage(reply)}
             >
-              <Text style={[styles.quickReplyText, { color: config.accent }]}>{reply}</Text>
+              <Text style={[styles.quickReplyText, { color: config.accent }]}>
+                {reply}
+              </Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
       </View>
 
-      <View style={[styles.composerWrap, { paddingBottom: Math.max(insets.bottom + 12, 16) }]}>
+      <View
+        style={[
+          styles.composerWrap,
+          { paddingBottom: Math.max(insets.bottom + 12, 16) },
+        ]}
+      >
         <TouchableOpacity activeOpacity={0.9} onPress={primaryAction.onPress}>
           <LinearGradient
             colors={config.gradient}
@@ -767,14 +1010,25 @@ export default function MicaChat({ navigation, route }: Props) {
             multiline
             editable={!isThinking}
           />
-          <TouchableOpacity activeOpacity={0.9} onPress={() => sendMessage(input)} disabled={isThinking}>
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => sendMessage(input)}
+            disabled={isThinking}
+          >
             <LinearGradient
               colors={config.gradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={[styles.sendButton, isThinking && styles.sendButtonDisabled]}
+              style={[
+                styles.sendButton,
+                isThinking && styles.sendButtonDisabled,
+              ]}
             >
-              <Ionicons name={isThinking ? "hourglass-outline" : "send"} size={18} color="#ffffff" />
+              <Ionicons
+                name={isThinking ? "hourglass-outline" : "send"}
+                size={18}
+                color="#ffffff"
+              />
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -1204,6 +1458,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingLeft: 12,
     backgroundColor: "#f3f7f5",
+  },
+  quickRepliesContent: {
+    paddingRight: 12,
   },
   quickReply: {
     minHeight: 40,

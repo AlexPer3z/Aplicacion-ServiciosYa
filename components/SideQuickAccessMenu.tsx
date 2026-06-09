@@ -1,15 +1,16 @@
-import React, { useState, useRef, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-  Easing,
-  TouchableWithoutFeedback,
-} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
+import {
+  Animated,
+  Easing,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
 
 interface QuickAccessItem {
   label: string;
@@ -53,7 +54,7 @@ const SideQuickAccessMenu: React.FC<SideQuickAccessMenuProps> = ({
           easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
     breatheLoop.start();
 
@@ -71,7 +72,7 @@ const SideQuickAccessMenu: React.FC<SideQuickAccessMenuProps> = ({
           useNativeDriver: true,
         }),
         Animated.delay(400),
-      ])
+      ]),
     );
     haloLoop.start();
 
@@ -98,7 +99,7 @@ const SideQuickAccessMenu: React.FC<SideQuickAccessMenuProps> = ({
           duration: 120,
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
     wiggleLoop.start();
 
@@ -112,7 +113,7 @@ const SideQuickAccessMenu: React.FC<SideQuickAccessMenuProps> = ({
   const items: QuickAccessItem[] = [
     {
       label: "Buscar servicio",
-      subtitle: "Contale a MICA que necesitas",
+      subtitle: "Contale a MICA qué necesitás",
       icon: "search-outline",
       gradient: ["#12c7dd", "#069eb3", "#047486"],
       badge: "CLIENTE",
@@ -120,7 +121,7 @@ const SideQuickAccessMenu: React.FC<SideQuickAccessMenuProps> = ({
     },
     {
       label: "Ofrecer servicio",
-      subtitle: "Arma tu perfil de prestador",
+      subtitle: "Armá tu perfil de prestador",
       icon: "briefcase-outline",
       gradient: ["#ffb04a", "#fe971a", "#d86f00"],
       badge: "PRO",
@@ -299,7 +300,7 @@ const SideQuickAccessMenu: React.FC<SideQuickAccessMenuProps> = ({
               pointerEvents="none"
             >
               <Text style={styles.mainCalloutTitle}>MICA</Text>
-              <Text style={styles.mainCalloutText}>empeza aca</Text>
+              <Text style={styles.mainCalloutText}>empezá acá</Text>
             </Animated.View>
           )}
           <TouchableOpacity
