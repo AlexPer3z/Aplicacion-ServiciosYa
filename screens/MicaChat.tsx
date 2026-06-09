@@ -13,6 +13,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import BotonVolver from "../components/BotonVolver";
 import { supabase } from "../lib/supabase";
@@ -346,6 +347,7 @@ async function askMicaApi({
 }
 
 export default function MicaChat({ navigation, route }: Props) {
+  const insets = useSafeAreaInsets();
   const mode = route.params.mode;
   const config = modeConfig[mode];
   const scrollRef = useRef<ScrollView>(null);
@@ -512,7 +514,8 @@ export default function MicaChat({ navigation, route }: Props) {
   return (
     <KeyboardAvoidingView
       style={styles.screen}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={0}
     >
       <LinearGradient
         colors={config.gradient}
@@ -540,6 +543,8 @@ export default function MicaChat({ navigation, route }: Props) {
         ref={scrollRef}
         style={styles.messages}
         contentContainerStyle={styles.messagesContent}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
         onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
       >
         <View style={styles.agentPanel}>
@@ -739,7 +744,7 @@ export default function MicaChat({ navigation, route }: Props) {
         </ScrollView>
       </View>
 
-      <View style={styles.composerWrap}>
+      <View style={[styles.composerWrap, { paddingBottom: Math.max(insets.bottom + 12, 16) }]}>
         <TouchableOpacity activeOpacity={0.9} onPress={primaryAction.onPress}>
           <LinearGradient
             colors={config.gradient}
@@ -853,7 +858,7 @@ const styles = StyleSheet.create({
   },
   messagesContent: {
     padding: 12,
-    paddingBottom: 24,
+    paddingBottom: 36,
   },
   agentPanel: {
     backgroundColor: "#ffffff",

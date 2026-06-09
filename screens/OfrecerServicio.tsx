@@ -130,7 +130,10 @@ function OfrecerServicio({ navigation }: Props) {
         contentContainerStyle={styles.scrollContentContainer}
         resetScrollToCoords={{ x: 0, y: 0 }}
         scrollEnabled={true}
-        extraScrollHeight={Platform.OS === "ios" ? 20 : 0} // Optional: fine-tune scroll distance
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+        extraScrollHeight={Platform.OS === "ios" ? 24 : 96}
+        extraHeight={Platform.OS === "ios" ? 80 : 140}
         enableOnAndroid={true}
       >
         <Text style={[styles.title, { marginTop: 20 }]}>
@@ -219,7 +222,7 @@ const styles = StyleSheet.create({
   // The content container handles padding and growth.
   scrollContentContainer: {
     padding: 20,
-    marginBottom: 20,
+    paddingBottom: 120,
     flexGrow: 1,
   },
   title: {
@@ -234,13 +237,13 @@ const styles = StyleSheet.create({
   inputContainer: {
     backgroundColor: "#fff",
     borderRadius: 28,
-    padding: 24,
+    padding: 22,
     elevation: 8,
     shadowColor: "#19D4C6",
     shadowOpacity: 0.1,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 5 },
-    marginBottom: 24,
+    marginBottom: 32,
   },
   label: {
     fontSize: 15,
@@ -276,7 +279,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAFAFA",
   },
   submitButton: {
-    marginTop: 28,
+    marginTop: 22,
     backgroundColor: "#FFA13C", // Naranja
     paddingVertical: 16,
     borderRadius: 22,
