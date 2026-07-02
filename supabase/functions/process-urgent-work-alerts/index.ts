@@ -19,7 +19,7 @@ type UrgentWorkAlert = {
 
 const EXPO_API_URL = "https://exp.host/--/api/v2/push/send";
 const URGENT_WORK_CHANNEL_ID = "urgent-work";
-const URGENT_WORK_SOUND = "urgent-work.wav";
+const URGENT_WORK_SOUND = "urgent_work.wav";
 const RETRY_MINUTES = [2, 10, 30, 60];
 
 function nextAttemptAt(createdAt: string, attemptsSentAfterCurrent: number) {

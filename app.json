@@ -8,7 +8,7 @@
       "android",
       "web"
     ],
-    "version": "88.0.0",
+    "version": "89.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -29,7 +29,7 @@
       "reactCompiler": true
     },
     "ios": {
-      "buildNumber": "88",
+      "buildNumber": "89",
       "supportsTablet": false,
       "usesAppleSignIn": true,
       "infoPlist": {
@@ -55,7 +55,7 @@
       ]
     },
     "android": {
-      "versionCode": 88,
+      "versionCode": 89,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -108,7 +108,7 @@
         "expo-notifications",
         {
           "sounds": [
-            "./assets/sounds/urgent-work.wav"
+            "./assets/sounds/urgent_work.wav"
           ]
         }
       ],

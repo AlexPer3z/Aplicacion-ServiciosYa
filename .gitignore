@@ -52,5 +52,9 @@ webhook (*.zip
 webhook (*)/
 
 android/keystore.properties
+android/keystore.properties.*
 android/app/toori-upload-keystore.README.txt
+credentials.json
+credentials/
+builds/
 *.der

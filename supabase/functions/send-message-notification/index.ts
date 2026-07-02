@@ -17,7 +17,7 @@ interface WebhookPayload {
 }
 
 const URGENT_WORK_CHANNEL_ID = "urgent-work";
-const URGENT_WORK_SOUND = "urgent-work.wav";
+const URGENT_WORK_SOUND = "urgent_work.wav";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,

@@ -1,5 +1,5 @@
 export const URGENT_WORK_CHANNEL_ID = "urgent-work";
-export const URGENT_WORK_SOUND = "urgent-work.wav";
+export const URGENT_WORK_SOUND = "urgent_work.wav";
 
 type UrgentWorkAlertSource = "service_request" | "direct_contact" | "chat_message";
 
