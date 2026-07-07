@@ -128,17 +128,30 @@ export default function PedidosMicaSection() {
       const ctx = contextQuery.data;
       if (!ctx) throw new Error("Prestador no disponible");
       if (ctx.oficios.length === 0) return [];
-      const response = await getPedidosDisponibles({
-        appUserId: ctx.appUserId,
-        telefono: ctx.telefono,
-        oficios: ctx.oficios,
-        ciudad: ctx.ciudad,
-        provincia: ctx.provincia,
-        limit: 10,
-      });
-      const bridgePedidos = response.pedidos ?? [];
-      if (bridgePedidos.length > 0) return bridgePedidos;
-      return getMicaAppFallbackPedidos(ctx);
+
+      let bridgePedidos: TooriBridgePedido[] = [];
+      try {
+        const response = await getPedidosDisponibles({
+          appUserId: ctx.appUserId,
+          telefono: ctx.telefono,
+          oficios: ctx.oficios,
+          ciudad: ctx.ciudad,
+          provincia: ctx.provincia,
+          limit: 10,
+        });
+        bridgePedidos = response.pedidos ?? [];
+      } catch (error) {
+        console.warn("[MICA] puente web no disponible, usando fallback RPC:", error);
+      }
+
+      const fallbackPedidos = await getMicaAppFallbackPedidos(ctx);
+      const mergedPedidos = new Map<string, TooriBridgePedido>();
+
+      for (const pedido of [...bridgePedidos, ...fallbackPedidos]) {
+        mergedPedidos.set(String(pedido.id), pedido);
+      }
+
+      return Array.from(mergedPedidos.values());
     },
     enabled: enabled && Boolean(contextQuery.data),
   });
