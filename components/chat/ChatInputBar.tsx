@@ -1,12 +1,9 @@
-import React, { useCallback, useRef, useEffect, memo } from "react";
+import React, { useRef, useEffect, memo } from "react";
 import CustomTextInput from "../inputs/CustomTextInput";
-import { TouchableOpacity, View, StyleSheet, Pressable, Text, Modal, TextInput, KeyboardAvoidingView, Platform, Animated, ScrollView } from "react-native";
+import { TouchableOpacity, View, StyleSheet, Text, Modal, TextInput, KeyboardAvoidingView, Platform, Animated, ScrollView } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import MoreSheetModal from "./MoreSheetModal";
-import { theme } from "../../lib/constants/colors";
 import { createQuoteMessage } from "../../lib/utils/quoteMessage";
 
 interface ChatInputBarProps {
@@ -27,7 +24,6 @@ function ChatInputBar({ onSend }: ChatInputBarProps) {
   const [notas, setNotas] = React.useState("");
   const [enviandoPresupuesto, setEnviandoPresupuesto] = React.useState(false);
 
-  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const shimmerAnim = useRef(new Animated.Value(-1)).current;
 
@@ -61,11 +57,6 @@ function ChatInputBar({ onSend }: ChatInputBarProps) {
       setSending(false);
     }
   };
-
-
-  const MoreButtonPress = useCallback(() => {
-    bottomSheetModalRef.current?.present();
-  }, []);
 
   const resetQuoteForm = () => {
     setMonto("");
@@ -131,16 +122,6 @@ function ChatInputBar({ onSend }: ChatInputBarProps) {
           value={message}
           onChangeText={setMessage}
           placeholder="Escribe un mensaje..."
-          appendComponent={
-            <Pressable onPress={MoreButtonPress}>
-              <Ionicons
-                name="logo-whatsapp"
-                size={24}
-                color={theme.palettes.primary[60]}
-              />
-              
-            </Pressable>
-          }
           multiline={true}
         />
         <TouchableOpacity
@@ -152,10 +133,6 @@ function ChatInputBar({ onSend }: ChatInputBarProps) {
           <Ionicons name="send" size={22} color="#fff" />
         </TouchableOpacity>
       </View>
-      <BottomSheetModal ref={bottomSheetModalRef}>
-        <MoreSheetModal />
-      </BottomSheetModal>
-
       {/* Modal presupuesto */}
       <Modal visible={presupuestoVisible} transparent animationType="fade" onRequestClose={() => setPresupuestoVisible(false)}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.modalOverlay}>

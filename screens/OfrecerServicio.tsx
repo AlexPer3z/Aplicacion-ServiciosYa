@@ -33,6 +33,17 @@ import type { MainStackParamList } from "../types/navigation";
 
 type Props = NativeStackScreenProps<MainStackParamList, "OfrecerServicio">;
 
+function normalizeOficios(values: Array<string | string[] | null | undefined>) {
+  return Array.from(
+    new Set(
+      values
+        .flatMap((value) => (Array.isArray(value) ? value : [value]))
+        .map((value) => String(value ?? "").trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
 function OfrecerServicio({ navigation }: Props) {
   // ... (all your state and functions remain exactly the same)
   const [titulo, setTitulo] = useState("");
@@ -94,9 +105,7 @@ function OfrecerServicio({ navigation }: Props) {
               nombre: perfil.nombre,
               email: perfil.email ?? undefined,
               telefono,
-              oficios: Array.from(
-                new Set([categoria, perfil.categoria].filter(Boolean)),
-              ) as string[],
+              oficios: normalizeOficios([categoria, perfil.categoria]),
               ciudad: perfil.ciudad ?? ubicacion.name ?? undefined,
               provincia: perfil.provincia ?? undefined,
               verificado: Boolean(perfil.dni_verificado),

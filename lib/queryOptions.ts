@@ -144,6 +144,8 @@ export const locationIpInfoQueryOptions = queryOptions<Coords>({
       latitude: data.lat,
       longitude: data.lon,
       city: data.city || "N/A",
+      province: data.regionName || data.region || null,
+      locality: data.city || null,
       country: data.countryCode || "N/A",
     };
   },

@@ -29,7 +29,7 @@ type ChatInsertOverride = Partial<ChatRowOverride> & {
 };
 
 type NuevaOfertaRow = {
-  id: string;
+  id: number;
   created_at: string | null;
   cliente_telefono: string | null;
   nombre_cliente: string | null;
@@ -47,7 +47,8 @@ type NuevaOfertaRow = {
 type PresupuestoRow = {
   id: number;
   created_at: string | null;
-  oferta_id: string | null;
+  oferta_id: number | null;
+  trabajador_id?: number | null;
   trabajador_uuid: string | null;
   monto: number | null;
   descripcion: string | null;
@@ -147,6 +148,61 @@ export type Database = MergeDeep<
         };
       };
       Functions: {
+        create_mica_app_request: {
+          Args: {
+            p_categoria: string;
+            p_descripcion: string;
+            p_zona: string;
+            p_nombre_cliente?: string | null;
+            p_cliente_telefono?: string | null;
+            p_ciudad?: string | null;
+            p_provincia?: string | null;
+            p_historial?: Json;
+            p_metadata?: Json;
+          };
+          Returns: {
+            ok: boolean;
+            oferta_id: string;
+          }[];
+        };
+        get_provider_contact_access: {
+          Args: {
+            p_cliente_id?: string | null;
+            p_trabajador_id?: string | null;
+            p_presupuesto_id?: number | null;
+            p_oferta_id?: string | null;
+            p_provincia?: string | null;
+            p_ciudad?: string | null;
+          };
+          Returns: {
+            can_view: boolean;
+            reason: string;
+            unlock_id: string | null;
+            requires_payment: boolean;
+          }[];
+        };
+        get_mica_app_requests_for_worker: {
+          Args: {
+            p_app_user_id: string;
+            p_oficios: string[];
+            p_ciudad?: string | null;
+            p_provincia?: string | null;
+            p_limit?: number;
+          };
+          Returns: {
+            id: string;
+            categoria: string;
+            zona: string;
+            descripcion: string;
+            estado: string;
+            paso: number;
+            created_at: string | null;
+            media_url: string | null;
+            video_urls: string | null;
+            presupuesto_estimado: number | null;
+            ya_respondio: boolean;
+          }[];
+        };
         get_servicios_with_online_workers: {
           Args: LocationParams;
         };

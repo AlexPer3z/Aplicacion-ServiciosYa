@@ -44,6 +44,8 @@ async function resolveLocationFromCoords(
             longitude: coords.longitude,
             accuracy: coords.accuracy ?? null,
             city: place?.city ?? place?.subregion ?? null,
+            province: place?.region ?? null,
+            locality: place?.subregion ?? null,
             country: place?.country ?? null,
         };
     } catch {
@@ -52,6 +54,8 @@ async function resolveLocationFromCoords(
             longitude: coords.longitude,
             accuracy: coords.accuracy ?? null,
             city: null,
+            province: null,
+            locality: null,
             country: null,
         };
     }
@@ -61,13 +65,15 @@ async function resolveLocationFromCoords(
  * IP-based fallback (no permissions, low accuracy)
  */
 async function resolveLocationFromIP(): Promise<Coords> {
-    const { latitude, longitude, city, country } = await queryClient.ensureQueryData(locationIpInfoQueryOptions);
+    const { latitude, longitude, city, province, locality, country } = await queryClient.ensureQueryData(locationIpInfoQueryOptions);
 
     return {
         latitude,
         longitude,
         accuracy: null,
         city,
+        province,
+        locality,
         country,
     };
 }

@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Linking,
   Platform,
@@ -17,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import BotonVolver from "../components/BotonVolver";
 import { supabase } from "../lib/supabase";
+import { useLocationStore } from "../store/locationStore";
 import type { MainStackParamList, MicaChatMode } from "../types/navigation";
 
 type Props = NativeStackScreenProps<MainStackParamList, "MicaChat">;
@@ -25,7 +27,7 @@ type Message = {
   author: "mica" | "user";
   text: string;
 };
-type SearchStage = "intake" | "quotes" | "selected" | "payment";
+type SearchStage = "intake" | "submitted" | "quotes" | "selected" | "payment";
 type SearchQuote = {
   id: string;
   name: string;
@@ -49,11 +51,27 @@ type AgentInsight = {
   units?: string;
   contactIntent?: string;
 };
+type MicaProfileFallback = {
+  nombre?: string | null;
+  celular?: string | number | null;
+  ciudad?: string | null;
+  provincia?: string | null;
+};
+type MicaLocationFallback = {
+  city?: string | null;
+  province?: string | null;
+  locality?: string | null;
+  source?: string | null;
+};
 type MicaApiResponse = {
   reply?: string;
   insightPatch?: Partial<AgentInsight>;
   readyForNextStep?: boolean;
   error?: string;
+};
+type CreateMicaRequestResult = {
+  ok: boolean;
+  oferta_id: string;
 };
 
 const serviceSignals: Array<{ label: string; words: string[] }> = [
@@ -98,6 +116,33 @@ const serviceSignals: Array<{ label: string; words: string[] }> = [
     words: ["aire", "heladera", "refrigeración", "refrigeracion", "split"],
   },
 ];
+
+serviceSignals.push(
+  {
+    label: "Traductor",
+    words: ["traductor", "traduccion", "traducciÃ³n", "ingles", "inglÃ©s"],
+  },
+  {
+    label: "Desarrollador web",
+    words: [
+      "web",
+      "pagina",
+      "pÃ¡gina",
+      "sitio",
+      "programador",
+      "software",
+      "app",
+    ],
+  },
+  {
+    label: "AlbaÃ±ilerÃ­a",
+    words: ["albaÃ±il", "albanil", "obra", "revoque", "ladrillo", "techo"],
+  },
+  {
+    label: "JardinerÃ­a",
+    words: ["jardin", "jardÃ­n", "pasto", "cesped", "cÃ©sped", "podar"],
+  },
+);
 
 const searchFlowSteps = [
   { label: "Orden", icon: "create-outline" as const },
@@ -210,6 +255,47 @@ function inferUnits(text: string) {
   return match?.[0];
 }
 
+function hasUsableText(value?: string | null, minLength = 3) {
+  return Boolean(value?.trim() && value.trim().length >= minLength);
+}
+
+function formatProfileLocation(profile?: MicaProfileFallback | null) {
+  return [profile?.ciudad, profile?.provincia]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(", ");
+}
+
+function formatLocationFallback(location?: MicaLocationFallback | null) {
+  return [location?.city || location?.locality, location?.province]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(", ");
+}
+
+function getSearchReadiness(
+  insight: AgentInsight,
+  profileLocation?: string | null,
+) {
+  const hasIssue = hasUsableText(insight.issue, 8);
+  const hasService = hasUsableText(insight.service);
+  const hasLocation =
+    hasUsableText(insight.location) || hasUsableText(profileLocation);
+  const missing: Array<"issue" | "service" | "location"> = [];
+
+  if (!hasIssue) missing.push("issue");
+  if (!hasService) missing.push("service");
+  if (!hasLocation) missing.push("location");
+
+  return {
+    canCreate: missing.length === 0,
+    hasIssue,
+    hasService,
+    hasLocation,
+    missing,
+  };
+}
+
 function inferInsight(
   mode: MicaChatMode,
   previous: AgentInsight,
@@ -295,12 +381,16 @@ function inferInsight(
   return next;
 }
 
-function getChecklist(mode: MicaChatMode, insight: AgentInsight) {
+function getChecklist(
+  mode: MicaChatMode,
+  insight: AgentInsight,
+  profileLocation?: string | null,
+) {
   if (mode === "buscar-servicio") {
     return [
       { label: "Rubro", value: insight.service },
       { label: "Problema", value: insight.issue ? "Descripto" : undefined },
-      { label: "Zona", value: insight.location },
+      { label: "Zona", value: insight.location || profileLocation },
       { label: "Urgencia", value: insight.urgency },
       { label: "Horario", value: insight.timeframe },
       { label: "Fotos", value: insight.media },
@@ -329,17 +419,29 @@ function getChecklist(mode: MicaChatMode, insight: AgentInsight) {
   ];
 }
 
-function getProgress(mode: MicaChatMode, insight: AgentInsight) {
-  const checklist = getChecklist(mode, insight);
+function getProgress(
+  mode: MicaChatMode,
+  insight: AgentInsight,
+  profileLocation?: string | null,
+) {
+  const checklist = getChecklist(mode, insight, profileLocation);
   const completed = checklist.filter((item) => Boolean(item.value)).length;
   return Math.round((completed / checklist.length) * 100);
 }
 
-function getMissingQuestion(mode: MicaChatMode, insight: AgentInsight) {
+function getMissingQuestion(
+  mode: MicaChatMode,
+  insight: AgentInsight,
+  profileLocation?: string | null,
+) {
   if (mode === "buscar-servicio") {
+    const readiness = getSearchReadiness(insight, profileLocation);
+    if (!readiness.hasIssue)
+      return "Contame con tus palabras quÃ© problema hay que resolver o quÃ© necesitÃ¡s contratar.";
     if (!insight.service)
       return "¿Qué tipo de trabajo parece ser: plomería, electricidad, gas, limpieza u otro?";
-    if (!insight.location) return "¿En qué ciudad o barrio hay que resolverlo?";
+    if (!readiness.hasLocation)
+      return "¿En qué ciudad o barrio hay que resolverlo?";
     if (!insight.urgency)
       return "¿Es urgente para hoy o puede coordinarse con más tiempo?";
     if (!insight.timeframe)
@@ -381,9 +483,13 @@ function summarizeSignals(insight: AgentInsight) {
   return parts.length ? parts.join(", ") : "todavía estoy juntando contexto";
 }
 
-function buildReply(mode: MicaChatMode, insight: AgentInsight) {
+function buildReply(
+  mode: MicaChatMode,
+  insight: AgentInsight,
+  profileLocation?: string | null,
+) {
   const signalSummary = summarizeSignals(insight);
-  const question = getMissingQuestion(mode, insight);
+  const question = getMissingQuestion(mode, insight, profileLocation);
 
   if (mode === "buscar-servicio") {
     return `Perfecto, te entiendo: ${signalSummary}.\n\n${question}`;
@@ -497,6 +603,91 @@ async function askMicaApi({
   return data;
 }
 
+async function createMicaAppRequest({
+  insight,
+  history,
+  profileFallback,
+  locationFallback,
+}: {
+  insight: AgentInsight;
+  history: Message[];
+  profileFallback?: MicaProfileFallback | null;
+  locationFallback?: MicaLocationFallback | null;
+}) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Necesitás iniciar sesión para pedir presupuestos.");
+  }
+
+  const { data: loadedProfile } = await supabase
+    .from("usuarios")
+    .select("nombre, celular, ciudad, provincia")
+    .eq("id", user.id)
+    .maybeSingle();
+  const profile = loadedProfile ?? profileFallback;
+  const gpsLocationLabel = formatLocationFallback(locationFallback);
+  const profileLocationLabel = formatProfileLocation(profile);
+  const requestCity =
+    locationFallback?.city?.trim() ||
+    locationFallback?.locality?.trim() ||
+    profile?.ciudad?.trim() ||
+    null;
+  const requestProvince =
+    locationFallback?.province?.trim() || profile?.provincia?.trim() || null;
+
+  const categoria = insight.service?.trim() || "Servicio general";
+  const zona =
+    insight.location?.trim() ||
+    gpsLocationLabel ||
+    profileLocationLabel ||
+    "Zona a confirmar";
+  const descripcion = [
+    insight.issue?.trim(),
+    insight.urgency ? `Urgencia: ${insight.urgency}` : null,
+    insight.timeframe ? `Horario/plazo: ${insight.timeframe}` : null,
+    insight.media ? `Evidencia: ${insight.media}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const { data, error } = await supabase.rpc("create_mica_app_request", {
+    p_categoria: categoria,
+    p_descripcion: descripcion || `Pedido de ${categoria} en ${zona}`,
+    p_zona: zona,
+    p_nombre_cliente: profile?.nombre ?? null,
+    p_cliente_telefono: profile?.celular ? String(profile.celular) : null,
+    p_ciudad: requestCity,
+    p_provincia: requestProvince,
+    p_historial: history.map(({ author, text }) => ({ author, text })),
+    p_metadata: {
+      source_screen: "MicaChat",
+      location_source: insight.location
+        ? "chat"
+        : gpsLocationLabel
+            ? locationFallback?.source ?? "device"
+            : profileLocationLabel
+              ? "profile"
+              : "missing",
+      insight,
+    },
+  });
+
+  if (error) throw error;
+
+  const result = Array.isArray(data)
+    ? (data[0] as CreateMicaRequestResult | undefined)
+    : (data as CreateMicaRequestResult | null);
+
+  if (!result?.oferta_id) {
+    throw new Error("No se pudo crear el pedido MICA.");
+  }
+
+  return result;
+}
+
 export default function MicaChat({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const mode = route.params.mode;
@@ -508,11 +699,80 @@ export default function MicaChat({ navigation, route }: Props) {
     createInitialMessages(mode),
   );
   const [searchStage, setSearchStage] = useState<SearchStage>("intake");
+  const [createdOfertaId, setCreatedOfertaId] = useState<string | null>(null);
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
   const [isThinking, setIsThinking] = useState(false);
+  const [isCreatingRequest, setIsCreatingRequest] = useState(false);
+  const [profileFallback, setProfileFallback] =
+    useState<MicaProfileFallback | null>(null);
+  const effectiveLocation = useLocationStore((state) => state.effectiveLocation);
+  const locationSource = useLocationStore((state) => state.source);
+  const requestDeviceLocation = useLocationStore(
+    (state) => state.requestDeviceLocation,
+  );
 
-  const checklist = getChecklist(mode, insight);
-  const progress = getProgress(mode, insight);
+  useEffect(() => {
+    if (mode !== "buscar-servicio") return;
+
+    let isMounted = true;
+
+    supabase.auth
+      .getUser()
+      .then(({ data: { user } }) => {
+        if (!user) return null;
+        return supabase
+          .from("usuarios")
+          .select("nombre, celular, ciudad, provincia")
+          .eq("id", user.id)
+          .maybeSingle();
+      })
+      .then((response) => {
+        if (!isMounted || !response?.data) return;
+        setProfileFallback(response.data);
+      })
+      .catch((error) => {
+        console.warn("[MICA] no se pudo leer el perfil base:", error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [mode]);
+
+  useEffect(() => {
+    if (mode !== "buscar-servicio" || effectiveLocation) return;
+    requestDeviceLocation().catch((error) => {
+      console.warn("[MICA] no se pudo resolver ubicacion:", error);
+    });
+  }, [effectiveLocation, mode, requestDeviceLocation]);
+
+  const profileLocation = useMemo(
+    () =>
+      formatLocationFallback({
+        city: effectiveLocation?.city,
+        province: effectiveLocation?.province,
+        locality: effectiveLocation?.locality,
+      }) || formatProfileLocation(profileFallback),
+    [effectiveLocation, profileFallback],
+  );
+  const locationFallback = useMemo<MicaLocationFallback | null>(
+    () =>
+      effectiveLocation
+        ? {
+            city: effectiveLocation.city,
+            province: effectiveLocation.province,
+            locality: effectiveLocation.locality,
+            source: locationSource,
+          }
+        : null,
+    [effectiveLocation, locationSource],
+  );
+  const searchReadiness = useMemo(
+    () => getSearchReadiness(insight, profileLocation),
+    [insight, profileLocation],
+  );
+  const checklist = getChecklist(mode, insight, profileLocation);
+  const progress = getProgress(mode, insight, profileLocation);
   const suggestions = getSuggestions(mode, insight);
   const selectedQuote = sampleQuotes.find(
     (quote) => quote.id === selectedQuoteId,
@@ -522,7 +782,7 @@ export default function MicaChat({ navigation, route }: Props) {
       ? 3
       : searchStage === "selected"
         ? 2
-        : searchStage === "quotes"
+        : searchStage === "quotes" || searchStage === "submitted"
           ? 1
           : 0;
 
@@ -535,18 +795,52 @@ export default function MicaChat({ navigation, route }: Props) {
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
   };
 
-  const handleSearchPrimaryAction = () => {
-    if (progress < 70) {
+  const handleSearchPrimaryAction = async () => {
+    if (!searchReadiness.canCreate) {
       addMicaMessage(
-        `Dale, antes de pedir presupuestos necesito un dato más.\n\n${getMissingQuestion(mode, insight)}`,
+        `Dale, antes de pedir presupuestos necesito un dato más.\n\n${getMissingQuestion(mode, insight, profileLocation)}`,
+      );
+      return;
+    }
+
+    if (createdOfertaId) {
+      addMicaMessage(
+        `Tu pedido ya quedÃ³ enviado a prestadores compatibles. CÃ³digo de seguimiento: ${createdOfertaId}.`,
       );
       return;
     }
 
     if (searchStage === "intake") {
-      setSearchStage("quotes");
+      setIsCreatingRequest(true);
+      try {
+        const request = await createMicaAppRequest({
+          insight,
+          history: messages,
+          profileFallback,
+          locationFallback,
+        });
+        setCreatedOfertaId(request.oferta_id);
+        setSearchStage("submitted");
+        addMicaMessage(
+          `Listo, ya enviÃ© tu pedido a prestadores compatibles. Cuando respondan con presupuestos, vas a poder compararlos y confirmar el que prefieras.\n\nSeguimiento: ${request.oferta_id}`,
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "No se pudo crear el pedido.";
+        addMicaMessage(
+          `Tengo los datos, pero todavÃ­a no pude crear el pedido real.\n\nDetalle: ${message}`,
+        );
+      } finally {
+        setIsCreatingRequest(false);
+      }
+      return;
+    }
+
+    if (searchStage === "submitted") {
       addMicaMessage(
-        "Listo, con esto ya se puede pedir presupuesto. Te dejo opciones para comparar precio, disponibilidad y detalle del trabajo.",
+        "El pedido ya estÃ¡ cargado. Apenas entren presupuestos de prestadores, el siguiente paso es comparar y confirmar uno.",
       );
       return;
     }
@@ -584,8 +878,12 @@ export default function MicaChat({ navigation, route }: Props) {
     if (mode === "buscar-servicio") {
       return {
         label:
-          searchStage === "intake"
-            ? progress >= 70
+          isCreatingRequest
+            ? "Enviando pedido..."
+            : createdOfertaId
+              ? "Pedido enviado"
+              : searchStage === "intake"
+            ? searchReadiness.canCreate
               ? "Pedir presupuestos"
               : "Completar pedido"
             : searchStage === "quotes"
@@ -594,7 +892,9 @@ export default function MicaChat({ navigation, route }: Props) {
                 ? "Coordinar y pagar luego"
                 : "Orden en seguimiento",
         icon:
-          searchStage === "intake"
+          createdOfertaId
+            ? ("checkmark-circle" as const)
+            : searchStage === "intake"
             ? ("receipt" as const)
             : searchStage === "quotes"
               ? ("person-circle" as const)
@@ -631,7 +931,16 @@ export default function MicaChat({ navigation, route }: Props) {
       icon: "arrow-forward" as const,
       onPress: () => navigation.goBack(),
     };
-  }, [insight, mode, navigation, progress, searchStage]);
+  }, [
+    createdOfertaId,
+    insight,
+    isCreatingRequest,
+    mode,
+    navigation,
+    progress,
+    searchReadiness,
+    searchStage,
+  ]);
 
   const sendMessage = async (text: string) => {
     const cleanText = text.trim();
@@ -670,7 +979,8 @@ export default function MicaChat({ navigation, route }: Props) {
             ? {
                 ...message,
                 id: `mica-${timestamp}`,
-                text: apiAnswer.reply ?? buildReply(mode, apiInsight),
+                text:
+                  apiAnswer.reply ?? buildReply(mode, apiInsight, profileLocation),
               }
             : message,
         ),
@@ -682,7 +992,7 @@ export default function MicaChat({ navigation, route }: Props) {
             ? {
                 ...message,
                 id: `mica-${timestamp}`,
-                text: buildReply(mode, nextInsight),
+                text: buildReply(mode, nextInsight, profileLocation),
               }
             : message,
         ),
@@ -820,7 +1130,39 @@ export default function MicaChat({ navigation, route }: Props) {
           </View>
         )}
 
-        {mode === "buscar-servicio" && searchStage !== "intake" && (
+        {mode === "buscar-servicio" && searchStage === "submitted" && (
+          <View style={styles.quotesPanel}>
+            <View style={styles.quotesHeader}>
+              <View>
+                <Text style={styles.panelEyebrow}>Pedido MICA</Text>
+                <Text style={styles.panelTitle}>Enviado a prestadores</Text>
+              </View>
+              <View style={styles.verifiedBadge}>
+                <Ionicons name="checkmark-circle" size={14} color="#0f8f58" />
+                <Text style={styles.verifiedText}>Activo</Text>
+              </View>
+            </View>
+            <View style={styles.requestStatusBox}>
+              <Ionicons name="radio-outline" size={20} color={config.accent} />
+              <View style={styles.requestStatusCopy}>
+                <Text style={styles.requestStatusTitle}>
+                  Estamos esperando presupuestos reales
+                </Text>
+                <Text style={styles.requestStatusText}>
+                  Los prestadores compatibles lo ven en su panel y pueden
+                  responder con monto, disponibilidad y detalle del trabajo.
+                </Text>
+                {!!createdOfertaId && (
+                  <Text style={styles.requestStatusCode}>
+                    Seguimiento: {createdOfertaId}
+                  </Text>
+                )}
+              </View>
+            </View>
+          </View>
+        )}
+
+        {mode === "buscar-servicio" && searchStage === "quotes" && (
           <View style={styles.quotesPanel}>
             <View style={styles.quotesHeader}>
               <View>
@@ -973,6 +1315,7 @@ export default function MicaChat({ navigation, route }: Props) {
               key={reply}
               style={[styles.quickReply, { borderColor: config.accent }]}
               onPress={() => sendMessage(reply)}
+              disabled={isThinking || isCreatingRequest}
             >
               <Text style={[styles.quickReplyText, { color: config.accent }]}>
                 {reply}
@@ -988,14 +1331,25 @@ export default function MicaChat({ navigation, route }: Props) {
           { paddingBottom: Math.max(insets.bottom + 12, 16) },
         ]}
       >
-        <TouchableOpacity activeOpacity={0.9} onPress={primaryAction.onPress}>
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={primaryAction.onPress}
+          disabled={isCreatingRequest}
+        >
           <LinearGradient
             colors={config.gradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.primaryAction}
+            style={[
+              styles.primaryAction,
+              isCreatingRequest && styles.primaryActionDisabled,
+            ]}
           >
-            <Ionicons name={primaryAction.icon} size={18} color="#ffffff" />
+            {isCreatingRequest ? (
+              <ActivityIndicator color="#ffffff" size="small" />
+            ) : (
+              <Ionicons name={primaryAction.icon} size={18} color="#ffffff" />
+            )}
             <Text style={styles.primaryActionText}>{primaryAction.label}</Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -1008,12 +1362,12 @@ export default function MicaChat({ navigation, route }: Props) {
             placeholder={config.placeholder}
             placeholderTextColor="#7c8b90"
             multiline
-            editable={!isThinking}
+            editable={!isThinking && !isCreatingRequest}
           />
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={() => sendMessage(input)}
-            disabled={isThinking}
+            disabled={isThinking || isCreatingRequest}
           >
             <LinearGradient
               colors={config.gradient}
@@ -1021,11 +1375,11 @@ export default function MicaChat({ navigation, route }: Props) {
               end={{ x: 1, y: 1 }}
               style={[
                 styles.sendButton,
-                isThinking && styles.sendButtonDisabled,
+                (isThinking || isCreatingRequest) && styles.sendButtonDisabled,
               ]}
             >
               <Ionicons
-                name={isThinking ? "hourglass-outline" : "send"}
+                name={isThinking || isCreatingRequest ? "hourglass-outline" : "send"}
                 size={18}
                 color="#ffffff"
               />
@@ -1274,6 +1628,38 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     marginLeft: 4,
   },
+  requestStatusBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: "#f2fbfa",
+    borderWidth: 1,
+    borderColor: "#cfecea",
+  },
+  requestStatusCopy: {
+    flex: 1,
+    marginLeft: 10,
+    minWidth: 0,
+  },
+  requestStatusTitle: {
+    color: "#20323a",
+    fontSize: 14,
+    fontWeight: "900",
+    marginBottom: 4,
+  },
+  requestStatusText: {
+    color: "#5d7377",
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: "700",
+  },
+  requestStatusCode: {
+    color: "#047a8f",
+    fontSize: 11,
+    fontWeight: "900",
+    marginTop: 8,
+  },
   quoteCard: {
     minHeight: 82,
     borderRadius: 8,
@@ -1506,6 +1892,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.14,
     shadowRadius: 9,
     elevation: 3,
+  },
+  primaryActionDisabled: {
+    opacity: 0.72,
   },
   primaryActionText: {
     color: "#ffffff",

@@ -39,6 +39,8 @@ export type Coords = {
   longitude: number;
   accuracy?: number | null;
   city?: string | null;
+  province?: string | null;
+  locality?: string | null;
   country?: string | null;
 };
 

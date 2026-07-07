@@ -28,9 +28,15 @@ const colors = {
   soft: "#F0FDFA",
 };
 
-function normalizeOficios(values: Array<string | null | undefined>) {
+function normalizeOficios(
+  values: Array<string | string[] | null | undefined>,
+) {
+  const flattened = values.flatMap((value) =>
+    Array.isArray(value) ? value : [value],
+  );
+
   return Array.from(
-    new Set(values.map((v) => String(v ?? "").trim()).filter(Boolean)),
+    new Set(flattened.map((v) => String(v ?? "").trim()).filter(Boolean)),
   );
 }
 
@@ -62,6 +68,37 @@ async function getBridgeWorkerContext() {
     provincia: perfil?.provincia ?? undefined,
     oficios,
   };
+}
+
+async function getMicaAppFallbackPedidos(ctx: {
+  appUserId: string;
+  oficios: string[];
+  ciudad?: string;
+  provincia?: string;
+}) {
+  const { data, error } = await supabase.rpc("get_mica_app_requests_for_worker", {
+    p_app_user_id: ctx.appUserId,
+    p_oficios: ctx.oficios,
+    p_ciudad: ctx.ciudad ?? null,
+    p_provincia: ctx.provincia ?? null,
+    p_limit: 10,
+  });
+
+  if (error) throw error;
+
+  return (data ?? []).map((pedido) => ({
+    id: pedido.id,
+    categoria: pedido.categoria,
+    zona: pedido.zona,
+    descripcion: pedido.descripcion,
+    estado: pedido.estado,
+    paso: pedido.paso,
+    createdAt: pedido.created_at,
+    mediaUrl: pedido.media_url,
+    videoUrls: pedido.video_urls,
+    presupuestoEstimado: pedido.presupuesto_estimado,
+    yaRespondio: pedido.ya_respondio,
+  }));
 }
 
 export default function PedidosMicaSection() {
@@ -99,7 +136,9 @@ export default function PedidosMicaSection() {
         provincia: ctx.provincia,
         limit: 10,
       });
-      return response.pedidos ?? [];
+      const bridgePedidos = response.pedidos ?? [];
+      if (bridgePedidos.length > 0) return bridgePedidos;
+      return getMicaAppFallbackPedidos(ctx);
     },
     enabled: enabled && Boolean(contextQuery.data),
   });

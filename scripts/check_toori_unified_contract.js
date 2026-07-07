@@ -2,16 +2,20 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
-const webRoot = path.resolve(
-  root,
-  "..",
-  "Users",
-  "LENOVO",
-  ".openclaw",
-  "workspace",
-  "external",
-  "Web-Torriserviciosya-nueva",
-);
+const webRootCandidates = [
+  path.resolve(root, "..", "Web-Torriserviciosya-nueva"),
+  path.resolve("E:", "Usuario", "Web-Torriserviciosya-nueva"),
+  path.resolve(
+    root,
+    "..",
+    "Users",
+    "LENOVO",
+    ".openclaw",
+    "workspace",
+    "external",
+    "Web-Torriserviciosya-nueva",
+  ),
+];
 
 const requiredAppFiles = [
   "TOORI_UNIFIED_CONTRACT.md",
@@ -67,7 +71,8 @@ assert(
   "App bridge tries Supabase Auth session before fallback token",
 );
 
-const guessedWebRoot = fs.existsSync(webRoot) ? webRoot : null;
+const guessedWebRoot =
+  webRootCandidates.find((candidate) => fs.existsSync(candidate)) ?? null;
 if (!guessedWebRoot) {
   console.warn(
     "⚠️ Web repo not found from this checkout; skipped endpoint existence check.",
@@ -84,8 +89,23 @@ if (!guessedWebRoot) {
     "utf8",
   );
   assert(
-    authSource.includes("app_bridge_assert_user"),
-    "Web auth validates appUserId for JWT users",
+    authSource.includes("app_bridge_validate_supabase_user_token"),
+    "Web auth validates Supabase Auth bearer tokens",
+  );
+  assert(
+    authSource.includes("TOORI_APP_SYNC_TOKEN"),
+    "Web auth supports shared sync token fallback",
+  );
+
+  const pedidosSource = fs.readFileSync(
+    path.join(guessedWebRoot, "api", "app", "pedidos-disponibles.php"),
+    "utf8",
+  );
+  assert(
+    pedidosSource.includes("mica_app") &&
+      pedidosSource.includes("modo_agente") &&
+      pedidosSource.includes("app_cliente_id"),
+    "Web pedidos endpoint supports MICA app requests and hides own requests",
   );
 }
 

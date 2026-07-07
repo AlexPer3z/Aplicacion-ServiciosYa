@@ -13,7 +13,6 @@ import {
   ScrollView,
   Share,
 } from "react-native";
-import * as Location from "expo-location";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -29,6 +28,8 @@ import {
   createUrgentWorkAlert,
   sendUrgentWorkPush,
 } from "../lib/utils/urgentWorkNotification";
+import { useLocationStore } from "../store/locationStore";
+import { openWhatsApp } from "../lib/utils/whatsapp";
 
 type Props = NativeStackScreenProps<MainStackParamList, "ServiciosPorCategoria">;
 
@@ -123,6 +124,51 @@ function WorkerCard({ worker, onPress }: { worker: Worker; onPress: () => void }
 }
 
 function WorkerDetailModal({ worker, visible, onClose, workerServices, loadingServices }: { worker: Worker | null; visible: boolean; onClose: () => void; workerServices: WorkerService[]; loadingServices: boolean }) {
+  const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
+  const [contactAccess, setContactAccess] = useState<{
+    can_view: boolean;
+    reason: string;
+    requires_payment: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    setContactAccess(null);
+
+    if (!visible || !worker?.id) return;
+
+    (async () => {
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        const clienteId = authData.user?.id;
+        if (!clienteId) return;
+
+        const { data, error } = await supabase.rpc("get_provider_contact_access", {
+          p_cliente_id: clienteId,
+          p_trabajador_id: worker.id,
+          p_presupuesto_id: null,
+          p_oferta_id: null,
+          p_provincia: worker.provincia ?? null,
+          p_ciudad: worker.ciudad ?? null,
+        });
+
+        if (!active) return;
+        if (error) {
+          setContactAccess(null);
+          return;
+        }
+
+        setContactAccess(Array.isArray(data) ? data[0] ?? null : data ?? null);
+      } catch {
+        if (active) setContactAccess(null);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [visible, worker?.id, worker?.provincia, worker?.ciudad]);
+
   if (!worker) return null;
   const ubicacion = [worker.barrio, worker.ciudad, worker.provincia].filter(Boolean).join(", ");
 
@@ -165,8 +211,6 @@ function WorkerDetailModal({ worker, visible, onClose, workerServices, loadingSe
     Linking.openURL(url).catch(() => Alert.alert("Error", "No se pudo abrir el documento."));
   };
 
-  const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
-
   const compartirPerfil = async () => {
     if (!worker?.id) {
       Alert.alert("Error", "No se pudo identificar al profesional.");
@@ -182,6 +226,18 @@ function WorkerDetailModal({ worker, visible, onClose, workerServices, loadingSe
     } catch {
       // usuario canceló o falló el share — no hace falta avisar
     }
+  };
+
+  const contactarWhatsApp = async () => {
+    if (!worker.celular) {
+      Alert.alert("Sin WhatsApp", "Este profesional no tiene celular cargado.");
+      return;
+    }
+
+    await openWhatsApp(
+      String(worker.celular),
+      `Hola ${worker.nombre || ""}, te contacto desde Toori Servicios Ya por un servicio.`,
+    );
   };
 
   const contactarChat = async () => {
@@ -384,6 +440,17 @@ function WorkerDetailModal({ worker, visible, onClose, workerServices, loadingSe
                 <Text style={styles.shareBtnText}>Compartir perfil</Text>
               </TouchableOpacity>
 
+              {contactAccess?.can_view && !!worker.celular && (
+                <TouchableOpacity style={styles.whatsappBtn} onPress={contactarWhatsApp}>
+                  <MaterialIcons name="chat" size={20} color="#fff" />
+                  <Text style={styles.whatsappBtnText}>
+                    {contactAccess.reason === "regional_exception"
+                      ? "WhatsApp habilitado en Catamarca"
+                      : "Contactar por WhatsApp"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
               <TouchableOpacity style={styles.contactBtn} onPress={contactarChat}>
                 <MaterialIcons name="chat" size={20} color="#fff" />
                 <Text style={styles.contactBtnText}>Enviar mensaje</Text>
@@ -399,7 +466,7 @@ function WorkerDetailModal({ worker, visible, onClose, workerServices, loadingSe
   );
 }
 
-type UserLocation = { ciudad?: string; provincia?: string; localidad?: string } | null;
+type UserLocation = { ciudad?: string; provincia?: string; localidad?: string } | null | undefined;
 
 interface WorkerService {
   id: number;
@@ -416,8 +483,21 @@ export default function ServiciosPorCategoria({ route }: Props) {
   const [selected, setSelected] = useState<Worker | null>(null);
   const [workerServices, setWorkerServices] = useState<WorkerService[]>([]);
   const [loadingServices, setLoadingServices] = useState(false);
-  const [userLocation, setUserLocation] = useState<UserLocation>(undefined as any);
-  const [locationError, setLocationError] = useState(false);
+  const effectiveLocation = useLocationStore((state) => state.effectiveLocation);
+  const requestDeviceLocation = useLocationStore((state) => state.requestDeviceLocation);
+  const locationLoading = useLocationStore((state) => state.isLoading);
+  const locationErrorMessage = useLocationStore((state) => state.error);
+  const locationPending = locationLoading || (!effectiveLocation && !locationErrorMessage);
+  const userLocation: UserLocation = effectiveLocation
+    ? {
+        ciudad: effectiveLocation.city ?? undefined,
+        provincia: effectiveLocation.province ?? undefined,
+        localidad: effectiveLocation.locality ?? undefined,
+      }
+    : locationPending
+      ? undefined
+      : null;
+  const locationError = !locationPending && !effectiveLocation;
 
   useEffect(() => {
     if (!selected) { setWorkerServices([]); return; }
@@ -425,7 +505,7 @@ export default function ServiciosPorCategoria({ route }: Props) {
     supabase
       .from("servicios")
       .select("id, titulo, descripcion, precio, horario")
-      .eq("usuario_id", selected.id)
+      .or(`user_id.eq.${selected.id},usuario_id.eq.${selected.id}`)
       .then(({ data }) => {
         setWorkerServices((data as WorkerService[]) || []);
         setLoadingServices(false);
@@ -439,26 +519,10 @@ export default function ServiciosPorCategoria({ route }: Props) {
   }, [categoria]);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== "granted") { setLocationError(true); return; }
-        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        const [geo] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-        if (geo) {
-          setUserLocation({
-            ciudad: geo.city ?? undefined,
-            provincia: geo.region ?? undefined,
-            localidad: geo.subregion ?? undefined,
-          });
-        } else {
-          setLocationError(true);
-        }
-      } catch {
-        setLocationError(true);
-      }
-    })();
-  }, []);
+    if (!effectiveLocation && !locationLoading) {
+      requestDeviceLocation();
+    }
+  }, [effectiveLocation, locationLoading, requestDeviceLocation]);
 
   const cargarWorkers = useCallback(async () => {
     setLoading(true);
@@ -690,6 +754,8 @@ const styles = StyleSheet.create({
   contactBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
   shareBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, backgroundColor: "#fff", paddingVertical: 13, borderRadius: 30, marginTop: 16, borderWidth: 2, borderColor: "#069eb3" },
   shareBtnText: { color: "#069eb3", fontSize: 16, fontWeight: "700" },
+  whatsappBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, backgroundColor: "#128c7e", paddingVertical: 15, borderRadius: 30, marginTop: 10, shadowColor: "#128c7e", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.24, shadowRadius: 8, elevation: 4 },
+  whatsappBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
   closeBtn: { alignItems: "center", paddingVertical: 16, borderTopWidth: 1, borderTopColor: "#f0f2f5" },
   closeBtnText: { color: "#888", fontSize: 15, fontWeight: "600" },
   svcCard: { backgroundColor: "#f0f8fa", borderRadius: 12, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: "#a8dfe8" },
