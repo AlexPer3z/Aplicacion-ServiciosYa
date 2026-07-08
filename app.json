@@ -8,7 +8,7 @@
       "android",
       "web"
     ],
-    "version": "90.0.0",
+    "version": "91.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -29,7 +29,7 @@
       "reactCompiler": true
     },
     "ios": {
-      "buildNumber": "90",
+      "buildNumber": "91",
       "supportsTablet": false,
       "usesAppleSignIn": true,
       "infoPlist": {
@@ -55,7 +55,7 @@
       ]
     },
     "android": {
-      "versionCode": 90,
+      "versionCode": 91,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"

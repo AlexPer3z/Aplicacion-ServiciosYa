@@ -23,6 +23,6 @@ EXPO_PUBLIC_TOORI_APP_SYNC_TOKEN=<mismo token que TOORI_APP_SYNC_TOKEN en web/we
 ## Build actual trabajado
 
 - Rama base funcional: `main`
-- Versión Android/iOS objetivo: `88.0.0`
-- Android `versionCode`: `88`
+- Versión Android/iOS objetivo: `91.0.0`
+- Android `versionCode`: `91`
 - Nombre visible: `TOORI Servicios Ya`
